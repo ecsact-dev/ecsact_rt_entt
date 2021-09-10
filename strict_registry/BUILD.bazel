@@ -1,0 +1,15 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "strict_registry",
+    visibility = ["//visibility:public"],
+    hdrs = ["strict_registry.hh"],
+    include_prefix = "ecs-idl-entt",
+    # strip_include_prefix = "strict_registry",
+    # copts = ["/std:c++latest"],
+    deps = [
+        "@ecs_idl//lib:cc",
+        "@com_github_skypjack_entt//:entt",
+        "@boost//libs/mp11",
+    ],
+)
