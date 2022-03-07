@@ -1,3 +1,3 @@
-# EnTT ecs-idl conformance and utility
+# EnTT ecsact runtime and utilities
 
-This repository contains ecs-idl implementation using the fabulous library EnTT. There are also several utilities that are useful to some when using ecs-idl and EnTT together.
+This repository contains an ecsact runtime implementation using the fabulous library EnTT. There are also several utilities that are useful to some when using ecsact and EnTT together.
