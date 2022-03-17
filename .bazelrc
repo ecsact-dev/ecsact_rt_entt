@@ -3,28 +3,32 @@ build --incompatible_use_platforms_repo_for_constraints
 build --incompatible_enable_cc_toolchain_resolution
 
 build:windows --platforms=//:windows
+build:windows --host_platform=//:windows
 build:windows --extra_execution_platforms=//:windows
-build:windows --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
 build:windows --cxxopt=/std:c++latest
-build:windows --cxxopt=-Xclang
-build:windows --cxxopt=-fcolor-diagnostics
-build:windows --cxxopt=-Xclang
-build:windows --cxxopt=-fansi-escape-codes
-build:windows --cxxopt=/D_HAS_DEPRECATED_RESULT_OF=1
+build:windows --cxxopt=/permissive-
 build:windows --cxxopt=/Zc:__cplusplus
-build:windows --cxxopt=/D_SILENCE_CLANG_COROUTINE_MESSAGE=1
-build:windows --cxxopt=/DBOOST_ASIO_DISABLE_STD_COROUTINE=1
+build:windows --cxxopt=/diagnostics:caret
+build:windows --cxxopt=/DWIN32_LEAN_AND_MEAN
+build:windows --host_cxxopt=/std:c++latest
+build:windows --host_cxxopt=/permissive-
+build:windows --host_cxxopt=/Zc:__cplusplus
+build:windows --host_cxxopt=/diagnostics:caret
+build:windows --host_cxxopt=/DWIN32_LEAN_AND_MEAN
+build:windows --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows
 
 build:linux --platforms=//:linux
-build:linux --extra_toolchains=@llvm_toolchain//:cc-toolchain-linux
-build:linux --cxxopt=-std=c++20
+build:linux --host_platform=//:linux
+build:linux --extra_execution_platforms=//:linux
+build:linux --extra_toolchains=@llvm_toolchain//:cc-toolchain-x86_64-linux
 build:linux --cxxopt=-stdlib=libstdc++
+build:linux --host_cxxopt=-stdlib=libstdc++
 build:linux --linkopt=-lstdc++
+build:linux --host_linkopt=-lstdc++
 
-build --cxxopt=-Wno-macro-redefined # For boost, because it's really annoying.
-
-common --watchfs
-common --experimental_windows_watchfs
-common --enable_runfiles
+build --experimental_windows_watchfs
+build --enable_runfiles
+build --experimental_worker_cancellation
+build --strategy=EcsactCodegen=local
 
 try-import %workspace%/user.bazelrc

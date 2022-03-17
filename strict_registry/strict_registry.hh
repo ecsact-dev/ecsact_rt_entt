@@ -1,27 +1,25 @@
 #pragma once
 
 #include <type_traits>
-#include <ecs-idl/lib.hh>
-#include <entt/entt.hpp>
 #include <boost/mp11.hpp>
+#include <ecsact/lib.hh>
+#include <entt/entity/registry.hpp>
 
-namespace ecs_idl::entt {
+namespace ecsact::entt {
 
 	/**
 	 * Simply wraps EnTT's basic registry but only allows components and views
-	 * that are defined by the ecs-idl package meta info.
+	 * that are defined by the ecsact package meta info.
 	 * 
 	 * Due to all compoennts being known at compile time there are a couple
 	 * differences between EnTT's registry.
 	 * 
-	 * 1. the `prepare` method is not available and instead the constructor calls
-	 *    `prepare` on each component inside the package meta info.
-	 * 2. an (expensive) copy constructor is available
+	 * 1. an (expensive) copy constructor is available
 	 */
-	template<::ecs_idl::package_meta_info PackageMetaInfo, typename Entity>
+	template<::ecsact::package Package, typename Entity>
 	class basic_strict_registry {
 	public:
-		using package_meta_info = PackageMetaInfo;
+		using package = Package;
 		using entity_type = Entity;
 		using entt_registry_type = ::entt::basic_registry<entity_type>;
 		using size_type = typename entt_registry_type::size_type;
@@ -32,9 +30,29 @@ namespace ecs_idl::entt {
 
 	public:
 
+		/**
+		 * Checks if type T is listd as one of the components in the ecact package.
+		 * @returns `true` if T is a component belonging to `package`, `false` 
+		 *          otherwise.
+		 */
+		template<typename T>
+		static constexpr bool is_component() {
+			using boost::mp11::mp_bind_front;
+			using boost::mp11::mp_transform_q;
+			using boost::mp11::mp_any;
+			using boost::mp11::mp_apply;
+
+			return mp_apply<mp_any, mp_transform_q<
+				mp_bind_front<std::is_same, std::remove_cvref_t<T>>,
+				typename package::components
+			>>::value;
+		}
+
 		basic_strict_registry() {
-			boost::mp11::mp_for_each<typename package_meta_info::all_components>(
-				[&]<typename C>(C) { _registry.template prepare<C>(); }
+			boost::mp11::mp_for_each<typename package::components>(
+				[&]<typename C>(C) {
+					static_cast<void>(_registry.template storage<C>());
+				}
 			);
 		}
 
@@ -46,7 +64,7 @@ namespace ecs_idl::entt {
 			other._registry.each([&](auto entity) {
 				static_cast<void>(_registry.create(entity));
 			});
-			boost::mp11::mp_for_each<typename package_meta_info::all_components>(
+			boost::mp11::mp_for_each<typename package::components>(
 				[&]<typename C>(C) {
 					if constexpr(std::is_empty_v<C>) {
 						other._registry.template view<C>().each([&](auto entity) {
@@ -82,7 +100,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::size<C>()
 		 */
 		template<typename C>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		[[nodiscard]] size_type size() const {
 			return _registry.template size<C>();
 		}
@@ -105,7 +123,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::reserve
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		void reserve
 			( const size_type cap
 			)
@@ -117,7 +135,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::capacity
 		 */
 		template<typename C>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		[[nodiscard]] size_type capacity() const {
 			return _registry.template capacity<C>();
 		}
@@ -133,7 +151,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::shrink_to_fit
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		void shrink_to_fit() {
 			_registry.template shrink_to_fit<C...>();
 		}
@@ -142,7 +160,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::empty
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] bool empty() const {
 			return _registry.template empty<C...>();
 		}
@@ -300,7 +318,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::emplace
 		 */
 		template<typename C, typename... Args>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		decltype(auto) emplace
 			( const entity_type  entity
 			, Args&&...          args
@@ -315,7 +333,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::emplace_or_replace
 		 */
 		template<typename C, typename... Args>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		decltype(auto) emplace_or_replace
 			( const entity_type  entity
 			, Args&&...          args
@@ -331,7 +349,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::patch
 		 */
 		template<typename C, typename... Func>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		decltype(auto) patch
 			( const entity_type  entity
 			, Func&&...          func
@@ -344,7 +362,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::replace
 		 */
 		template<typename C, typename... Args>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		decltype(auto) replace
 			( const entity_type  entity
 			, Args&&...          args
@@ -357,7 +375,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::remove
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		size_type remove
 			( const entity_type entity
 			)
@@ -369,7 +387,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::remove
 		 */
 		template<typename... C, typename It>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		size_type remove
 			( It first
 			, It last
@@ -382,7 +400,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::erase
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		void erase
 			( const entity_type entity
 			)
@@ -394,7 +412,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::erase
 		 */
 		template<typename... C, typename It>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		void erase
 			( It first
 			, It last
@@ -407,7 +425,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::compact
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		void compact() {
 			_registry.template compact<C...>();
 		}
@@ -416,7 +434,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::all_of
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] bool all_of
 			( const entity_type entity
 			) const
@@ -428,7 +446,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::any_of
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] bool any_of
 			( const entity_type entity
 			) const
@@ -440,7 +458,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::get
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] decltype(auto) get
 			( const entity_type entity
 			) const
@@ -452,7 +470,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::get
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] decltype(auto) get
 			( const entity_type entity
 			)
@@ -464,7 +482,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::get_or_emplace
 		 */
 		template<typename C, typename... Args>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		[[nodiscard]] decltype(auto) get_or_emplace
 			( const entity_type  entity
 			, Args&&...          args
@@ -480,7 +498,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::try_get
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] auto try_get
 			( const entity_type entity
 			) const
@@ -492,7 +510,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::try_get
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		[[nodiscard]] auto try_get
 			( const entity_type entity
 			)
@@ -504,9 +522,27 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::clear
 		 */
 		template<typename... C>
-			requires (package_meta_info::template is_component_v<C> && ...)
+			requires (is_component<C>() && ...)
 		void clear() {
 			_registry.template clear<C...>();
+		}
+
+		/**
+		 * @copydoc ::entt::basic_registry<entity_type>::storage
+		 */
+		template<typename... C>
+			requires (is_component<C>() && ...)
+		[[nodiscard]] decltype(auto) storage() const {
+			return _registry.template storage<C...>();
+		}
+
+		/**
+		 * @copydoc ::entt::basic_registry<entity_type>::storage
+		 */
+		template<typename... C>
+			requires (is_component<C>() && ...)
+		[[nodiscard]] decltype(auto) storage() {
+			return _registry.template storage<C...>();
 		}
 
 		/**
@@ -545,7 +581,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::on_construct
 		 */
 		template<typename C>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		[[nodiscard]] auto on_construct() {
 			return _registry.template on_construct<C>();
 		}
@@ -554,7 +590,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::on_update
 		 */
 		template<typename C>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		[[nodiscard]] auto on_update() {
 			return _registry.template on_update<C>();
 		}
@@ -563,7 +599,7 @@ namespace ecs_idl::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::on_destroy
 		 */
 		template<typename C>
-			requires (package_meta_info::template is_component_v<C>)
+			requires (is_component<C>())
 		[[nodiscard]] auto on_destroy() {
 			return _registry.template on_destroy<C>();
 		}
@@ -573,8 +609,8 @@ namespace ecs_idl::entt {
 		 */
 		template<typename... C, typename... E>
 			requires (
-				(package_meta_info::template is_component_v<C> && ...) &&
-				(package_meta_info::template is_component_v<E> && ...)
+				(is_component<C>() && ...) &&
+				(package::template is_component_v<E> && ...)
 			)
 		[[nodiscard]]
 		::entt::basic_view<Entity, ::entt::exclude_t<E...>, std::add_const_t<C>...> 
@@ -590,8 +626,8 @@ namespace ecs_idl::entt {
 		 */
 		template<typename... C, typename... E>
 			requires (
-				(package_meta_info::template is_component_v<C> && ...) &&
-				(package_meta_info::template is_component_v<E> && ...)
+				(is_component<C>() && ...) &&
+				(is_component<E>() && ...)
 			)
 		[[nodiscard]]
 		::entt::basic_view<Entity, ::entt::exclude_t<E...>, std::add_const_t<C>...> 
@@ -618,9 +654,9 @@ namespace ecs_idl::entt {
 
 	};
 
-	template<::ecs_idl::package_meta_info PackageMetaInfo>
+	template<::ecsact::package Package>
 	using strict_registry = basic_strict_registry
-		< PackageMetaInfo
+		< Package
 		, ::entt::entity
 		>;
 

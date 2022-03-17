@@ -4,11 +4,9 @@ cc_library(
     name = "strict_registry",
     visibility = ["//visibility:public"],
     hdrs = ["strict_registry.hh"],
-    include_prefix = "ecs-idl-entt",
-    # strip_include_prefix = "strict_registry",
-    # copts = ["/std:c++latest"],
+    include_prefix = "ecsact/entt",
     deps = [
-        "@ecs_idl//lib:cc",
+        "@ecsact//lib:cc",
         "@com_github_skypjack_entt//:entt",
         "@boost//libs/mp11",
     ],

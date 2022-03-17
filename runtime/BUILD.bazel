@@ -1,0 +1,22 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "common.template.hh",
+    "core.template.cc",
+    "dynamic.template.cc",
+    "runtime.template.cc",
+    "runtime.hh",
+])
+
+# load("@rules_cc//cc:defs.bzl", "cc_library")
+
+# cc_library(
+#     name = "runtime",
+#     visibility = ["//visibility:public"],
+#     include_prefix = "ecsact/entt",
+#     hdrs = ["runtime.hh"],
+#     srcs = [
+#         "common.template.hh",
+#         "core.template.cc",
+#     ],
+# )
