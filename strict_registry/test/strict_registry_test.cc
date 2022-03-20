@@ -4,24 +4,6 @@
 
 #include <ecsact/entt/strict_registry.hh>
 
-struct TestComponentA {
-
-};
-
-struct TestComponentB {
-
-};
-
-struct test_package_meta_info {
-	static constexpr auto ecsact_tag = ecsact::package_tag;
-
-	using components = ecsact::mp_list<TestComponentA, TestComponentB>;
-
-	using actions = ecsact::mp_list<>;
-
-	using systems = ecsact::mp_list<>;
-};
-
 TEST(strict_registry, default_ctor) {
 	ecsact::entt::strict_registry<test_package_meta_info> reg;
 }

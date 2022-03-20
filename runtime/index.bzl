@@ -60,6 +60,7 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], **kwargs):
         "@boost//libs/mp11",
         "@ecsact//lib/runtime",
         "@ecsact//lib/runtime-cpp",
+        "@ecsact//runtime-util",
         "@com_github_skypjack_entt//:entt",
     ]
 

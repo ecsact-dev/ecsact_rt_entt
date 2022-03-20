@@ -11,7 +11,8 @@
 #include <ecsact/runtime/core.h>
 #include <ecsact/entt/strict_registry.hh>
 #include <ecsact/lib.hh>
-// #include <ecsact/runtime-util/runtime-util.hh>
+
+#include "runtime-util/runtime-util.hh"
 
 namespace ecsact::entt {
 
@@ -25,11 +26,54 @@ namespace ecsact::entt {
 		using entt_registry_type =
 			typename strict_registry<Package>::entt_registry_type;
 
+		using add_component_callback_set_t = ::ecsact::runtime_util::callback_set
+			< ecsact_add_component_callback
+			, void*
+			>;
+		using add_component_callbacks_t = std::unordered_map
+			< ::ecsact::component_id
+			, add_component_callback_set_t
+			>;
+
+		using update_component_callback_set_t = ::ecsact::runtime_util::callback_set
+			< ecsact_update_component_callback
+			, void*
+			>;
+		using update_component_callbacks_t = std::unordered_map
+			< ::ecsact::component_id
+			, update_component_callback_set_t
+			>;
+
+		using before_remove_component_callback_set_t =
+			::ecsact::runtime_util::callback_set
+				< ecsact_before_remove_component_callback
+				, void*
+				>;
+		using before_remove_component_callbacks_t = std::unordered_map
+			< ::ecsact::component_id
+			, before_remove_component_callback_set_t
+			>;
+
+		using after_remove_component_callback_set_t =
+			::ecsact::runtime_util::callback_set
+				< ecsact_after_remove_component_callback
+				, void*
+				>;
+		using after_remove_component_callbacks_t = std::unordered_map
+			< ::ecsact::component_id
+			, after_remove_component_callback_set_t
+			>;
+
 		struct registry_info {
 			strict_registry<Package> registry;
 			entt_registry_type pending_execution_registry;
 			entity_id_map_t entities_map;
 			::ecsact::entity_id last_entity_id{};
+
+			add_component_callbacks_t add_component_callbacks;
+			update_component_callbacks_t update_component_callbacks;
+			before_remove_component_callbacks_t before_remove_component_callbacks;
+			after_remove_component_callbacks_t after_remove_component_callbacks;
 
 			// Creates an entity and also makes sure there is a matching one in the
 			// pending registry
@@ -59,7 +103,12 @@ namespace ecsact::entt {
 			, const ComponentT&    component
 			)
 		{
-
+			if(info.add_component_callbacks.contains(ComponentT::id)) {
+				info.add_component_callbacks.at(ComponentT::id)(
+					static_cast<ecsact_entity_id>(entity),
+					static_cast<const void*>(&component)
+				);
+			}
 		}
 
 		template<typename ComponentT>
@@ -69,7 +118,12 @@ namespace ecsact::entt {
 			, const ComponentT&    component
 			)
 		{
-			
+			if(info.update_component_callbacks.contains(ComponentT::id)) {
+				info.update_component_callbacks.at(ComponentT::id)(
+					static_cast<ecsact_entity_id>(entity),
+					static_cast<const void*>(&component)
+				);
+			}
 		}
 
 		template<typename ComponentT>
@@ -78,7 +132,21 @@ namespace ecsact::entt {
 			, ::ecsact::entity_id  entity
 			)
 		{
-
+			if(info.before_remove_component_callbacks.contains(ComponentT::id)) {
+				auto entt_entity_id = info.entities_map.at(entity);
+				if constexpr(std::is_empty_v<ComponentT>) {
+					info.before_remove_component_callbacks.at(ComponentT::id)(
+						static_cast<ecsact_entity_id>(entity),
+						nullptr
+					);
+				} else {
+					auto& component = info.registry.get<ComponentT>(entt_entity_id);
+					info.before_remove_component_callbacks.at(ComponentT::id)(
+						static_cast<ecsact_entity_id>(entity),
+						static_cast<const void*>(&component)
+					);
+				}
+			}
 		}
 
 		template<typename ComponentT>
@@ -87,7 +155,11 @@ namespace ecsact::entt {
 			, ::ecsact::entity_id  entity
 			)
 		{
-
+			if(info.after_remove_component_callbacks.contains(ComponentT::id)) {
+				info.after_remove_component_callbacks.at(ComponentT::id)(
+					static_cast<ecsact_entity_id>(entity)
+				);
+			}
 		}
 
 	public:
@@ -447,7 +519,11 @@ namespace ecsact::entt {
 			, void*                          callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.add_component_callbacks[ComponentT::id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void on_add_component
@@ -457,13 +533,11 @@ namespace ecsact::entt {
 			, void*                          callback_user_data
 			)
 		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
-					on_add_component<C>(reg_id, callback, callback_user_data);
-				}
-			});
+			auto& info = _registries.at(reg_id);
+			info.add_component_callbacks[component_id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_add_component
@@ -472,7 +546,8 @@ namespace ecsact::entt {
 			, ecsact_add_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.add_component_callbacks[component_id].remove(callback);
 		}
 
 		template<typename ComponentT>
@@ -482,7 +557,11 @@ namespace ecsact::entt {
 			, void*                             callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.update_component_callbacks[ComponentT::id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void on_update_component
@@ -492,13 +571,11 @@ namespace ecsact::entt {
 			, void*                             callback_user_data
 			)
 		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
-					on_update_component<C>(reg_id, callback, callback_user_data);
-				}
-			});
+			auto& info = _registries.at(reg_id);
+			info.update_component_callbacks[component_id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_update_component
@@ -507,7 +584,8 @@ namespace ecsact::entt {
 			, ecsact_update_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.update_component_callbacks[component_id].remove(callback);
 		}
 
 		template<typename ComponentT>
@@ -517,7 +595,11 @@ namespace ecsact::entt {
 			, void*                                    callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.before_remove_component_callbacks[ComponentT::id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void on_before_remove_component
@@ -527,13 +609,11 @@ namespace ecsact::entt {
 			, void*                                    callback_user_data
 			)
 		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
-					on_before_remove_component<C>(reg_id, callback, callback_user_data);
-				}
-			});
+			auto& info = _registries.at(reg_id);
+			info.before_remove_component_callbacks[component_id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_before_remove_component
@@ -542,7 +622,8 @@ namespace ecsact::entt {
 			, ecsact_before_remove_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.before_remove_component_callbacks[component_id].remove(callback);
 		}
 
 		template<typename ComponentT>
@@ -552,7 +633,11 @@ namespace ecsact::entt {
 			, void*                                   callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.after_remove_component_callbacks[ComponentT::id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void on_after_remove_component
@@ -562,13 +647,11 @@ namespace ecsact::entt {
 			, void*                                   callback_user_data
 			)
 		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
-					on_after_remove_component<C>(reg_id, callback, callback_user_data);
-				}
-			});
+			auto& info = _registries.at(reg_id);
+			info.after_remove_component_callbacks[component_id].add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_after_remove_component
@@ -577,7 +660,8 @@ namespace ecsact::entt {
 			, ecsact_after_remove_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.after_remove_component_callbacks[component_id].remove(callback);
 		}
 
 		void on_add_any_component
@@ -821,6 +905,15 @@ namespace ecsact::entt {
 			using boost::mp11::mp_for_each;
 
 			auto& info = _registries.at(reg_id);
+
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				if constexpr(!std::is_empty_v<C>) {
+					info.registry.sort<C>([](const C& a, const C& b) -> bool {
+						return a < b;
+					});
+				}
+			});
+
 			mp_for_each<typename package::execution_order>(
 				[&]<typename SystemList>(SystemList) {
 					mp_for_each<SystemList>([&]<typename SystemPair>(SystemPair) {

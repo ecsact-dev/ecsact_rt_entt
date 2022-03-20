@@ -1,9 +1,28 @@
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@ecsact//:index.bzl", "ecsact_codegen")
+
+ecsact_codegen(
+    name = "test_codegen_srcs",
+    main = "strict_registry_test.ecsact",
+    srcs = ["strict_registry_test.ecsact"],
+    plugins = {
+        "@ecsact//generator/meta_cc": {},
+        "@ecsact//generator/cpp/header": {
+            "constexpr_component_ids": True,
+        },
+        "@ecsact//generator/cpp_systems/header": {
+            "constexpr_system_ids": True,
+        },
+    },
+)
 
 cc_test(
     name = "test",
     visibility = ["//visibility:public"],
-    srcs = ["strict_registry_test.cc"],
+    srcs = [
+        "strict_registry_test.cc",
+        ":test_codegen_srcs",
+    ],
     deps = [
         "//strict_registry",
         "@com_google_googletest//:gtest",

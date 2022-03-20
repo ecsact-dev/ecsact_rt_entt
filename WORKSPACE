@@ -49,3 +49,32 @@ http_archive(
     url = "https://github.com/zaucy/googletest/archive/5c08f92c881b666998a4f7852c3cf9e393bf33a7.zip",
     sha256 = "af1d807468ce8caf4215f9b2d50b9a4eade7d29dd82e02e29edeccd49b1b430a",
 )
+
+_nlohmann_json_build_file = """
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "json",
+    visibility = ["//visibility:public"],
+    includes = ["include"],
+    hdrs = glob(["include/**/*.hpp"]),
+    strip_include_prefix = "include",
+)
+"""
+
+http_archive(
+    name = "nlohmann_json",
+    url = "https://github.com/nlohmann/json/releases/download/v3.10.4/include.zip",
+    sha256 = "62c585468054e2d8e7c2759c0d990fd339d13be988577699366fe195162d16cb",
+    build_file_content = _nlohmann_json_build_file,
+)
+
+http_archive(
+    name = "com_google_protobuf",
+    strip_prefix = "protobuf-3.18.0",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v3.18.0/protobuf-cpp-3.18.0.tar.gz"],
+    sha256 = "7308590dbb95e77066b99c5674eed855c8257e70658d2af586f4a81ff0eea2b1",
+)
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()

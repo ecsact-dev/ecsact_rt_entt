@@ -457,25 +457,25 @@ namespace ecsact::entt {
 		/**
 		 * @copydoc ::entt::basic_registry<entity_type>::get
 		 */
-		template<typename... C>
-			requires (is_component<C>() && ...)
-		[[nodiscard]] decltype(auto) get
+		template<typename C>
+			requires (is_component<C>())
+		[[nodiscard]] const C& get
 			( const entity_type entity
 			) const
 		{
-			return _registry.template get<C...>(entity);
+			return _registry.template get<C>(entity);
 		}
 
 		/**
 		 * @copydoc ::entt::basic_registry<entity_type>::get
 		 */
-		template<typename... C>
-			requires (is_component<C>() && ...)
-		[[nodiscard]] decltype(auto) get
+		template<typename C>
+			requires (is_component<C>())
+		[[nodiscard]] C& get
 			( const entity_type entity
 			)
 		{
-			return _registry.template get<C...>(entity);
+			return _registry.template get<C>(entity);
 		}
 
 		/**
@@ -650,6 +650,39 @@ namespace ecsact::entt {
 			) const
 		{
 			return _registry.template visit<Func>(std::forward<Func>(func));
+		}
+
+		/**
+		 * @copydoc ::entt::basic_registry<entity_type>::sort
+		 */
+    template
+			< typename     Component
+			, typename     Compare
+			, typename     Sort = ::entt::std_sort
+			, typename...  Args
+			> requires (
+				is_component<Component>()
+			)
+    void sort
+			( Compare&&  compare
+			, Sort&&     algo = Sort{}
+			, Args&&...  args
+			)
+		{
+			_registry.template sort<Component, Compare, Sort, Args...>(
+				std::forward<Compare>(compare),
+				std::forward<Sort>(algo),
+				std::forward<Args>(args)...
+			);
+		}
+
+		/**
+		 * @copydoc ::entt::basic_registry<entity_type>::sort
+		 */
+    template<typename To, typename From>
+			requires(is_component<To>() && is_component<From>())
+    void sort() {
+			_registry.template sort<To, From>();
 		}
 
 	};
