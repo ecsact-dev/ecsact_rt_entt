@@ -64,6 +64,23 @@ namespace ecsact::entt {
 			, after_remove_component_callback_set_t
 			>;
 
+		using add_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
+			< ecsact_add_any_component_callback
+			, void*
+			>;
+		using update_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
+			< ecsact_update_any_component_callback
+			, void*
+			>;
+		using before_remove_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
+			< ecsact_before_remove_any_component_callback
+			, void*
+			>;
+		using after_remove_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
+			< ecsact_after_remove_any_component_callback
+			, void*
+			>;
+
 		struct registry_info {
 			strict_registry<Package> registry;
 			entt_registry_type pending_execution_registry;
@@ -74,6 +91,11 @@ namespace ecsact::entt {
 			update_component_callbacks_t update_component_callbacks;
 			before_remove_component_callbacks_t before_remove_component_callbacks;
 			after_remove_component_callbacks_t after_remove_component_callbacks;
+
+			add_any_comp_cbs_t add_any_component_callbacks;
+			update_any_comp_cbs_t update_any_component_callbacks;
+			before_remove_any_comp_cbs_t before_remove_any_component_callbacks;
+			after_remove_any_comp_cbs_t after_remove_any_component_callbacks;
 
 			// Creates an entity and also makes sure there is a matching one in the
 			// pending registry
@@ -109,6 +131,12 @@ namespace ecsact::entt {
 					static_cast<const void*>(&component)
 				);
 			}
+
+			info.add_any_component_callbacks(
+				static_cast<ecsact_entity_id>(entity),
+				static_cast<ecsact_component_id>(ComponentT::id),
+				static_cast<const void*>(&component)
+			);
 		}
 
 		template<typename ComponentT>
@@ -124,6 +152,12 @@ namespace ecsact::entt {
 					static_cast<const void*>(&component)
 				);
 			}
+
+			info.update_any_component_callbacks(
+				static_cast<ecsact_entity_id>(entity),
+				static_cast<ecsact_component_id>(ComponentT::id),
+				static_cast<const void*>(&component)
+			);
 		}
 
 		template<typename ComponentT>
@@ -147,6 +181,24 @@ namespace ecsact::entt {
 					);
 				}
 			}
+
+			if(!info.before_remove_any_component_callbacks.empty()) {
+				auto entt_entity_id = info.entities_map.at(entity);
+				if constexpr(std::is_empty_v<ComponentT>) {
+					info.before_remove_any_component_callbacks(
+						static_cast<ecsact_entity_id>(entity),
+						static_cast<ecsact_component_id>(ComponentT::id),
+						nullptr
+					);
+				} else {
+					auto& component = info.registry.get<ComponentT>(entt_entity_id);
+					info.before_remove_any_component_callbacks(
+						static_cast<ecsact_entity_id>(entity),
+						static_cast<ecsact_component_id>(ComponentT::id),
+						static_cast<const void*>(&component)
+					);
+				}
+			}
 		}
 
 		template<typename ComponentT>
@@ -160,6 +212,11 @@ namespace ecsact::entt {
 					static_cast<ecsact_entity_id>(entity)
 				);
 			}
+
+			info.after_remove_any_component_callbacks(
+				static_cast<ecsact_entity_id>(entity),
+				static_cast<ecsact_component_id>(ComponentT::id)
+			);
 		}
 
 	public:
@@ -670,7 +727,11 @@ namespace ecsact::entt {
 			, void*                              callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.add_any_component_callbacks.add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_add_any_component
@@ -678,7 +739,8 @@ namespace ecsact::entt {
 			, ecsact_add_any_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.add_any_component_callbacks.remove(callback);
 		}
 
 		void on_update_any_component
@@ -687,7 +749,11 @@ namespace ecsact::entt {
 			, void*                                 callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.update_any_component_callbacks.add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_update_any_component
@@ -695,7 +761,8 @@ namespace ecsact::entt {
 			, ecsact_update_any_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.update_any_component_callbacks.remove(callback);
 		}
 
 		void on_before_remove_any_component
@@ -704,7 +771,11 @@ namespace ecsact::entt {
 			, void*                                        callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.before_remove_any_component_callbacks.add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_before_remove_any_component
@@ -712,7 +783,8 @@ namespace ecsact::entt {
 			, ecsact_before_remove_any_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.before_remove_any_component_callbacks.remove(callback);
 		}
 
 		void on_after_remove_any_component
@@ -721,7 +793,11 @@ namespace ecsact::entt {
 			, void*                                       callback_user_data
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.after_remove_any_component_callbacks.add(
+				callback,
+				callback_user_data
+			);
 		}
 
 		void off_after_remove_any_component
@@ -729,7 +805,8 @@ namespace ecsact::entt {
 			, ecsact_after_remove_any_component_callback  callback
 			)
 		{
-
+			auto& info = _registries.at(reg_id);
+			info.after_remove_any_component_callbacks.remove(callback);
 		}
 
 		template<typename ActionT>
