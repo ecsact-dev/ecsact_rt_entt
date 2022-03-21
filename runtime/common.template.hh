@@ -1,7 +1,9 @@
 #pragma once
 
-#include <boost/mp11.hpp>
+#include <stdexcept>
 #include <type_traits>
+#include <string>
+#include <boost/mp11.hpp>
 
 #ifndef ECSACT_ENTT_RUNTIME_USER_HEADER
 #	error ECSACT_ENTT_RUNTIME_USER_HEADER must be defined
@@ -38,11 +40,28 @@ struct ecsact_system_execution_context {
 		( const ComponentT& component
 		)
 	{
+		using ecsact::entt::component_added;
+
+#ifndef NDEBUG
+		{
+			const bool already_has_component =
+				info.pending_events_registry.all_of<ComponentT>(entity);
+			if(already_has_component) {
+				std::string err_msg = "Cannot call ctx.add() multiple times. ";
+				err_msg += "Added component: ";
+				err_msg += typeid(ComponentT).name();
+				throw std::runtime_error(err_msg.c_str());
+			}
+		}
+#endif
+
 		if constexpr(std::is_empty_v<ComponentT>) {
 			info.registry.emplace<ComponentT>(entity);
 		} else {
 			info.registry.emplace<ComponentT>(entity, component);
 		}
+
+		info.pending_events_registry.emplace<component_added<ComponentT>>(entity);
 	}
 
 	void add
@@ -61,7 +80,23 @@ struct ecsact_system_execution_context {
 
 	template<typename ComponentT>
 	void remove() {
+		using ecsact::entt::component_removed;
+
+#ifndef NDEBUG
+		{
+			const bool already_has_component =
+				info.pending_events_registry.all_of<ComponentT>(entity);
+			if(!already_has_component) {
+				std::string err_msg = "Cannot call ctx.remove() multiple times. ";
+				err_msg += "Removed component: ";
+				err_msg += typeid(ComponentT).name();
+				throw std::runtime_error(err_msg.c_str());
+			}
+		}
+#endif
+
 		info.registry.remove<ComponentT>(entity);
+		info.pending_events_registry.emplace<component_removed<ComponentT>>(entity);
 	}
 
 	void remove
@@ -126,8 +161,9 @@ struct ecsact_system_execution_context {
 		)
 	{
 		using boost::mp11::mp_for_each;
+		using ecsact::entt::component_added;
 
-		auto new_entity = info._create_entity();
+		auto new_entity = info.create_entity().entt_entity_id;
 		for(int i=0; component_count > i; ++i) {
 			auto component_id = component_ids[i];
 			auto component_data = components_data[i];
@@ -141,6 +177,8 @@ struct ecsact_system_execution_context {
 							*static_cast<const C*>(component_data)
 						);
 					}
+
+					info.pending_events_registry.emplace<component_added<C>>(entity);
 				}
 			});
 		}

@@ -5,6 +5,8 @@
 #include <tuple>
 #include <functional>
 #include <unordered_map>
+#include <optional>
+#include <mutex>
 #include <boost/mp11.hpp>
 #include <ecsact/runtime.hh>
 #include <ecsact/runtime/common.h>
@@ -14,7 +16,44 @@
 
 #include "runtime-util/runtime-util.hh"
 
+namespace ecsact::entt::detail {
+	template<typename Key, typename Value>
+	class biidmap_value {
+	public:
+		using key_type = Key;
+		using value_type = Value;
+	};
+
+	/**
+	 * Bi-directional ID map (bidi). Used for storing EnTT and Ecsact IDs while
+	 * being able to do reverse lookups.
+	 */
+	template<typename T1, typename T2>
+	class biidmap {
+	public:
+
+	};
+}
+
 namespace ecsact::entt {
+
+	/**
+	 * Marker to indicate that a component has changed
+	 */
+	template<typename Component>
+	struct component_changed {};
+
+	/**
+	 * Marker to indicate that a component has been added
+	 */
+	template<typename Component>
+	struct component_added {};
+
+	/**
+	 * Marker to indicate that a component has been removed
+	 */
+	template<typename Component>
+	struct component_removed {};
 
 	template<::ecsact::package Package>
 	class runtime {
@@ -82,9 +121,18 @@ namespace ecsact::entt {
 			>;
 
 		struct registry_info {
+			std::optional<std::reference_wrapper<std::mutex>> mutex;
 			strict_registry<Package> registry;
-			entt_registry_type pending_execution_registry;
+			// This registry stores component event details needed to execute events
+			// at the end of system execution. The entity IDs in this registry are 1:1
+			// with the `this->registry`.
+			entt_registry_type pending_events_registry;
 			entity_id_map_t entities_map;
+			/**
+			 * Index of this vector is a statically casted EnTT ID
+			 */
+			std::vector<::ecsact::entity_id> _ecsact_entity_ids;
+
 			::ecsact::entity_id last_entity_id{};
 
 			add_component_callbacks_t add_component_callbacks;
@@ -97,16 +145,70 @@ namespace ecsact::entt {
 			before_remove_any_comp_cbs_t before_remove_any_component_callbacks;
 			after_remove_any_comp_cbs_t after_remove_any_component_callbacks;
 
+			struct create_new_entity_result {
+				typename strict_registry<Package>::entity_type entt_entity_id;
+				::ecsact::entity_id ecsact_entity_id;
+			};
+
+			/** @internal */
+			inline auto _create_entity
+				( ::ecsact::entity_id ecsact_entity_id
+				)
+			{
+				auto new_entt_entity_id = registry.create();
+				[[maybe_unused]]
+				auto pending_entt_entity_id = pending_events_registry.create(
+					new_entt_entity_id
+				);
+				assert(pending_entt_entity_id == new_entt_entity_id);
+				entities_map[ecsact_entity_id] = new_entt_entity_id;
+				_ecsact_entity_ids.resize(static_cast<size_t>(new_entt_entity_id) + 1);
+				_ecsact_entity_ids[_ecsact_entity_ids.size() - 1] = ecsact_entity_id;
+				return new_entt_entity_id;
+			}
+
+			/** @internal */
+			inline create_new_entity_result _create_entity() {
+				auto new_entity_id = static_cast<::ecsact::entity_id>(
+					static_cast<int>(last_entity_id) + 1
+				);
+				while(entities_map.contains(new_entity_id)) {
+					new_entity_id = static_cast<::ecsact::entity_id>(
+						static_cast<int>(new_entity_id) + 1
+					);
+				}
+				return {
+					.entt_entity_id = _create_entity(new_entity_id),
+					.ecsact_entity_id = new_entity_id,
+				};
+			}
+		
 			// Creates an entity and also makes sure there is a matching one in the
 			// pending registry
-			inline auto _create_entity() {
-				auto new_entity_id = registry.create();
-				[[maybe_unused]]
-				auto pending_entity_id = pending_execution_registry.create(
-					new_entity_id
-				);
-				assert(pending_entity_id == new_entity_id);
-				return new_entity_id;
+			inline auto create_entity
+				( ::ecsact::entity_id ecsact_entity_id
+				)
+			{
+				std::scoped_lock lk(mutex->get());
+				return _create_entity(ecsact_entity_id);
+			}
+			inline auto create_entity() {
+				std::scoped_lock lk(mutex->get());
+				return _create_entity();
+			}
+
+			typename strict_registry<Package>::entity_type entt_entity_id
+				( ::ecsact::entity_id ecsact_entity_id
+				) const
+			{
+				return entities_map.at(ecsact_entity_id);
+			}
+
+			::ecsact::entity_id ecsact_entity_id
+				( typename strict_registry<Package>::entity_type entt_entity_id
+				) const
+			{
+				return _ecsact_entity_ids.at(static_cast<size_t>(entt_entity_id));
 			}
 		};
 
@@ -162,43 +264,74 @@ namespace ecsact::entt {
 
 		template<typename ComponentT>
 		void _invoke_before_remove_callbacks
-			( registry_info&       info
-			, ::ecsact::entity_id  entity
+			( registry_info&                                  info
+			, ::ecsact::entity_id                             entity_id
+			, typename strict_registry<Package>::entity_type  entt_entity_id
+			, auto&&                                          component_source
 			)
 		{
 			if(info.before_remove_component_callbacks.contains(ComponentT::id)) {
-				auto entt_entity_id = info.entities_map.at(entity);
 				if constexpr(std::is_empty_v<ComponentT>) {
 					info.before_remove_component_callbacks.at(ComponentT::id)(
-						static_cast<ecsact_entity_id>(entity),
+						static_cast<ecsact_entity_id>(entity_id),
 						nullptr
 					);
 				} else {
-					auto& component = info.registry.get<ComponentT>(entt_entity_id);
+					auto& component = component_source.get<ComponentT>(entt_entity_id);
 					info.before_remove_component_callbacks.at(ComponentT::id)(
-						static_cast<ecsact_entity_id>(entity),
+						static_cast<ecsact_entity_id>(entity_id),
 						static_cast<const void*>(&component)
 					);
 				}
 			}
 
 			if(!info.before_remove_any_component_callbacks.empty()) {
-				auto entt_entity_id = info.entities_map.at(entity);
 				if constexpr(std::is_empty_v<ComponentT>) {
 					info.before_remove_any_component_callbacks(
-						static_cast<ecsact_entity_id>(entity),
+						static_cast<ecsact_entity_id>(entity_id),
 						static_cast<ecsact_component_id>(ComponentT::id),
 						nullptr
 					);
 				} else {
-					auto& component = info.registry.get<ComponentT>(entt_entity_id);
+					auto& component = component_source.get<ComponentT>(entt_entity_id);
 					info.before_remove_any_component_callbacks(
-						static_cast<ecsact_entity_id>(entity),
+						static_cast<ecsact_entity_id>(entity_id),
 						static_cast<ecsact_component_id>(ComponentT::id),
 						static_cast<const void*>(&component)
 					);
 				}
 			}
+		}
+
+		template<typename ComponentT>
+		void _invoke_before_remove_callbacks
+			( registry_info&                                  info
+			, typename strict_registry<Package>::entity_type  entt_entity_id
+			, auto&&                                          component_source
+			)
+		{
+			auto ecsact_entity_id = info.ecsact_entity_id(entt_entity_id);
+			_invoke_before_remove_callbacks<ComponentT>(
+				info,
+				ecsact_entity_id,
+				entt_entity_id,
+				info.registry
+			);
+		}
+
+		template<typename ComponentT>
+		void _invoke_before_remove_callbacks
+			( registry_info&       info
+			, ::ecsact::entity_id  ecsact_entity_id
+			)
+		{
+			auto entt_entity_id = info.entities_map.at(ecsact_entity_id);
+			_invoke_before_remove_callbacks<ComponentT>(
+				info,
+				ecsact_entity_id,
+				entt_entity_id,
+				info.registry
+			);
 		}
 
 		template<typename ComponentT>
@@ -283,17 +416,7 @@ namespace ecsact::entt {
 			)
 		{
 			auto& info = _registries.at(reg_id);
-			auto new_entity_id = static_cast<::ecsact::entity_id>(
-				static_cast<int>(info.last_entity_id) + 1
-			);
-			while(info.entities_map.contains(new_entity_id)) {
-				new_entity_id = static_cast<::ecsact::entity_id>(
-					static_cast<int>(new_entity_id) + 1
-				);
-			}
-			info.last_entity_id = new_entity_id;
-			info.entities_map[new_entity_id] = info._create_entity();
-			return new_entity_id;
+			return info.create_entity().ecsact_entity_id;
 		}
 
 		void ensure_entity
@@ -303,7 +426,7 @@ namespace ecsact::entt {
 		{
 			auto& info = _registries.at(reg_id);
 			if(!info.entities_map.contains(entity_id)) {
-				info.entities_map[entity_id] = info._create_entity();
+				info.create_entity(entity_id);
 			}
 		}
 
@@ -920,6 +1043,58 @@ namespace ecsact::entt {
 			}
 		}
 
+		template<typename SystemT>
+		void _begin_writable_change_check
+			( registry_info&    info
+			, entt_entity_type  entity
+			, auto&&            view
+			)
+		{
+			mp_for_each<typename SystemT::writable>([&]<typename C>(C) {
+				if constexpr(std::is_empty_v<C>) return;
+
+				const bool has_comp_changed =
+					info.pending_events_registry.all_of<component_changed<C>>(entity);
+				
+				// If our component has already been marked as changed we do not need
+				// to process it.
+				if(has_comp_changed) return;
+
+				// When a writable component has not been marked as changed we store
+				// it's value in our pending registry to be checked after executing
+				// the system to see if the value has changed.
+				info.pending_events_registry.emplace<C>(entity, view.get<C>());
+			});
+		}
+
+		template<typename SystemT>
+		void _end_writable_change_check
+			( registry_info&    info
+			, entt_entity_type  entity
+			, auto&&            view
+			)
+		{
+			mp_for_each<typename SystemT::writable>([&]<typename C>(C) {
+				if constexpr(std::is_empty_v<C>) return;
+
+				const bool has_comp_changed =
+					info.pending_events_registry.all_of<component_changed<C>>(entity);
+				
+				// If our component has already been marked as changed we do not need
+				// to process it.
+				if(has_comp_changed) return;
+
+				const C& prev_value = info.pending_events_registry.get<C>(entity);
+				const C& curr_value = view.get<C>();
+
+				if(prev_value != curr_value) {
+					info.pending_events_registry.emplace<component_changed<C>>(entity);
+				}
+
+				info.pending_events_registry.remove<C>(entity);
+			});
+		}
+
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user
 			( registry_info&                    info
@@ -943,15 +1118,20 @@ namespace ecsact::entt {
 					.action = nullptr,
 				};
 
+				_begin_writable_change_check(info, entity, view);
+
+				// Execute the user defined system implementation
 				SystemT::dynamic_impl(
 					reinterpret_cast<ecsact::detail::system_execution_context*>(&ctx)
 				);
 
+				_end_writable_change_check(info, entity, view);
+
 				mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
-						using boost::mp11::mp_first;
-						using boost::mp11::mp_second;
-						using ChildSystemT = mp_first<SystemPair>;
-						using GrandChildSystemsListT = mp_second<SystemPair>;
+					using boost::mp11::mp_first;
+					using boost::mp11::mp_second;
+					using ChildSystemT = mp_first<SystemPair>;
+					using GrandChildSystemsListT = mp_second<SystemPair>;
 
 					_execute_system<ChildSystemT, GrandChildSystemsListT>(
 						info,
@@ -1006,6 +1186,67 @@ namespace ecsact::entt {
 					});
 				}
 			);
+
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				::entt::basic_view added_view{
+					info.registry.storage<C>(),
+					info.pending_events_registry.storage<component_added<C>>(),
+				};
+				
+				for(entt_entity_type entity : added_view) {
+					if constexpr(std::is_empty_v<C>) {
+						_invoke_add_callbacks<C>(info, info.ecsact_entity_id(entity), C{});
+					} else {
+						_invoke_add_callbacks<C>(
+							info,
+							info.ecsact_entity_id(entity),
+							added_view.get<C>(entity)
+						);
+					}
+				}
+				
+				info.pending_events_registry.clear<component_added<C>>();
+
+				if constexpr(!std::is_empty_v<C>) {
+					::entt::basic_view changed_view{
+						info.registry.storage<C>(),
+						info.pending_events_registry.storage<component_changed<C>>(),
+					};
+
+					for(entt_entity_type entity : changed_view) {
+						_invoke_update_callbacks<C>(
+							info,
+							info.ecsact_entity_id(entity),
+							changed_view.get<C>(entity)
+						);
+					}
+
+					info.pending_events_registry.clear<component_changed<C>>();
+				}
+
+				::entt::basic_view before_removed_view{
+					info.registry.storage<C>(),
+					info.pending_events_registry.storage<component_removed<C>>(),
+				};
+
+				for(entt_entity_type entity : before_removed_view) {
+					_invoke_before_remove_callbacks<C>(info, entity, before_removed_view);
+					info.registry.remove<C>(entity);
+				}
+
+				::entt::basic_view after_removed_view{
+					info.pending_events_registry.storage<component_removed<C>>(),
+				};
+
+				for(entt_entity_type entity : after_removed_view) {
+					_invoke_after_remove_callbacks<C>(
+						info,
+						info.ecsact_entity_id(entity)
+					);
+				}
+
+				info.pending_events_registry.clear<component_removed<C>>();
+			});
 		}
 
 	};
