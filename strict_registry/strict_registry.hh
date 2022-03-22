@@ -531,7 +531,6 @@ namespace ecsact::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::storage
 		 */
 		template<typename... C>
-			requires (is_component<C>() && ...)
 		[[nodiscard]] decltype(auto) storage() const {
 			return _registry.template storage<C...>();
 		}
@@ -540,7 +539,6 @@ namespace ecsact::entt {
 		 * @copydoc ::entt::basic_registry<entity_type>::storage
 		 */
 		template<typename... C>
-			requires (is_component<C>() && ...)
 		[[nodiscard]] decltype(auto) storage() {
 			return _registry.template storage<C...>();
 		}
@@ -610,11 +608,9 @@ namespace ecsact::entt {
 		template<typename... C, typename... E>
 			requires (
 				(is_component<C>() && ...) &&
-				(package::template is_component_v<E> && ...)
+				(is_component<E>() && ...)
 			)
-		[[nodiscard]]
-		::entt::basic_view<Entity, ::entt::exclude_t<E...>, std::add_const_t<C>...> 
-		view
+		[[nodiscard]] auto view
 			( ::entt::exclude_t<E...> = {}
 			) const
 		{
@@ -628,10 +624,8 @@ namespace ecsact::entt {
 			requires (
 				(is_component<C>() && ...) &&
 				(is_component<E>() && ...)
-			)
-		[[nodiscard]]
-		::entt::basic_view<Entity, ::entt::exclude_t<E...>, std::add_const_t<C>...> 
-		view
+			) const
+		[[nodiscard]] auto view
 			( ::entt::exclude_t<E...> = {}
 			)
 		{

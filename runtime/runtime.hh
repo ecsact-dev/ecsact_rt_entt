@@ -361,6 +361,8 @@ namespace ecsact::entt {
 			( const char* registry_name
 			)
 		{
+			using boost::mp11::mp_for_each;
+
 			// Using the index of _registries as an ID
 			const auto reg_id = static_cast<::ecsact::registry_id>(
 				static_cast<int>(_last_registry_id) + 1
@@ -368,12 +370,24 @@ namespace ecsact::entt {
 
 			_last_registry_id = reg_id;
 
-			_registries.emplace_hint(
+			auto itr = _registries.emplace_hint(
 				_registries.end(),
 				std::piecewise_construct,
 				std::forward_as_tuple(reg_id),
 				std::forward_as_tuple()
 			);
+
+			registry_info& info = itr->second;
+			auto& events_registry = info.pending_events_registry;
+
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				static_cast<void>(events_registry.storage<C>());
+				static_cast<void>(events_registry.storage<component_added<C>>());
+				if constexpr(!std::is_empty_v<C>) {
+					static_cast<void>(events_registry.storage<component_changed<C>>());
+				}
+				static_cast<void>(events_registry.storage<component_removed<C>>());
+			});
 
 			return reg_id;
 		}
@@ -415,8 +429,12 @@ namespace ecsact::entt {
 			( ::ecsact::registry_id reg_id
 			)
 		{
+			std::mutex mutex;
 			auto& info = _registries.at(reg_id);
-			return info.create_entity().ecsact_entity_id;
+			info.mutex = mutex;
+			auto new_entity_id = info.create_entity().ecsact_entity_id;
+			info.mutex = std::nullopt;
+			return new_entity_id;
 		}
 
 		void ensure_entity
@@ -426,7 +444,10 @@ namespace ecsact::entt {
 		{
 			auto& info = _registries.at(reg_id);
 			if(!info.entities_map.contains(entity_id)) {
+				std::mutex mutex;
+				info.mutex = mutex;
 				info.create_entity(entity_id);
+				info.mutex = std::nullopt;
 			}
 		}
 
@@ -1050,7 +1071,9 @@ namespace ecsact::entt {
 			, auto&&            view
 			)
 		{
-			mp_for_each<typename SystemT::writable>([&]<typename C>(C) {
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
 				if constexpr(std::is_empty_v<C>) return;
 
 				const bool has_comp_changed =
@@ -1060,10 +1083,17 @@ namespace ecsact::entt {
 				// to process it.
 				if(has_comp_changed) return;
 
+				const bool is_new_comp =
+					info.pending_events_registry.all_of<component_added<C>>(entity);
+
+				// If our component is new (added during this invocation) then we do not
+				// ned to process it. The add event will trigger instead of the update.
+				if(is_new_comp) return;
+
 				// When a writable component has not been marked as changed we store
 				// it's value in our pending registry to be checked after executing
 				// the system to see if the value has changed.
-				info.pending_events_registry.emplace<C>(entity, view.get<C>());
+				info.pending_events_registry.emplace<C>(entity, view.get<C>(entity));
 			});
 		}
 
@@ -1074,7 +1104,9 @@ namespace ecsact::entt {
 			, auto&&            view
 			)
 		{
-			mp_for_each<typename SystemT::writable>([&]<typename C>(C) {
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
 				if constexpr(std::is_empty_v<C>) return;
 
 				const bool has_comp_changed =
@@ -1084,8 +1116,15 @@ namespace ecsact::entt {
 				// to process it.
 				if(has_comp_changed) return;
 
+				const bool is_new_comp =
+					info.pending_events_registry.all_of<component_added<C>>(entity);
+
+				// If our component is new (added during this invocation) then we do not
+				// ned to process it. The add event will trigger instead of the update.
+				if(is_new_comp) return;
+
 				const C& prev_value = info.pending_events_registry.get<C>(entity);
-				const C& curr_value = view.get<C>();
+				const C& curr_value = view.get<C>(entity);
 
 				if(prev_value != curr_value) {
 					info.pending_events_registry.emplace<component_changed<C>>(entity);
@@ -1112,20 +1151,20 @@ namespace ecsact::entt {
 
 			std::for_each(view.begin(), view.end(), [&](auto entity) {
 				ecsact_system_execution_context ctx{
-					.registry = info.registry,
+					.info = info,
 					.entity = entity,
 					.parent = parent,
 					.action = nullptr,
 				};
 
-				_begin_writable_change_check(info, entity, view);
+				_begin_writable_change_check<SystemT>(info, entity, view);
 
 				// Execute the user defined system implementation
 				SystemT::dynamic_impl(
 					reinterpret_cast<ecsact::detail::system_execution_context*>(&ctx)
 				);
 
-				_end_writable_change_check(info, entity, view);
+				_end_writable_change_check<SystemT>(info, entity, view);
 
 				mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
 					using boost::mp11::mp_first;
@@ -1161,10 +1200,16 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
+			std::mutex mutex;
 			auto& info = _registries.at(reg_id);
+			info.mutex = std::ref(mutex);
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				if constexpr(!std::is_empty_v<C>) {
+					// Sorting for deterministic order of components when executing
+					// systems.
+					// TODO(zaucy): This sort is only necessary for components part of a 
+					//              system execution hierarchy greater than 1.
 					info.registry.sort<C>([](const C& a, const C& b) -> bool {
 						return a < b;
 					});
@@ -1225,13 +1270,13 @@ namespace ecsact::entt {
 				}
 
 				::entt::basic_view before_removed_view{
-					info.registry.storage<C>(),
+					info.pending_events_registry.storage<C>(),
 					info.pending_events_registry.storage<component_removed<C>>(),
 				};
 
 				for(entt_entity_type entity : before_removed_view) {
 					_invoke_before_remove_callbacks<C>(info, entity, before_removed_view);
-					info.registry.remove<C>(entity);
+					info.pending_events_registry.remove<C>(entity);
 				}
 
 				::entt::basic_view after_removed_view{
@@ -1247,6 +1292,8 @@ namespace ecsact::entt {
 
 				info.pending_events_registry.clear<component_removed<C>>();
 			});
+
+			info.mutex = std::nullopt;
 		}
 
 	};

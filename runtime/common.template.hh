@@ -35,33 +35,39 @@ struct ecsact_system_execution_context {
 	const ecsact_system_execution_context* parent;
 	const void* action;
 
-	template<typename ComponentT>
+	template<typename C>
 	void add
-		( const ComponentT& component
+		( const C& component
 		)
 	{
 		using ecsact::entt::component_added;
+		using ecsact::entt::component_removed;
+
+		if(info.pending_events_registry.all_of<component_removed<C>>(entity)) {
+			info.pending_events_registry.remove<component_removed<C>>(entity);
+			info.pending_events_registry.remove<C>(entity);
+		}
 
 #ifndef NDEBUG
 		{
 			const bool already_has_component =
-				info.pending_events_registry.all_of<ComponentT>(entity);
+				info.pending_events_registry.all_of<C>(entity);
 			if(already_has_component) {
 				std::string err_msg = "Cannot call ctx.add() multiple times. ";
 				err_msg += "Added component: ";
-				err_msg += typeid(ComponentT).name();
+				err_msg += typeid(C).name();
 				throw std::runtime_error(err_msg.c_str());
 			}
 		}
 #endif
 
-		if constexpr(std::is_empty_v<ComponentT>) {
-			info.registry.emplace<ComponentT>(entity);
+		if constexpr(std::is_empty_v<C>) {
+			info.registry.emplace<C>(entity);
 		} else {
-			info.registry.emplace<ComponentT>(entity, component);
+			info.registry.emplace<C>(entity, component);
 		}
 
-		info.pending_events_registry.emplace<component_added<ComponentT>>(entity);
+		info.pending_events_registry.emplace<component_added<C>>(entity);
 	}
 
 	void add
@@ -78,25 +84,39 @@ struct ecsact_system_execution_context {
 		});
 	}
 
-	template<typename ComponentT>
+	template<typename C>
 	void remove() {
 		using ecsact::entt::component_removed;
+		using ecsact::entt::component_added;
+		using ecsact::entt::component_changed;
 
 #ifndef NDEBUG
 		{
-			const bool already_has_component =
-				info.pending_events_registry.all_of<ComponentT>(entity);
+			const bool already_has_component = info.registry.all_of<C>(entity);
 			if(!already_has_component) {
 				std::string err_msg = "Cannot call ctx.remove() multiple times. ";
 				err_msg += "Removed component: ";
-				err_msg += typeid(ComponentT).name();
+				err_msg += typeid(C).name();
 				throw std::runtime_error(err_msg.c_str());
 			}
 		}
 #endif
 
-		info.registry.remove<ComponentT>(entity);
-		info.pending_events_registry.emplace<component_removed<ComponentT>>(entity);
+		if(info.pending_events_registry.all_of<component_changed<C>>(entity)) {
+			info.pending_events_registry.remove<component_changed<C>>(entity);
+		} else if(info.pending_events_registry.all_of<component_added<C>>(entity)) {
+			info.pending_events_registry.remove<component_added<C>>(entity);
+		}
+		if constexpr(!std::is_empty_v<C>) {
+			// Store current value of component for the before_remove event later
+			info.pending_events_registry.emplace_or_replace<C>(
+				entity,
+				info.registry.get<C>(entity)
+			);
+		}
+
+		info.registry.remove<C>(entity);
+		info.pending_events_registry.emplace<component_removed<C>>(entity);
 	}
 
 	void remove
