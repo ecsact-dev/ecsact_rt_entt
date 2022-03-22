@@ -50,8 +50,7 @@ struct ecsact_system_execution_context {
 
 #ifndef NDEBUG
 		{
-			const bool already_has_component =
-				info.pending_events_registry.all_of<C>(entity);
+			const bool already_has_component = info.registry.all_of<C>(entity);
 			if(already_has_component) {
 				std::string err_msg = "Cannot call ctx.add() multiple times. ";
 				err_msg += "Added component: ";

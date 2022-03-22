@@ -611,10 +611,10 @@ namespace ecsact::entt {
 				(is_component<E>() && ...)
 			)
 		[[nodiscard]] auto view
-			( ::entt::exclude_t<E...> = {}
+			( ::entt::exclude_t<E...> e = {}
 			) const
 		{
-			return _registry.template view<C..., E...>();
+			return _registry.template view<C..., E...>(e);
 		}
 
 		/**
@@ -626,10 +626,10 @@ namespace ecsact::entt {
 				(is_component<E>() && ...)
 			) const
 		[[nodiscard]] auto view
-			( ::entt::exclude_t<E...> = {}
+			( ::entt::exclude_t<E...> e = {}
 			)
 		{
-			return _registry.template view<C..., E...>();
+			return _registry.template view<C..., E...>(e);
 		}
 
 		// TODO(zaucy): runtime_view

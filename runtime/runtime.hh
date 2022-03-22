@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <optional>
 #include <mutex>
+#include <tuple>
 #include <boost/mp11.hpp>
 #include <ecsact/runtime.hh>
 #include <ecsact/runtime/common.h>
@@ -120,6 +121,24 @@ namespace ecsact::entt {
 			, void*
 			>;
 
+		/**
+		 * Checks if type T is listd as one of the actions in the ecact package.
+		 * @returns `true` if T is a component belonging to `package`, `false` 
+		 *          otherwise.
+		 */
+		template<typename T>
+		static constexpr bool is_action() {
+			using boost::mp11::mp_bind_front;
+			using boost::mp11::mp_transform_q;
+			using boost::mp11::mp_any;
+			using boost::mp11::mp_apply;
+
+			return mp_apply<mp_any, mp_transform_q<
+				mp_bind_front<std::is_same, std::remove_cvref_t<T>>,
+				typename Package::actions
+			>>::value;
+		}
+
 		struct registry_info {
 			std::optional<std::reference_wrapper<std::mutex>> mutex;
 			strict_registry<Package> registry;
@@ -144,6 +163,18 @@ namespace ecsact::entt {
 			update_any_comp_cbs_t update_any_component_callbacks;
 			before_remove_any_comp_cbs_t before_remove_any_component_callbacks;
 			after_remove_any_comp_cbs_t after_remove_any_component_callbacks;
+			
+			using actions_tuple_t = boost::mp11::mp_assign
+				< std::tuple<>
+				, typename Package::actions
+				>;
+
+			using actions_t = boost::mp11::mp_transform
+				< std::vector
+				, actions_tuple_t
+				>;
+			
+			actions_t actions;
 
 			struct create_new_entity_result {
 				typename strict_registry<Package>::entity_type entt_entity_id;
@@ -177,6 +208,7 @@ namespace ecsact::entt {
 						static_cast<int>(new_entity_id) + 1
 					);
 				}
+				last_entity_id = new_entity_id;
 				return {
 					.entt_entity_id = _create_entity(new_entity_id),
 					.ecsact_entity_id = new_entity_id,
@@ -959,7 +991,8 @@ namespace ecsact::entt {
 			, const ActionT&         action
 			)
 		{
-			
+			auto& info = _registries.at(reg_id);
+			std::get<std::vector<ActionT>>(info.actions).push_back(action);
 		}
 
 		void push_action
@@ -990,6 +1023,7 @@ namespace ecsact::entt {
 		void _execute_system_trivial_removes_only
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
+			, const void*                       action
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -1003,6 +1037,7 @@ namespace ecsact::entt {
 		void _execute_system_trivial_default
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
+			, const void*                       action
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -1017,7 +1052,7 @@ namespace ecsact::entt {
 					.info = info,
 					.entity = entity,
 					.parent = parent,
-					.action = nullptr,
+					.action = action,
 				};
 
 				mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
@@ -1033,6 +1068,7 @@ namespace ecsact::entt {
 		void _execute_system_trivial
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
+			, const void*                       action
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -1054,12 +1090,14 @@ namespace ecsact::entt {
 			if constexpr(is_removes_only) {
 				_execute_system_trivial_removes_only<SystemT, ChildSystemsListT>(
 					info,
-					parent
+					parent,
+					action
 				);
 			} else {
 				_execute_system_trivial_default<SystemT, ChildSystemsListT>(
 					info,
-					parent
+					parent,
+					action
 				);
 			}
 		}
@@ -1138,6 +1176,7 @@ namespace ecsact::entt {
 		void _execute_system_user
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
+			, const void*                       action
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -1154,7 +1193,7 @@ namespace ecsact::entt {
 					.info = info,
 					.entity = entity,
 					.parent = parent,
-					.action = nullptr,
+					.action = action,
 				};
 
 				_begin_writable_change_check<SystemT>(info, entity, view);
@@ -1186,10 +1225,36 @@ namespace ecsact::entt {
 			, ecsact_system_execution_context*  parent
 			)
 		{
-			if constexpr(SystemT::has_trivial_impl) {
-				_execute_system_trivial<SystemT, ChildSystemsListT>(info, parent);
+			if constexpr(is_action<SystemT>()) {
+				for(const auto& action : std::get<std::vector<SystemT>>(info.actions)) {
+					if constexpr(SystemT::has_trivial_impl) {
+						_execute_system_trivial<SystemT, ChildSystemsListT>(
+							info,
+							parent,
+							&action
+						);
+					} else {
+						_execute_system_user<SystemT, ChildSystemsListT>(
+							info,
+							parent,
+							&action
+						);
+					}
+				}
 			} else {
-				_execute_system_user<SystemT, ChildSystemsListT>(info, parent);
+				if constexpr(SystemT::has_trivial_impl) {
+					_execute_system_trivial<SystemT, ChildSystemsListT>(
+						info,
+						parent,
+						nullptr
+					);
+				} else {
+					_execute_system_user<SystemT, ChildSystemsListT>(
+						info,
+						parent,
+						nullptr
+					);
+				}
 			}
 		}
 
