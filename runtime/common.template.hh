@@ -42,11 +42,7 @@ struct ecsact_system_execution_context {
 	{
 		using ecsact::entt::component_added;
 		using ecsact::entt::component_removed;
-
-		if(info.pending_events_registry.all_of<component_removed<C>>(entity)) {
-			info.pending_events_registry.remove<component_removed<C>>(entity);
-			info.pending_events_registry.remove<C>(entity);
-		}
+		using namespace ::entt::literals;
 
 #ifndef NDEBUG
 		{
@@ -66,7 +62,13 @@ struct ecsact_system_execution_context {
 			info.registry.emplace<C>(entity, component);
 		}
 
-		info.pending_events_registry.emplace<component_added<C>>(entity);
+		if constexpr(!C::transient) {
+			if(info.registry.all_of<component_removed<C>>(entity)) {
+				info.registry.remove<component_removed<C>>(entity);
+			} else {
+				info.registry.emplace<component_added<C>>(entity);
+			}
+		}
 	}
 
 	void add
@@ -88,6 +90,7 @@ struct ecsact_system_execution_context {
 		using ecsact::entt::component_removed;
 		using ecsact::entt::component_added;
 		using ecsact::entt::component_changed;
+		using namespace ::entt::literals;
 
 #ifndef NDEBUG
 		{
@@ -101,21 +104,29 @@ struct ecsact_system_execution_context {
 		}
 #endif
 
-		if(info.pending_events_registry.all_of<component_changed<C>>(entity)) {
-			info.pending_events_registry.remove<component_changed<C>>(entity);
-		} else if(info.pending_events_registry.all_of<component_added<C>>(entity)) {
-			info.pending_events_registry.remove<component_added<C>>(entity);
-		}
-		if constexpr(!std::is_empty_v<C>) {
-			// Store current value of component for the before_remove event later
-			info.pending_events_registry.emplace_or_replace<C>(
-				entity,
-				info.registry.get<C>(entity)
-			);
+		if constexpr(!C::transient) {
+			if(info.registry.all_of<component_changed<C>>(entity)) {
+				info.registry.remove<component_changed<C>>(entity);
+			} else if(info.registry.all_of<component_added<C>>(entity)) {
+				info.registry.remove<component_added<C>>(entity);
+			}
+			if constexpr(!std::is_empty_v<C>) {
+				auto& temp_storage = info.registry.storage<C>("temp"_hs);
+				
+				// Store current value of component for the before_remove event later
+				if(temp_storage.contains(entity)) {
+					temp_storage.get(entity) = info.registry.get<C>(entity);
+				} else {
+					temp_storage.emplace(entity, info.registry.get<C>(entity));
+				}
+			}
 		}
 
 		info.registry.remove<C>(entity);
-		info.pending_events_registry.emplace<component_removed<C>>(entity);
+
+		if constexpr(!C::transient) {
+			info.registry.emplace<component_removed<C>>(entity);
+		}
 	}
 
 	void remove
@@ -197,7 +208,7 @@ struct ecsact_system_execution_context {
 						);
 					}
 
-					info.pending_events_registry.emplace<component_added<C>>(entity);
+					info.registry.emplace<component_added<C>>(entity);
 				}
 			});
 		}

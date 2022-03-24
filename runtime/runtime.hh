@@ -12,8 +12,8 @@
 #include <ecsact/runtime.hh>
 #include <ecsact/runtime/common.h>
 #include <ecsact/runtime/core.h>
-#include <ecsact/entt/strict_registry.hh>
 #include <ecsact/lib.hh>
+#include <entt/entt.hpp>
 
 #include "runtime-util/runtime-util.hh"
 
@@ -61,10 +61,8 @@ namespace ecsact::entt {
 		friend struct ::ecsact_system_execution_context;
 		using entity_id_map_t = std::unordered_map
 			< ::ecsact::entity_id
-			, typename strict_registry<Package>::entity_type
+			, typename ::entt::registry::entity_type
 			>;
-		using entt_registry_type =
-			typename strict_registry<Package>::entt_registry_type;
 
 		using add_component_callback_set_t = ::ecsact::runtime_util::callback_set
 			< ecsact_add_component_callback
@@ -141,11 +139,7 @@ namespace ecsact::entt {
 
 		struct registry_info {
 			std::optional<std::reference_wrapper<std::mutex>> mutex;
-			strict_registry<Package> registry;
-			// This registry stores component event details needed to execute events
-			// at the end of system execution. The entity IDs in this registry are 1:1
-			// with the `this->registry`.
-			entt_registry_type pending_events_registry;
+			::entt::registry registry;
 			entity_id_map_t entities_map;
 			/**
 			 * Index of this vector is a statically casted EnTT ID
@@ -177,7 +171,7 @@ namespace ecsact::entt {
 			actions_t actions;
 
 			struct create_new_entity_result {
-				typename strict_registry<Package>::entity_type entt_entity_id;
+				typename ::entt::registry::entity_type entt_entity_id;
 				::ecsact::entity_id ecsact_entity_id;
 			};
 
@@ -187,11 +181,6 @@ namespace ecsact::entt {
 				)
 			{
 				auto new_entt_entity_id = registry.create();
-				[[maybe_unused]]
-				auto pending_entt_entity_id = pending_events_registry.create(
-					new_entt_entity_id
-				);
-				assert(pending_entt_entity_id == new_entt_entity_id);
 				entities_map[ecsact_entity_id] = new_entt_entity_id;
 				_ecsact_entity_ids.resize(static_cast<size_t>(new_entt_entity_id) + 1);
 				_ecsact_entity_ids[_ecsact_entity_ids.size() - 1] = ecsact_entity_id;
@@ -229,7 +218,7 @@ namespace ecsact::entt {
 				return _create_entity();
 			}
 
-			typename strict_registry<Package>::entity_type entt_entity_id
+			typename ::entt::registry::entity_type entt_entity_id
 				( ::ecsact::entity_id ecsact_entity_id
 				) const
 			{
@@ -237,7 +226,7 @@ namespace ecsact::entt {
 			}
 
 			::ecsact::entity_id ecsact_entity_id
-				( typename strict_registry<Package>::entity_type entt_entity_id
+				( typename ::entt::registry::entity_type entt_entity_id
 				) const
 			{
 				return _ecsact_entity_ids.at(static_cast<size_t>(entt_entity_id));
@@ -298,15 +287,16 @@ namespace ecsact::entt {
 		void _invoke_before_remove_callbacks
 			( registry_info&                                  info
 			, ::ecsact::entity_id                             entity_id
-			, typename strict_registry<Package>::entity_type  entt_entity_id
+			, typename ::entt::registry::entity_type  entt_entity_id
 			, auto&&                                          component_source
 			)
 		{
 			if(info.before_remove_component_callbacks.contains(ComponentT::id)) {
 				if constexpr(std::is_empty_v<ComponentT>) {
+					ComponentT c{};
 					info.before_remove_component_callbacks.at(ComponentT::id)(
 						static_cast<ecsact_entity_id>(entity_id),
-						nullptr
+						&c
 					);
 				} else {
 					auto& component = component_source.get<ComponentT>(entt_entity_id);
@@ -319,10 +309,11 @@ namespace ecsact::entt {
 
 			if(!info.before_remove_any_component_callbacks.empty()) {
 				if constexpr(std::is_empty_v<ComponentT>) {
+					ComponentT c{};
 					info.before_remove_any_component_callbacks(
 						static_cast<ecsact_entity_id>(entity_id),
 						static_cast<ecsact_component_id>(ComponentT::id),
-						nullptr
+						&c
 					);
 				} else {
 					auto& component = component_source.get<ComponentT>(entt_entity_id);
@@ -338,7 +329,7 @@ namespace ecsact::entt {
 		template<typename ComponentT>
 		void _invoke_before_remove_callbacks
 			( registry_info&                                  info
-			, typename strict_registry<Package>::entity_type  entt_entity_id
+			, typename ::entt::registry::entity_type  entt_entity_id
 			, auto&&                                          component_source
 			)
 		{
@@ -385,7 +376,7 @@ namespace ecsact::entt {
 		}
 
 	public:
-		using registry_type = strict_registry<Package>;
+		using registry_type = ::entt::registry;
 		using entt_entity_type = typename registry_type::entity_type;
 		using package = Package;
 
@@ -410,15 +401,19 @@ namespace ecsact::entt {
 			);
 
 			registry_info& info = itr->second;
-			auto& events_registry = info.pending_events_registry;
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
-				static_cast<void>(events_registry.storage<C>());
-				static_cast<void>(events_registry.storage<component_added<C>>());
-				if constexpr(!std::is_empty_v<C>) {
-					static_cast<void>(events_registry.storage<component_changed<C>>());
+				using namespace ::entt::literals;
+				static_cast<void>(info.registry.storage<C>());
+
+				if constexpr(!C::transient) {
+					static_cast<void>(info.registry.storage<C>("temp"_hs));
+					static_cast<void>(info.registry.storage<component_added<C>>());
+					if constexpr(!std::is_empty_v<C>) {
+						static_cast<void>(info.registry.storage<component_changed<C>>());
+					}
+					static_cast<void>(info.registry.storage<component_removed<C>>());
 				}
-				static_cast<void>(events_registry.storage<component_removed<C>>());
 			});
 
 			return reg_id;
@@ -451,6 +446,7 @@ namespace ecsact::entt {
 			}
 
 			info.registry.clear();
+			info.entities_map.clear();
 
 			for(auto& fn : after_remove_fns) {
 				fn(info);
@@ -673,7 +669,10 @@ namespace ecsact::entt {
 			const void* component_data = nullptr;
 			mp_for_each<typename package::components>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
-					if constexpr(!std::is_empty_v<C>) {
+					if constexpr(std::is_empty_v<C>) {
+						static C c{};
+						component_data = &c;
+					} else {
 						component_data = &(get_component<C>(reg_id, entity_id));
 					}
 				}
@@ -1112,26 +1111,30 @@ namespace ecsact::entt {
 			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
+				using namespace ::entt::literals;
+
 				if constexpr(std::is_empty_v<C>) return;
+				if constexpr(C::transient) return;
 
-				const bool has_comp_changed =
-					info.pending_events_registry.all_of<component_changed<C>>(entity);
+				const bool already_has_event = info.registry.any_of<
+					component_added<C>,
+					component_changed<C>,
+					component_removed<C>
+				>(entity);
 				
-				// If our component has already been marked as changed we do not need
-				// to process it.
-				if(has_comp_changed) return;
+				// If our component already has some event we do not need to check for
+				// changes.
+				if(already_has_event) return;
 
-				const bool is_new_comp =
-					info.pending_events_registry.all_of<component_added<C>>(entity);
-
-				// If our component is new (added during this invocation) then we do not
-				// ned to process it. The add event will trigger instead of the update.
-				if(is_new_comp) return;
-
+				auto& temp_storage = info.registry.storage<C>("temp"_hs);
 				// When a writable component has not been marked as changed we store
 				// it's value in our pending registry to be checked after executing
 				// the system to see if the value has changed.
-				info.pending_events_registry.emplace<C>(entity, view.get<C>(entity));
+				if(temp_storage.contains(entity)) {
+					temp_storage.get(entity) = view.get<C>(entity);
+				} else {
+					temp_storage.emplace(entity, view.get<C>(entity));
+				}
 			});
 		}
 
@@ -1145,30 +1148,33 @@ namespace ecsact::entt {
 			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
+				using namespace ::entt::literals;
+
 				if constexpr(std::is_empty_v<C>) return;
+				if constexpr(C::transient) return;
 
-				const bool has_comp_changed =
-					info.pending_events_registry.all_of<component_changed<C>>(entity);
+				const bool already_has_event = info.registry.any_of<
+					component_added<C>,
+					component_changed<C>,
+					component_removed<C>
+				>(entity);
 				
-				// If our component has already been marked as changed we do not need
-				// to process it.
-				if(has_comp_changed) return;
+				// If our component already has some event we do not need to check for
+				// changes.
+				if(already_has_event) return;
 
-				const bool is_new_comp =
-					info.pending_events_registry.all_of<component_added<C>>(entity);
+				auto& temp_storage = info.registry.storage<C>("temp"_hs);
 
-				// If our component is new (added during this invocation) then we do not
-				// ned to process it. The add event will trigger instead of the update.
-				if(is_new_comp) return;
+				if(temp_storage.contains(entity)) {
+					const C& prev_value = temp_storage.get(entity);
+					const C& curr_value = view.get<C>(entity);
 
-				const C& prev_value = info.pending_events_registry.get<C>(entity);
-				const C& curr_value = view.get<C>(entity);
+					if(prev_value != curr_value) {
+						info.registry.emplace<component_changed<C>>(entity);
+					}
 
-				if(prev_value != curr_value) {
-					info.pending_events_registry.emplace<component_changed<C>>(entity);
+					temp_storage.remove(entity);
 				}
-
-				info.pending_events_registry.remove<C>(entity);
 			});
 		}
 
@@ -1298,9 +1304,17 @@ namespace ecsact::entt {
 			);
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
+				using namespace ::entt::literals;
+
+				// Transients require no processing, just clear.
+				if constexpr(C::transient) {
+					info.registry.clear<C>();
+					return;
+				}
+
 				::entt::basic_view added_view{
 					info.registry.storage<C>(),
-					info.pending_events_registry.storage<component_added<C>>(),
+					info.registry.storage<component_added<C>>(),
 				};
 				
 				for(entt_entity_type entity : added_view) {
@@ -1315,12 +1329,12 @@ namespace ecsact::entt {
 					}
 				}
 				
-				info.pending_events_registry.clear<component_added<C>>();
+				info.registry.clear<component_added<C>>();
 
 				if constexpr(!std::is_empty_v<C>) {
 					::entt::basic_view changed_view{
 						info.registry.storage<C>(),
-						info.pending_events_registry.storage<component_changed<C>>(),
+						info.registry.storage<component_changed<C>>(),
 					};
 
 					for(entt_entity_type entity : changed_view) {
@@ -1331,21 +1345,21 @@ namespace ecsact::entt {
 						);
 					}
 
-					info.pending_events_registry.clear<component_changed<C>>();
+					info.registry.clear<component_changed<C>>();
 				}
 
 				::entt::basic_view before_removed_view{
-					info.pending_events_registry.storage<C>(),
-					info.pending_events_registry.storage<component_removed<C>>(),
+					info.registry.storage<C>("temp"_hs),
+					info.registry.storage<component_removed<C>>(),
 				};
 
 				for(entt_entity_type entity : before_removed_view) {
 					_invoke_before_remove_callbacks<C>(info, entity, before_removed_view);
-					info.pending_events_registry.remove<C>(entity);
+					info.registry.storage<C>("temp"_hs).remove(entity);
 				}
 
 				::entt::basic_view after_removed_view{
-					info.pending_events_registry.storage<component_removed<C>>(),
+					info.registry.storage<component_removed<C>>(),
 				};
 
 				for(entt_entity_type entity : after_removed_view) {
@@ -1355,7 +1369,7 @@ namespace ecsact::entt {
 					);
 				}
 
-				info.pending_events_registry.clear<component_removed<C>>();
+				info.registry.clear<component_removed<C>>();
 			});
 
 			info.mutex = std::nullopt;
