@@ -8,6 +8,7 @@
 #include <optional>
 #include <mutex>
 #include <tuple>
+#include <cstdio>
 #include <boost/mp11.hpp>
 #include <ecsact/runtime.hh>
 #include <ecsact/runtime/common.h>
@@ -17,32 +18,21 @@
 
 #include "runtime-util/runtime-util.hh"
 
-namespace ecsact::entt::detail {
-	template<typename Key, typename Value>
-	class biidmap_value {
-	public:
-		using key_type = Key;
-		using value_type = Value;
-	};
+namespace ecsact::entt::details {
+	template<typename C> requires(std::is_empty_v<C>)
+	struct temp_storage { };
 
-	/**
-	 * Bi-directional ID map (bidi). Used for storing EnTT and Ecsact IDs while
-	 * being able to do reverse lookups.
-	 */
-	template<typename T1, typename T2>
-	class biidmap {
-	public:
+	template<typename C> requires(!std::is_empty_v<C>)
+	struct temp_storage { C value; };
 
-	};
+	template<typename C> requires(std::is_empty_v<C>)
+	struct beforechange_storage { };
+
+	template<typename C> requires(!std::is_empty_v<C>)
+	struct beforechange_storage { C value; };
 }
 
 namespace ecsact::entt {
-
-	/**
-	 * Marker to indicate that a component has changed
-	 */
-	template<typename Component>
-	struct component_changed {};
 
 	/**
 	 * Marker to indicate that a component has been added
@@ -409,11 +399,13 @@ namespace ecsact::entt {
 				if constexpr(!C::transient) {
 					static_cast<void>(info.registry.storage<C>("temp"_hs));
 					static_cast<void>(info.registry.storage<component_added<C>>());
-					if constexpr(!std::is_empty_v<C>) {
-						static_cast<void>(info.registry.storage<component_changed<C>>());
-					}
 					static_cast<void>(info.registry.storage<component_removed<C>>());
 				}
+			});
+
+			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
+				using namespace ::entt::literals;
+				static_cast<void>(info.registry.storage<C>("beforechange"_hs));
 			});
 
 			return reg_id;
@@ -1101,83 +1093,6 @@ namespace ecsact::entt {
 			}
 		}
 
-		template<typename SystemT>
-		void _begin_writable_change_check
-			( registry_info&    info
-			, entt_entity_type  entity
-			, auto&&            view
-			)
-		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
-				using namespace ::entt::literals;
-
-				if constexpr(std::is_empty_v<C>) return;
-				if constexpr(C::transient) return;
-
-				const bool already_has_event = info.registry.any_of<
-					component_added<C>,
-					component_changed<C>,
-					component_removed<C>
-				>(entity);
-				
-				// If our component already has some event we do not need to check for
-				// changes.
-				if(already_has_event) return;
-
-				auto& temp_storage = info.registry.storage<C>("temp"_hs);
-				// When a writable component has not been marked as changed we store
-				// it's value in our pending registry to be checked after executing
-				// the system to see if the value has changed.
-				if(temp_storage.contains(entity)) {
-					temp_storage.get(entity) = view.get<C>(entity);
-				} else {
-					temp_storage.emplace(entity, view.get<C>(entity));
-				}
-			});
-		}
-
-		template<typename SystemT>
-		void _end_writable_change_check
-			( registry_info&    info
-			, entt_entity_type  entity
-			, auto&&            view
-			)
-		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
-				using namespace ::entt::literals;
-
-				if constexpr(std::is_empty_v<C>) return;
-				if constexpr(C::transient) return;
-
-				const bool already_has_event = info.registry.any_of<
-					component_added<C>,
-					component_changed<C>,
-					component_removed<C>
-				>(entity);
-				
-				// If our component already has some event we do not need to check for
-				// changes.
-				if(already_has_event) return;
-
-				auto& temp_storage = info.registry.storage<C>("temp"_hs);
-
-				if(temp_storage.contains(entity)) {
-					const C& prev_value = temp_storage.get(entity);
-					const C& curr_value = view.get<C>(entity);
-
-					if(prev_value != curr_value) {
-						info.registry.emplace<component_changed<C>>(entity);
-					}
-
-					temp_storage.remove(entity);
-				}
-			});
-		}
-
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user
 			( registry_info&                    info
@@ -1202,14 +1117,10 @@ namespace ecsact::entt {
 					.action = action,
 				};
 
-				_begin_writable_change_check<SystemT>(info, entity, view);
-
 				// Execute the user defined system implementation
 				SystemT::dynamic_impl(
 					reinterpret_cast<ecsact::detail::system_execution_context*>(&ctx)
 				);
-
-				_end_writable_change_check<SystemT>(info, entity, view);
 
 				mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
 					using boost::mp11::mp_first;
@@ -1232,6 +1143,7 @@ namespace ecsact::entt {
 			)
 		{
 			if constexpr(is_action<SystemT>()) {
+				auto& actions = std::get<std::vector<SystemT>>(info.actions);
 				for(const auto& action : std::get<std::vector<SystemT>>(info.actions)) {
 					if constexpr(SystemT::has_trivial_impl) {
 						_execute_system_trivial<SystemT, ChildSystemsListT>(
@@ -1247,6 +1159,7 @@ namespace ecsact::entt {
 						);
 					}
 				}
+				actions.clear();
 			} else {
 				if constexpr(SystemT::has_trivial_impl) {
 					_execute_system_trivial<SystemT, ChildSystemsListT>(
@@ -1264,19 +1177,28 @@ namespace ecsact::entt {
 			}
 		}
 
-	public:
-		void execute_systems
-			( ::ecsact::registry_id reg_id
+		void _clear_transients
+			( registry_info& info
 			)
 		{
 			using boost::mp11::mp_for_each;
 
-			std::mutex mutex;
-			auto& info = _registries.at(reg_id);
-			info.mutex = std::ref(mutex);
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				// Transients require no processing, just clear.
+				if constexpr(C::transient) {
+					info.registry.clear<C>();
+				}
+			});
+		}
+
+		void _sort_components
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
-				if constexpr(!std::is_empty_v<C>) {
+				if constexpr(!std::is_empty_v<C> && !C::transient) {
 					// Sorting for deterministic order of components when executing
 					// systems.
 					// TODO(zaucy): This sort is only necessary for components part of a 
@@ -1286,31 +1208,16 @@ namespace ecsact::entt {
 					});
 				}
 			});
+		}
 
-			mp_for_each<typename package::execution_order>(
-				[&]<typename SystemList>(SystemList) {
-					mp_for_each<SystemList>([&]<typename SystemPair>(SystemPair) {
-						using boost::mp11::mp_first;
-						using boost::mp11::mp_second;
-
-						using SystemT = mp_first<SystemPair>;
-						using ChildSystemsListT = mp_second<SystemPair>;
-						_execute_system<SystemT, ChildSystemsListT>(
-							info,
-							nullptr
-						);
-					});
-				}
-			);
+		void _trigger_add_component_events
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				using namespace ::entt::literals;
-
-				// Transients require no processing, just clear.
-				if constexpr(C::transient) {
-					info.registry.clear<C>();
-					return;
-				}
 
 				::entt::basic_view added_view{
 					info.registry.storage<C>(),
@@ -1330,23 +1237,72 @@ namespace ecsact::entt {
 				}
 				
 				info.registry.clear<component_added<C>>();
+			});
+		}
 
-				if constexpr(!std::is_empty_v<C>) {
-					::entt::basic_view changed_view{
-						info.registry.storage<C>(),
-						info.registry.storage<component_changed<C>>(),
-					};
+		void _begin_component_change_checks
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
 
-					for(entt_entity_type entity : changed_view) {
-						_invoke_update_callbacks<C>(
+			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
+				using namespace ::entt::literals;
+
+				for(auto&& [entity, c] : info.registry.view<C>().each()) {
+					std::fprintf(
+						stderr,
+						"begin system_writables C=%s Entity=%i\n",
+						typeid(C).name(),
+						entity
+					);
+					info.registry.storage<C>("beforechange"_hs).emplace(entity, c);
+				}
+			});
+		}
+
+		void _end_component_change_checks
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
+				using namespace ::entt::literals;
+
+				::entt::basic_view view{
+					info.registry.storage<C>("beforechange"_hs),
+					info.registry.storage<C>()
+				};
+				
+				for(auto&& [entity, before, after] : view.each()) {
+					std::fprintf(
+						stderr,
+						"end system_writables C=%s Entity=%i\n",
+						typeid(C).name(),
+						entity
+					);
+					if(before != after) {
+						_invoke_update_callbacks(
 							info,
 							info.ecsact_entity_id(entity),
-							changed_view.get<C>(entity)
+							after
 						);
 					}
-
-					info.registry.clear<component_changed<C>>();
 				}
+
+				info.registry.storage<C>("beforechange"_hs).clear();
+			});
+		}
+
+		void _trigger_remove_component_events
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				using namespace ::entt::literals;
 
 				::entt::basic_view before_removed_view{
 					info.registry.storage<C>("temp"_hs),
@@ -1371,6 +1327,49 @@ namespace ecsact::entt {
 
 				info.registry.clear<component_removed<C>>();
 			});
+		}
+
+		void _execute_systems
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename package::execution_order>(
+				[&]<typename SystemList>(SystemList) {
+					mp_for_each<SystemList>([&]<typename SystemPair>(SystemPair) {
+						using boost::mp11::mp_first;
+						using boost::mp11::mp_second;
+
+						using SystemT = mp_first<SystemPair>;
+						using ChildSystemsListT = mp_second<SystemPair>;
+						_execute_system<SystemT, ChildSystemsListT>(
+							info,
+							nullptr
+						);
+					});
+				}
+			);
+		}
+
+	public:
+		void execute_systems
+			( ::ecsact::registry_id reg_id
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			std::mutex mutex;
+			auto& info = _registries.at(reg_id);
+			info.mutex = std::ref(mutex);
+
+			_sort_components(info);
+			_begin_component_change_checks(info);
+			_execute_systems(info);
+			_clear_transients(info);
+			_trigger_add_component_events(info);
+			_end_component_change_checks(info);
+			_trigger_remove_component_events(info);
 
 			info.mutex = std::nullopt;
 		}

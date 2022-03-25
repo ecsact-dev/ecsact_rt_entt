@@ -89,7 +89,6 @@ struct ecsact_system_execution_context {
 	void remove() {
 		using ecsact::entt::component_removed;
 		using ecsact::entt::component_added;
-		using ecsact::entt::component_changed;
 		using namespace ::entt::literals;
 
 #ifndef NDEBUG
@@ -105,9 +104,7 @@ struct ecsact_system_execution_context {
 #endif
 
 		if constexpr(!C::transient) {
-			if(info.registry.all_of<component_changed<C>>(entity)) {
-				info.registry.remove<component_changed<C>>(entity);
-			} else if(info.registry.all_of<component_added<C>>(entity)) {
+			if(info.registry.all_of<component_added<C>>(entity)) {
 				info.registry.remove<component_added<C>>(entity);
 			}
 			if constexpr(!std::is_empty_v<C>) {
