@@ -46,11 +46,7 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], **kwargs):
     ]
 
     _cc_srcs = [
-        "@ecsact_entt//runtime:runtime.hh",
-        "@ecsact_entt//runtime:runtime.template.cc",
-        "@ecsact_entt//runtime:common.template.hh",
-        "@ecsact_entt//runtime:dynamic.template.cc",
-        "@ecsact_entt//runtime:core.template.cc",
+        "@ecsact_entt//runtime:sources",
         ":%s__public_hdrs" % name,
         ":%s__private_srcs" % name,
     ]

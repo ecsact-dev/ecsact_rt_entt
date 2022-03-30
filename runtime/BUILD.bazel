@@ -1,12 +1,22 @@
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
+_srcs = [
     "common.template.hh",
     "core.template.cc",
     "dynamic.template.cc",
     "runtime.template.cc",
+    "system_execution_context.hh",
+    "registry_info.hh",
+    "event_markers.hh",
     "runtime.hh",
-])
+]
+
+exports_files(_srcs)
+
+filegroup(
+    name = "sources",
+    srcs = _srcs,
+)
 
 # load("@rules_cc//cc:defs.bzl", "cc_library")
 
