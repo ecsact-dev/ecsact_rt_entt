@@ -160,232 +160,25 @@ void ecsact_remove_component
 	);
 }
 
-void ecsact_on_add_component
-	( ecsact_registry_id             reg_id
-	, ecsact_component_id            component_id
-	, ecsact_add_component_callback  callback
-	, void*                          callback_user_data
-	)
-{
-	runtime.on_add_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback,
-		callback_user_data
-	);
-}
-
-void ecsact_off_add_component
-	( ecsact_registry_id             reg_id
-	, ecsact_component_id            component_id
-	, ecsact_add_component_callback  callback
-	)
-{
-	runtime.off_add_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback
-	);
-}
-
-void ecsact_on_update_component
-	( ecsact_registry_id                reg_id
-	, ecsact_component_id               component_id
-	, ecsact_update_component_callback  callback
-	, void*                             callback_user_data
-	)
-{
-	runtime.on_update_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback,
-		callback_user_data
-	);
-}
-
-void ecsact_off_update_component
-	( ecsact_registry_id                reg_id
-	, ecsact_component_id               component_id
-	, ecsact_update_component_callback  callback
-	)
-{
-	runtime.off_update_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback
-	);
-}
-
-void ecsact_on_before_remove_component
-	( ecsact_registry_id                       reg_id
-	, ecsact_component_id                      component_id
-	, ecsact_before_remove_component_callback  callback
-	, void*                                    callback_user_data
-	)
-{
-	runtime.on_before_remove_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback,
-		callback_user_data
-	);
-}
-
-void ecsact_off_before_remove_component
-	( ecsact_registry_id                       reg_id
-	, ecsact_component_id                      component_id
-	, ecsact_before_remove_component_callback  callback
-	)
-{
-	runtime.off_before_remove_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback
-	);
-}
-
-void ecsact_on_after_remove_component
-	( ecsact_registry_id                      reg_id
-	, ecsact_component_id                     component_id
-	, ecsact_after_remove_component_callback  callback
-	, void*                                   callback_user_data
-	)
-{
-	runtime.on_after_remove_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback,
-		callback_user_data
-	);
-}
-
-void ecsact_off_after_remove_component
-	( ecsact_registry_id                      reg_id
-	, ecsact_component_id                     component_id
-	, ecsact_after_remove_component_callback  callback
-	)
-{
-	runtime.off_after_remove_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::component_id>(component_id),
-		callback
-	);
-}
-
-void ecsact_on_add_any_component
-	( ecsact_registry_id                 reg_id
-	, ecsact_add_any_component_callback  callback
-	, void*                              callback_user_data
-	)
-{
-	runtime.on_add_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback,
-		callback_user_data
-	);
-}
-
-void ecsact_off_add_any_component
-	( ecsact_registry_id                 reg_id
-	, ecsact_add_any_component_callback  callback
-	)
-{
-	runtime.off_add_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback
-	);
-}
-
-void ecsact_on_update_any_component
-	( ecsact_registry_id                    reg_id
-	, ecsact_update_any_component_callback  callback
-	, void*                                 callback_user_data
-	)
-{
-	runtime.on_update_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback,
-		callback_user_data
-	);	
-}
-
-void ecsact_off_update_any_component
-	( ecsact_registry_id                    reg_id
-	, ecsact_update_any_component_callback  callback
-	)
-{
-	runtime.off_update_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback
-	);
-}
-
-void ecsact_on_before_remove_any_component
-	( ecsact_registry_id                           reg_id
-	, ecsact_before_remove_any_component_callback  callback
-	, void*                                        callback_user_data
-	)
-{
-	runtime.on_before_remove_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback,
-		callback_user_data
-	);	
-}
-
-void ecsact_off_before_remove_any_component
-	( ecsact_registry_id                           reg_id
-	, ecsact_before_remove_any_component_callback  callback
-	)
-{
-	runtime.off_before_remove_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback
-	);
-}
-
-void ecsact_on_after_remove_any_component
-	( ecsact_registry_id                          reg_id
-	, ecsact_after_remove_any_component_callback  callback
-	, void*                                       callback_user_data
-	)
-{
-	runtime.on_after_remove_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback,
-		callback_user_data
-	);
-}
-
-void ecsact_off_after_remove_any_component
-	( ecsact_registry_id                          reg_id
-	, ecsact_after_remove_any_component_callback  callback
-	)
-{
-	runtime.off_after_remove_any_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		callback
-	);
-}
-
-void ecsact_push_action
-	( ecsact_registry_id  reg_id
-	, ecsact_system_id    system_id
-	, const void*         action_data
-	)
-{
-	runtime.push_action(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::action_id>(system_id),
-		action_data
-	);
-}
-
 void ecsact_execute_systems
-	( ecsact_registry_id  reg_id
+	( ecsact_registry_id                        registry_id
+	, int                                       execution_count
+	, const ecsact_execution_options*           execution_options_list
+	, const ecsact_execution_events_collector*  c_events_collector
 	)
 {
+	using ecsact_entt_rt::execution_events_collector;
+
+	std::optional<execution_events_collector> events_collector_opt = {};
+	if(c_events_collector != nullptr) {
+		auto& events_collector = events_collector_opt.emplace();
+		events_collector.target = c_events_collector;
+	}
+
 	runtime.execute_systems(
-		static_cast<ecsact::registry_id>(reg_id)
+		static_cast<ecsact::registry_id>(registry_id),
+		execution_count,
+		execution_options_list,
+		events_collector_opt
 	);
 }

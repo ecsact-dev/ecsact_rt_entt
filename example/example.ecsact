@@ -1,0 +1,11 @@
+main package entt_example;
+
+component ComponentA {
+  int32 a;
+}
+
+component ComponentB {
+  decimal32 b;
+}
+
+component TagComponent {}

@@ -13,63 +13,8 @@
 namespace ecsact_entt_rt {
 	using entity_id_map_t = std::unordered_map
 		< ::ecsact::entity_id
-		, typename ::entt::registry::entity_type
+		, entt::entity
 		>;
-	using add_component_callback_set_t = ::ecsact::runtime_util::callback_set
-		< ecsact_add_component_callback
-		, void*
-		>;
-	using add_component_callbacks_t = std::unordered_map
-		< ::ecsact::component_id
-		, add_component_callback_set_t
-		>;
-
-	using update_component_callback_set_t = ::ecsact::runtime_util::callback_set
-		< ecsact_update_component_callback
-		, void*
-		>;
-	using update_component_callbacks_t = std::unordered_map
-		< ::ecsact::component_id
-		, update_component_callback_set_t
-		>;
-
-	using before_remove_component_callback_set_t =
-		::ecsact::runtime_util::callback_set
-			< ecsact_before_remove_component_callback
-			, void*
-			>;
-	using before_remove_component_callbacks_t = std::unordered_map
-		< ::ecsact::component_id
-		, before_remove_component_callback_set_t
-		>;
-
-	using after_remove_component_callback_set_t =
-		::ecsact::runtime_util::callback_set
-			< ecsact_after_remove_component_callback
-			, void*
-			>;
-	using after_remove_component_callbacks_t = std::unordered_map
-		< ::ecsact::component_id
-		, after_remove_component_callback_set_t
-		>;
-
-	using add_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
-		< ecsact_add_any_component_callback
-		, void*
-		>;
-	using update_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
-		< ecsact_update_any_component_callback
-		, void*
-		>;
-	using before_remove_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
-		< ecsact_before_remove_any_component_callback
-		, void*
-		>;
-	using after_remove_any_comp_cbs_t = ::ecsact::runtime_util::callback_set
-		< ecsact_after_remove_any_component_callback
-		, void*
-		>;
-
 
 	template<typename Package>
 	struct registry_info {
@@ -82,16 +27,6 @@ namespace ecsact_entt_rt {
 		std::vector<::ecsact::entity_id> _ecsact_entity_ids;
 
 		::ecsact::entity_id last_entity_id{};
-
-		add_component_callbacks_t add_component_callbacks;
-		update_component_callbacks_t update_component_callbacks;
-		before_remove_component_callbacks_t before_remove_component_callbacks;
-		after_remove_component_callbacks_t after_remove_component_callbacks;
-
-		add_any_comp_cbs_t add_any_component_callbacks;
-		update_any_comp_cbs_t update_any_component_callbacks;
-		before_remove_any_comp_cbs_t before_remove_any_component_callbacks;
-		after_remove_any_comp_cbs_t after_remove_any_component_callbacks;
 		
 		using actions_tuple_t = boost::mp11::mp_assign
 			< std::tuple<>
@@ -106,7 +41,7 @@ namespace ecsact_entt_rt {
 		actions_t actions;
 
 		struct create_new_entity_result {
-			typename ::entt::registry::entity_type entt_entity_id;
+			entt::entity entt_entity_id;
 			::ecsact::entity_id ecsact_entity_id;
 		};
 
@@ -153,7 +88,7 @@ namespace ecsact_entt_rt {
 			return _create_entity();
 		}
 
-		typename ::entt::registry::entity_type entt_entity_id
+		entt::entity entt_entity_id
 			( ::ecsact::entity_id ecsact_entity_id
 			) const
 		{
@@ -161,7 +96,7 @@ namespace ecsact_entt_rt {
 		}
 
 		::ecsact::entity_id ecsact_entity_id
-			( typename ::entt::registry::entity_type entt_entity_id
+			( entt::entity entt_entity_id
 			) const
 		{
 			return _ecsact_entity_ids.at(static_cast<size_t>(entt_entity_id));

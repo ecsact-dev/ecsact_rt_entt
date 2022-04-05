@@ -6,6 +6,7 @@ _srcs = [
     "dynamic.template.cc",
     "runtime.template.cc",
     "system_execution_context.hh",
+    "execution_events_collector.hh",
     "registry_info.hh",
     "event_markers.hh",
     "runtime.hh",

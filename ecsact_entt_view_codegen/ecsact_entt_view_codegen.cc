@@ -15,11 +15,17 @@ void ecsact::ecsact_entt_view_codegen
 		<< "// GENERATED FILE - DO NOT EDIT\n"
 		<< "#pragma once\n\n";
 
+	std::filesystem::path cpp_hdr_path = package.source_file_path;
+	cpp_hdr_path = cpp_hdr_path.replace_extension(".ecsact.hh");
+	std::filesystem::path cpp_systems_hdr_path = package.source_file_path;
+	cpp_systems_hdr_path =
+		cpp_systems_hdr_path.replace_extension(".ecsact.systems.hh");
+
 	options.out_stream
 		<< "#include <type_traits>\n"
 		<< "#include <entt/entt.hpp>\n"
-		<< "#include \"" << package.name << ".hh\"\n"
-		<< "#include \"" << package.name << ".systems.hh\"\n"
+		<< "#include \"" << cpp_hdr_path.generic_string() << "\"\n"
+		<< "#include \"" << cpp_systems_hdr_path.generic_string() << "\"\n"
 		<< "\n";
 
 	options.out_stream

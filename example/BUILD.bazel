@@ -1,0 +1,12 @@
+load("//runtime:index.bzl", "ecsact_entt_runtime")
+
+ecsact_entt_runtime(
+    name = "runtime",
+    visibility = ["//visibility:public"],
+    main = "example.ecsact",
+    srcs = ["example.ecsact"],
+    ECSACT_ENTT_VIEW_HEADER = "example/example.ecsact.entt_view.hh",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "example/example.ecsact.meta.hh",
+    ECSACT_ENTT_RUNTIME_PACKAGE = "::entt_example::package",
+    deps = [],
+)
