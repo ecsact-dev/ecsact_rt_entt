@@ -437,6 +437,49 @@ namespace ecsact::entt {
 		}
 
 	private:
+
+		template<typename SystemT>
+		void _apply_pending_adds
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
+			using ecsact::entt::detail::pending_add;
+
+			mp_for_each<typename SystemT::adds>([&]<typename C>(C) {
+				auto view = info.registry.view<pending_add<C>>();
+				if constexpr(std::is_empty_v<C>) {
+					view.each([&](auto entity) {
+						info.registry.emplace<C>(entity);
+					});
+				} else {
+					view.each([&](auto entity, auto& component) {
+						info.registry.emplace<C>(entity, component.value);
+					});
+				}
+
+				info.registry.clear<pending_add<C>>();
+			});
+		}
+
+		template<typename SystemT>
+		void _apply_pending_removes
+			( registry_info& info
+			)
+		{
+			using boost::mp11::mp_for_each;
+			using ecsact::entt::detail::pending_remove;
+
+			mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
+				auto view = info.registry.view<pending_remove<C>>();
+				view.each([&](auto entity) {
+					info.registry.remove<C>(entity);
+				});
+
+				info.registry.clear<pending_remove<C>>();
+			});
+		}
+
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_trivial_removes_only
 			( registry_info&                    info
@@ -452,13 +495,51 @@ namespace ecsact::entt {
 		}
 
 		template<typename SystemT, typename ChildSystemsListT>
+		void _execute_system_trivial_default_itr
+			( registry_info&                    info
+			, entt_entity_type                  entity
+			, ecsact_system_execution_context*  parent
+			, const void*                       action
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			system_execution_context ctx{
+				.info = info,
+				.entity = entity,
+				.parent = parent,
+				.action = action,
+			};
+
+			mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
+				ctx.remove<C>();
+			});
+			mp_for_each<typename SystemT::adds>([&]<typename C>(C) {
+				ctx.add<C>(C{});
+			});
+
+			mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
+				using boost::mp11::mp_first;
+				using boost::mp11::mp_second;
+				using ChildSystemT = mp_first<SystemPair>;
+				using GrandChildSystemsListT = mp_second<SystemPair>;
+
+				_execute_system<ChildSystemT, GrandChildSystemsListT>(
+					info,
+					ctx.cptr()
+				);
+			});
+		}
+
+		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_trivial_default
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
 			, const void*                       action
 			)
 		{
-			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_empty;
+			using std::execution::par_unseq;
 			using std::execution::seq;
 
 #ifndef NDEBUG
@@ -470,33 +551,25 @@ namespace ecsact::entt {
 				info.registry
 			);
 
-			std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
-				system_execution_context ctx{
-					.info = info,
-					.entity = entity,
-					.parent = parent,
-					.action = action,
-				};
-
-				mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
-					ctx.remove<C>();
-				});
-				mp_for_each<typename SystemT::adds>([&]<typename C>(C) {
-					ctx.add<C>(C{});
-				});
-
-				mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
-					using boost::mp11::mp_first;
-					using boost::mp11::mp_second;
-					using ChildSystemT = mp_first<SystemPair>;
-					using GrandChildSystemsListT = mp_second<SystemPair>;
-
-					_execute_system<ChildSystemT, GrandChildSystemsListT>(
+			if constexpr(mp_empty<ChildSystemsListT>::value) {
+				std::for_each(par_unseq, view.begin(), view.end(), [&](auto entity) {
+					_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
 						info,
-						ctx.cptr()
+						entity,
+						parent,
+						action
 					);
 				});
-			});
+			} else {
+				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
+					_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
+						info,
+						entity,
+						parent,
+						action
+					);
+				});
+			}
 		}
 
 		template<typename SystemT, typename ChildSystemsListT>
@@ -580,12 +653,53 @@ namespace ecsact::entt {
 				auto& before = ctx.info.registry.get<beforechange_storage<C>>(
 					ctx.entity
 				);
-				auto& after = ctx.info.registry.get<C>(ctx.entity);
+				auto& after = component_source.get<C>(ctx.entity);
 
 				if(before.value != after) {
 					ctx.info.registry.emplace<component_changed<C>>(ctx.entity);
 				}
 				ctx.info.registry.remove<beforechange_storage<C>>(ctx.entity);
+			});
+		}
+
+		template<typename SystemT, typename ChildSystemsListT>
+		void _execute_system_user_itr
+			( registry_info&                    info
+			, entt_entity_type                  entity
+			, ecsact_system_execution_context*  parent
+			, const void*                       action
+			, auto&                             view
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			const auto system_name = typeid(SystemT).name();
+
+			system_execution_context ctx{
+				.info = info,
+				.entity = entity,
+				.parent = parent,
+				.action = action,
+				.writables{},
+			};
+
+			_prepare_check_component_changes<SystemT>(ctx);
+
+			// Execute the user defined system implementation
+			SystemT::dynamic_impl(ctx.cpp_ptr());
+
+			_check_component_changes<SystemT>(ctx, view);
+
+			mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
+				using boost::mp11::mp_first;
+				using boost::mp11::mp_second;
+				using ChildSystemT = mp_first<SystemPair>;
+				using GrandChildSystemsListT = mp_second<SystemPair>;
+
+				_execute_system<ChildSystemT, GrandChildSystemsListT>(
+					info,
+					ctx.cptr()
+				);
 			});
 		}
 
@@ -596,8 +710,9 @@ namespace ecsact::entt {
 			, const void*                       action
 			)
 		{
-			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_empty;
 			using std::execution::seq;
+			using std::execution::par_unseq;
 
 			static_assert(!SystemT::has_trivial_impl);
 
@@ -606,39 +721,27 @@ namespace ecsact::entt {
 				info.registry
 			);
 
-			std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
-				using boost::mp11::mp_empty;
-				using boost::mp11::mp_size;
-
-				const auto system_name = typeid(SystemT).name();
-
-				system_execution_context ctx{
-					.info = info,
-					.entity = entity,
-					.parent = parent,
-					.action = action,
-					.writables{},
-				};
-
-				_prepare_check_component_changes<SystemT>(ctx);
-
-				// Execute the user defined system implementation
-				SystemT::dynamic_impl(ctx.cpp_ptr());
-
-				_check_component_changes<SystemT>(ctx, view);
-
-				mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
-					using boost::mp11::mp_first;
-					using boost::mp11::mp_second;
-					using ChildSystemT = mp_first<SystemPair>;
-					using GrandChildSystemsListT = mp_second<SystemPair>;
-
-					_execute_system<ChildSystemT, GrandChildSystemsListT>(
+			if constexpr(mp_empty<ChildSystemsListT>::value) {
+				std::for_each(par_unseq, view.begin(), view.end(), [&](auto entity) {
+					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
-						ctx.cptr()
+						entity,
+						parent,
+						action,
+						view
 					);
 				});
-			});
+			} else {
+				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
+					_execute_system_user_itr<SystemT, ChildSystemsListT>(
+						info,
+						entity,
+						parent,
+						action,
+						view
+					);
+				});
+			}
 		}
 
 		template<typename SystemT, typename ChildSystemsListT>
@@ -680,6 +783,9 @@ namespace ecsact::entt {
 					);
 				}
 			}
+
+			_apply_pending_adds<SystemT>(info);
+			_apply_pending_removes<SystemT>(info);
 		}
 
 		void _clear_transients
@@ -1022,7 +1128,7 @@ namespace ecsact::entt {
 				if(execution_options_list != nullptr) {
 					_apply_execution_options(execution_options_list[n], info);
 				}
-				_sort_components(info);
+				// _sort_components(info);
 				_execute_systems(info);
 				_clear_transients(info);
 			}

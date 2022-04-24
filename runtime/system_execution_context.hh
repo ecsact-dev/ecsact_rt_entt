@@ -60,23 +60,25 @@ namespace ecsact_entt_rt {
 		{
 			using ecsact::entt::component_added;
 			using ecsact::entt::component_removed;
+			using ecsact::entt::detail::pending_add;
 			using namespace std::string_literals;
 
-	#ifndef NDEBUG
+#ifndef NDEBUG
 			{
-				const bool already_has_component = info.registry.all_of<C>(entity);
+				const bool already_has_component =
+					info.registry.all_of<pending_add<C>>(entity);
 				if(already_has_component) {
 					std::string err_msg = "Cannot call ctx.add() multiple times. ";
 					err_msg += "Added component: "s + typeid(C).name();
 					throw std::runtime_error(err_msg.c_str());
 				}
 			}
-	#endif
+#endif
 
 			if constexpr(std::is_empty_v<C>) {
-				info.registry.emplace<C>(entity);
+				info.registry.emplace<pending_add<C>>(entity);
 			} else {
-				info.registry.emplace<C>(entity, component);
+				info.registry.emplace<pending_add<C>>(entity, component);
 			}
 
 			if constexpr(!C::transient) {
@@ -107,8 +109,9 @@ namespace ecsact_entt_rt {
 			using ecsact::entt::component_removed;
 			using ecsact::entt::component_added;
 			using ecsact::entt::detail::temp_storage;
+			using ecsact::entt::detail::pending_remove;
 
-	#ifndef NDEBUG
+#ifndef NDEBUG
 			[[maybe_unused]] auto component_name = typeid(C).name();
 
 			{
@@ -120,7 +123,7 @@ namespace ecsact_entt_rt {
 					throw std::runtime_error(err_msg.c_str());
 				}
 			}
-	#endif
+#endif
 
 			if constexpr(!C::transient) {
 				if(info.registry.all_of<component_added<C>>(entity)) {
@@ -138,7 +141,7 @@ namespace ecsact_entt_rt {
 				}
 			}
 
-			info.registry.remove<C>(entity);
+			info.registry.emplace<pending_remove<C>>(entity);
 
 			if constexpr(!C::transient) {
 				info.registry.emplace<component_removed<C>>(entity);

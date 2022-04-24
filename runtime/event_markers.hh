@@ -40,4 +40,16 @@ namespace ecsact::entt::detail {
 
 	template<typename C> requires(!std::is_empty_v<C>)
 	struct beforechange_storage<C> { C value; };
+
+	template<typename C>
+	struct pending_add;
+
+	template<typename C> requires(std::is_empty_v<C>)
+	struct pending_add<C> {};
+
+	template<typename C> requires(!std::is_empty_v<C>)
+	struct pending_add<C> { C value; };
+
+	template<typename C>
+	struct pending_remove {};
 }
