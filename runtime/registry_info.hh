@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #include <optional>
 #include <utility>
 #include <mutex>
@@ -10,6 +11,8 @@
 
 #include "runtime-util/runtime-util.hh"
 
+#include "event_markers.hh"
+
 namespace ecsact_entt_rt {
 	using entity_id_map_t = std::unordered_map
 		< ::ecsact::entity_id
@@ -18,32 +21,75 @@ namespace ecsact_entt_rt {
 
 	template<typename Package>
 	struct registry_info {
+		using package = Package;
+
 		std::optional<std::reference_wrapper<std::mutex>> mutex;
 		::entt::registry registry;
 		entity_id_map_t entities_map;
+
 		/**
 		 * Index of this vector is a statically casted EnTT ID
 		 */
 		std::vector<::ecsact::entity_id> _ecsact_entity_ids;
 
 		::ecsact::entity_id last_entity_id{};
-		
-		using actions_tuple_t = boost::mp11::mp_assign
-			< std::tuple<>
-			, typename Package::actions
-			>;
-
-		using actions_t = boost::mp11::mp_transform
-			< std::vector
-			, actions_tuple_t
-			>;
-		
-		actions_t actions;
 
 		struct create_new_entity_result {
 			entt::entity entt_entity_id;
 			::ecsact::entity_id ecsact_entity_id;
 		};
+
+		template<typename C> requires(std::is_empty_v<C>)
+		void add_component
+			( ::entt::entity entity
+			)
+		{
+			registry.emplace<C>(entity);
+		}
+
+		template<typename C, typename... Args> requires(!std::is_empty_v<C>)
+		void add_component
+			( ::entt::entity  entity
+			, Args&&...       args
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			registry.emplace<C>(entity, std::forward<Args>(args)...);
+
+			mp_for_each<typename package::system_writables>([&]<typename O>(O) {
+				if constexpr(C::transient) return;
+				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
+					using ecsact::entt::detail::beforechange_storage;
+					beforechange_storage<O> beforechange = {
+						.value{std::forward<Args>(args)...},
+						.set = false,
+					};
+					registry.emplace<beforechange_storage<O>>(
+						entity,
+						std::move(beforechange)
+					);
+				}
+			});
+		}
+
+		template<typename C>
+		void remove_component
+			( ::entt::entity  entity
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			registry.erase<C>(entity);
+
+			mp_for_each<typename package::system_writables>([&]<typename O>(O) {
+				if constexpr(C::transient) return;
+				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
+					using ecsact::entt::detail::beforechange_storage;
+					registry.erase<beforechange_storage<O>>(entity);
+				}
+			});
+		}
 
 		/** @internal */
 		inline auto _create_entity

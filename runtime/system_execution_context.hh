@@ -161,7 +161,7 @@ namespace ecsact_entt_rt {
 			});
 		}
 
-		template<typename C>
+		template<typename C> requires(!std::is_empty_v<C>)
 		C& get() {
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
@@ -169,12 +169,10 @@ namespace ecsact_entt_rt {
 			C& comp = info.registry.get<C>(entity);
 
 			if(writables.contains(C::id)) {
-				const bool should_store_beforechange = !info.registry.any_of<
-					component_changed<C>,
-					beforechange_storage<C>
-				>(entity);
-				if(should_store_beforechange) {
-					info.registry.emplace<beforechange_storage<C>>(entity, comp);
+				auto& beforechange = info.registry.get<beforechange_storage<C>>(entity);
+				if(!beforechange.set) {
+					beforechange.value = comp;
+					beforechange.set = true;
 				}
 			}
 
@@ -226,6 +224,7 @@ namespace ecsact_entt_rt {
 		{
 			using boost::mp11::mp_for_each;
 			using ecsact::entt::component_added;
+			using ecsact::entt::detail::pending_add;
 
 			auto new_entity = info.create_entity().entt_entity_id;
 			for(int i=0; component_count > i; ++i) {
@@ -234,15 +233,15 @@ namespace ecsact_entt_rt {
 				mp_for_each<typename package::components>([&]<typename C>(const C&) {
 					if(C::id == component_id) {
 						if constexpr(std::is_empty_v<C>) {
-							info.registry.emplace<C>(new_entity);
+							info.registry.emplace<pending_add<C>>(new_entity);
 						} else {
-							info.registry.emplace<C>(
+							info.registry.emplace<pending_add<C>>(
 								new_entity,
 								*static_cast<const C*>(component_data)
 							);
 						}
 
-						info.registry.emplace<component_added<C>>(entity);
+						info.registry.emplace<component_added<C>>(new_entity);
 					}
 				});
 			}
