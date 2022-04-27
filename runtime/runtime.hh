@@ -414,9 +414,34 @@ namespace ecsact::entt {
 			)
 		{
 			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_unique;
+			using boost::mp11::mp_flatten;
+			using boost::mp11::mp_push_back;
 			using ecsact::entt::detail::pending_add;
 
-			mp_for_each<typename SystemT::adds>([&]<typename C>(C) {
+			// using flattened_generates = typename SystmT::generates
+
+			using addables = mp_unique<mp_flatten<mp_push_back<
+				typename SystemT::generates,
+				typename SystemT::adds
+			>>>;
+
+			mp_for_each<addables>([&]<typename C>(C) {
+				using boost::mp11::mp_apply;
+				using boost::mp11::mp_bind_front;
+				using boost::mp11::mp_transform_q;
+				using boost::mp11::mp_any;
+
+				// Making sure all the components in `addables` list are indeed package
+				// components. If this assertion fails there was an error in creating
+				// the `addables` alias.
+				static_assert(
+					mp_apply<mp_any, mp_transform_q<
+						mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
+						typename Package::components
+					>>::value
+				);
+
 				auto view = info.registry.view<pending_add<C>>();
 				if constexpr(std::is_empty_v<C>) {
 					view.each([&](auto entity) {
@@ -612,6 +637,8 @@ namespace ecsact::entt {
 				ctx.writables.reserve(mp_size<typename SystemT::writables>::value);
 
 				mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
+					if constexpr(C::transient) return;
+
 					if(!ctx.info.registry.all_of<component_changed<C>>(ctx.entity)) {
 						ctx.writables.emplace(C::id);
 					}
