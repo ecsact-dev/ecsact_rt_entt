@@ -23,6 +23,7 @@
 #include "execution_events_collector.hh"
 #include "registry_info.hh"
 #include "event_markers.hh"
+#include "system_entt_view.hh"
 
 namespace ecsact::entt {
 	template<::ecsact::package Package>
@@ -58,8 +59,9 @@ namespace ecsact::entt {
 		registries_map_t _registries;
 
 	public:
+		template<typename SystemT>
 		using system_execution_context =
-			ecsact_entt_rt::system_execution_context<Package>;
+			ecsact_entt_rt::system_execution_context<Package, SystemT>;
 		using execution_events_collector =
 			ecsact_entt_rt::execution_events_collector;
 		using registry_type = ::entt::registry;
@@ -407,7 +409,6 @@ namespace ecsact::entt {
 		}
 
 	private:
-
 		template<typename SystemT>
 		void _apply_pending_adds
 			( registry_info& info
@@ -493,6 +494,7 @@ namespace ecsact::entt {
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_trivial_default_itr
 			( registry_info&                    info
+			, system_view_type<SystemT>&        view
 			, entt_entity_type                  entity
 			, ecsact_system_execution_context*  parent
 			, const void*                       action
@@ -501,12 +503,7 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
-			system_execution_context ctx{
-				.info = info,
-				.entity = entity,
-				.parent = parent,
-				.action = action,
-			};
+			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
 
 			mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
 				ctx.remove<C>();
@@ -545,10 +542,7 @@ namespace ecsact::entt {
 			[[maybe_unused]] auto system_name = typeid(SystemT).name();
 #endif
 
-			auto view = ecsact_entt_view(
-				std::type_identity<SystemT>{},
-				info.registry
-			);
+			auto view = system_view<SystemT>(info.registry);
 
 			constexpr bool can_exec_parallel =
 				mp_empty<ChildSystemsListT>::value &&
@@ -561,6 +555,7 @@ namespace ecsact::entt {
 				std::for_each(par_unseq, view.begin(), view.end(), [&](auto entity) {
 					_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
 						info,
+						view,
 						entity,
 						parent,
 						action,
@@ -571,6 +566,7 @@ namespace ecsact::entt {
 				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
 					_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
 						info,
+						view,
 						entity,
 						parent,
 						action,
@@ -624,67 +620,13 @@ namespace ecsact::entt {
 			}
 		}
 
-		template<typename SystemT>
-		void _prepare_check_component_changes
-			( system_execution_context&  ctx
-			)
-		{
-			using boost::mp11::mp_empty;
-			using boost::mp11::mp_size;
-			using boost::mp11::mp_for_each;
-
-			if constexpr(!mp_empty<typename SystemT::writables>::value) {
-				ctx.writables.reserve(mp_size<typename SystemT::writables>::value);
-
-				mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
-					if constexpr(C::transient) return;
-
-					if(!ctx.info.registry.all_of<component_changed<C>>(ctx.entity)) {
-						ctx.writables.emplace(C::id);
-					}
-				});
-			}
-		}
-
-		template<typename SystemT>
-		void _check_component_changes
-			( system_execution_context&  ctx
-			, auto&                      component_source
-			)
-		{
-			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename SystemT::writables>([&]<typename C>(C) {
-				using ecsact::entt::detail::beforechange_storage;
-				if(!ctx.writables.contains(C::id)) return;
-				if(!ctx.info.registry.all_of<beforechange_storage<C>>(ctx.entity)) {
-					return;
-				}
-
-				const auto component_name = typeid(C).name();
-
-				auto& before = ctx.info.registry.get<beforechange_storage<C>>(
-					ctx.entity
-				);
-
-				if(before.set) {
-					auto& after = component_source.get<C>(ctx.entity);
-
-					if(before.value != after) {
-						ctx.info.registry.emplace<component_changed<C>>(ctx.entity);
-					}
-					before.set = false;
-				}
-			});
-		}
-
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user_itr
 			( registry_info&                    info
+			, system_view_type<SystemT>&        view
 			, entt_entity_type                  entity
 			, ecsact_system_execution_context*  parent
 			, const void*                       action
-			, auto&                             view
 			, const actions_span_t&             actions
 			)
 		{
@@ -692,20 +634,12 @@ namespace ecsact::entt {
 
 			const auto system_name = typeid(SystemT).name();
 
-			system_execution_context ctx{
-				.info = info,
-				.entity = entity,
-				.parent = parent,
-				.action = action,
-				.writables{},
-			};
-
-			_prepare_check_component_changes<SystemT>(ctx);
+			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
 
 			// Execute the user defined system implementation
 			SystemT::dynamic_impl(ctx.cpp_ptr());
 
-			_check_component_changes<SystemT>(ctx, view);
+			// _check_component_changes<SystemT>(ctx, view);
 
 			mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
 				using boost::mp11::mp_first;
@@ -735,10 +669,7 @@ namespace ecsact::entt {
 
 			static_assert(!SystemT::has_trivial_impl);
 
-			auto view = ecsact_entt_view(
-				std::type_identity<SystemT>{},
-				info.registry
-			);
+			auto view = system_view<SystemT>(info.registry);
 
 			constexpr bool can_exec_parallel =
 				mp_empty<ChildSystemsListT>::value &&
@@ -750,10 +681,10 @@ namespace ecsact::entt {
 				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
 					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
+						view,
 						entity,
 						parent,
 						action,
-						view,
 						actions
 					);
 				});
@@ -761,10 +692,10 @@ namespace ecsact::entt {
 				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
 					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
+						view,
 						entity,
 						parent,
 						action,
-						view,
 						actions
 					);
 				});
@@ -911,6 +842,7 @@ namespace ecsact::entt {
 								current
 							);
 						}
+						before.set = false;
 					}
 				}
 			});

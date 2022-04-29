@@ -5,9 +5,9 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "com_github_skypjack_entt",
-    strip_prefix = "entt-3.9.0",
-    url = "https://github.com/skypjack/entt/archive/refs/tags/v3.9.0.tar.gz",
-    sha256 = "1b06f1f6627c3702486855877bdeab6885f5d821d3dd78862126d4308c627c23",
+    strip_prefix = "entt-3.10.1",
+    url = "https://github.com/skypjack/entt/archive/refs/tags/v3.10.1.tar.gz",
+    sha256 = "",
 )
 
 http_archive(

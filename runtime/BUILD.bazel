@@ -10,6 +10,7 @@ _srcs = [
     "registry_info.hh",
     "event_markers.hh",
     "runtime.hh",
+    "system_entt_view.hh",
 ]
 
 exports_files(_srcs)

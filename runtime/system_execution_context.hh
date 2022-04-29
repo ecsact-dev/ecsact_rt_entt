@@ -9,48 +9,88 @@
 
 #include "registry_info.hh"
 #include "event_markers.hh"
+#include "system_entt_view.hh"
 
 namespace ecsact_entt_rt {
-	template<typename Package>
-	struct system_execution_context {
+	struct system_execution_context_base;
+}
+
+struct ecsact_system_execution_context {
+	ecsact::system_id system_id;
+	// System execution context implementation. To be casted to specific derived
+	// templated type. See `system_execution_context<Package, System>`
+	ecsact_entt_rt::system_execution_context_base* impl;
+};
+
+namespace ecsact_entt_rt {
+
+	struct system_execution_context_base {
 		using cptr_t = struct ::ecsact_system_execution_context*;
 		using const_cptr_t = const struct ::ecsact_system_execution_context*;
 		using cpp_ptr_t = ecsact::detail::system_execution_context*;
 		using const_cpp_ptr_t = ecsact::detail::system_execution_context*;
 
-		using package = Package;
-		ecsact_entt_rt::registry_info<Package>& info;
 		::entt::entity entity;
 		const cptr_t parent;
 		const void* action;
-		std::unordered_set<::ecsact::component_id> writables;
+	};
+
+	template<typename Package, typename SystemT>
+	struct system_execution_context : system_execution_context_base {
+		using system_execution_context_base::cptr_t;
+		using system_execution_context_base::const_cptr_t;
+		using system_execution_context_base::cpp_ptr_t;
+		using system_execution_context_base::const_cpp_ptr_t;
+
+		using package = Package;
+		using view_type = ecsact::entt::system_view_type<SystemT>;
+		ecsact_entt_rt::registry_info<Package>& info;
+		view_type& view;
+
+		/** @internal */
+		ecsact_system_execution_context _c_ctx;
+
+		system_execution_context
+			( ecsact_entt_rt::registry_info<Package>&  info
+			, view_type&                               view
+			, ::entt::entity                           entity
+			, const cptr_t                             parent
+			, const void*                              action
+			)
+			: system_execution_context_base{entity, parent, action}
+			, view(view)
+			, info(info)
+		{
+			_c_ctx.system_id = static_cast<::ecsact::system_id>(SystemT::id);
+			_c_ctx.impl = this;
+		}
 
 		/**
 		 * Pointer for ecsact C system execution
 		 */
 		inline cptr_t cptr() noexcept {
-			return reinterpret_cast<cptr_t>(this);
+			return reinterpret_cast<cptr_t>(&_c_ctx);
 		}
 
 		/**
 		 * Pointer for ecsact C system execution
 		 */
 		inline const_cptr_t cptr() const noexcept {
-			return reinterpret_cast<const_cptr_t>(this);
+			return reinterpret_cast<const_cptr_t>(&_c_ctx);
 		}
 
 		/**
 		 * Pointer for ecsact C++ system execution
 		 */
 		inline cpp_ptr_t cpp_ptr() noexcept {
-			return reinterpret_cast<cpp_ptr_t>(this);
+			return reinterpret_cast<cpp_ptr_t>(cptr());
 		}
 
 		/**
 		 * Pointer for ecsact C++ system execution
 		 */
 		inline const_cpp_ptr_t cpp_ptr() const noexcept {
-			return reinterpret_cast<const_cpp_ptr_t>(this);
+			return reinterpret_cast<const_cpp_ptr_t>(cptr());
 		}
 
 		template<typename C>
@@ -163,16 +203,27 @@ namespace ecsact_entt_rt {
 
 		template<typename C> requires(!std::is_empty_v<C>)
 		C& get() {
+			using boost::mp11::mp_apply;
+			using boost::mp11::mp_bind_front;
+			using boost::mp11::mp_transform_q;
+			using boost::mp11::mp_any;
+
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
 
-			C& comp = info.registry.get<C>(entity);
+			C& comp = view.get<C>(entity);
+			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
+				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
+				typename SystemT::writables
+			>>::value;
 
-			if(writables.contains(C::id)) {
-				auto& beforechange = info.registry.get<beforechange_storage<C>>(entity);
+			if constexpr(is_writable) {
+				auto& beforechange = view.get<beforechange_storage<C>>(entity);
 				if(!beforechange.set) {
 					beforechange.value = comp;
 					beforechange.set = true;
+
+					info.registry.emplace_or_replace<component_changed<C>>(entity);
 				}
 			}
 
@@ -184,9 +235,16 @@ namespace ecsact_entt_rt {
 			)
 		{
 			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_unique;
+			using boost::mp11::mp_push_back;
+			using boost::mp11::mp_flatten;
 
 			void* component = nullptr;
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
+			using gettable_components = mp_unique<mp_flatten<mp_push_back<
+				typename SystemT::writables,
+				typename SystemT::readables
+			>>>;
+			mp_for_each<gettable_components>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
 					if constexpr(!std::is_empty_v<C>) {
 						component = &(get<C>());
