@@ -967,9 +967,11 @@ namespace ecsact::entt {
 		void _pre_exec_update_component
 			( registry_info&    info
 			, entt_entity_type  entity
-			, const C&          component
+			, const C&          updated_component
 			)
 		{
+			using detail::beforechange_storage;
+
 #ifndef NDEBUG
 			if(!info.registry.all_of<C>(entity)) {
 				using namespace std::string_literals;
@@ -979,14 +981,21 @@ namespace ecsact::entt {
 			}
 #endif
 
-			// No change. Do nothing.
-			if(info.registry.get<C>(entity) == component) return;
-
-			info.registry.get<C>(entity) = component;
-			if(!info.registry.all_of<component_added<C>>(entity)) {
-				if(!info.registry.all_of<component_changed<C>>(entity)) {
-					info.registry.emplace<component_changed<C>>(entity);
+			C& component = info.registry.get<C>(entity);
+			if(info.registry.all_of<beforechange_storage<C>>(entity)) {
+				auto& before = info.registry.get<beforechange_storage<C>>(entity);
+				if(!before.set) {
+					before.value = component;
+					before.set = true;
 				}
+			} else {
+				info.registry.emplace<beforechange_storage<C>>(entity, component, true);
+			}
+
+			component = updated_component;
+
+			if(!info.registry.all_of<component_added<C>>(entity)) {
+				info.registry.emplace_or_replace<component_changed<C>>(entity);
 			}
 		}
 
