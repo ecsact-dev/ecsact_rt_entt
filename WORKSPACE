@@ -1,6 +1,14 @@
 workspace(name = "ecsact_entt")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "ecsact",
+    remote = "git@github.com:seaube/ecsact.git",
+    commit = "5289c04775fd7c2ae2df0bdcb933b49772603f4f",
+    # shallow_since = "1645942766 -0800",
+)
 
 http_archive(
     name = "com_github_skypjack_entt",
