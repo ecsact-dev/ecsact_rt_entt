@@ -19,16 +19,3 @@ filegroup(
     name = "sources",
     srcs = _srcs,
 )
-
-# load("@rules_cc//cc:defs.bzl", "cc_library")
-
-# cc_library(
-#     name = "runtime",
-#     visibility = ["//visibility:public"],
-#     include_prefix = "ecsact/entt",
-#     hdrs = ["runtime.hh"],
-#     srcs = [
-#         "common.template.hh",
-#         "core.template.cc",
-#     ],
-# )
