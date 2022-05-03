@@ -89,29 +89,7 @@ namespace ecsact::entt {
 			);
 
 			registry_info& info = itr->second;
-
-			mp_for_each<typename package::components>([&]<typename C>(C) {
-				info.registry.storage<C>();
-			});
-
-			mp_for_each<typename package::system_addables>([&]<typename C>(C) {
-				info.registry.storage<component_added<C>>();
-			});
-
-			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
-				using detail::beforechange_storage;
-
-				info.registry.storage<beforechange_storage<C>>();
-				info.registry.storage<component_changed<C>>();
-			});
-
-			mp_for_each<typename package::system_removables>([&]<typename C>(C) {
-				using detail::temp_storage;
-
-				info.registry.storage<temp_storage<C>>();
-				info.registry.storage<component_removed<C>>();
-			});
-
+			info.init_registry();
 			return reg_id;
 		}
 
@@ -130,7 +108,8 @@ namespace ecsact::entt {
 
 			auto& info = _registries.at(reg_id);
 
-			info.registry.clear();
+			info.registry = {};
+			info.init_registry();
 			info.entities_map.clear();
 			info._ecsact_entity_ids.clear();
 			info.last_entity_id = {};
@@ -890,6 +869,7 @@ namespace ecsact::entt {
 			mp_for_each<typename package::execution_order>(
 				[&]<typename SystemList>(SystemList) {
 					using boost::mp11::mp_size;
+					using boost::mp11::mp_empty;
 					using boost::mp11::mp_first;
 					using boost::mp11::mp_second;
 					using std::execution::par_unseq;
@@ -904,7 +884,7 @@ namespace ecsact::entt {
 								actions
 							);
 						});
-					} else {
+					} else if constexpr(!mp_empty<SystemList>::value) {
 						using SystemPair = mp_first<SystemList>;
 						using SystemT = mp_first<SystemPair>;
 						using ChildSystemsListT = mp_second<SystemPair>;

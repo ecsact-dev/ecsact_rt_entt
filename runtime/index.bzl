@@ -54,12 +54,13 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_RUN
         "@ecsact//lib/runtime",
         "@ecsact//lib/runtime-cpp",
         "@ecsact//runtime-util",
+        "@ecsact//lib:cc",
         "@com_github_skypjack_entt//:entt",
     ]
 
     cc_library(
         name = name,
-        local_defines = _cc_local_defines + [
+        defines = _cc_local_defines + [
             "ECSACT_CORE_API=",
             "ECSACT_DYNAMIC_API=",
         ],

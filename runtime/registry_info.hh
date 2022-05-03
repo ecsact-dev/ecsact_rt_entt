@@ -4,6 +4,7 @@
 #include <optional>
 #include <utility>
 #include <mutex>
+#include <boost/mp11.hpp>
 #include <entt/entt.hpp>
 #include <ecsact/runtime.hh>
 #include <ecsact/runtime/common.h>
@@ -38,6 +39,33 @@ namespace ecsact_entt_rt {
 			entt::entity entt_entity_id;
 			::ecsact::entity_id ecsact_entity_id;
 		};
+
+		void init_registry() {
+			using boost::mp11::mp_for_each;
+			using ecsact::entt::detail::beforechange_storage;
+			using ecsact::entt::detail::temp_storage;
+			using ecsact::entt::component_added;
+			using ecsact::entt::component_changed;
+			using ecsact::entt::component_removed;
+
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				registry.storage<C>();
+			});
+
+			mp_for_each<typename package::system_addables>([&]<typename C>(C) {
+				registry.storage<component_added<C>>();
+			});
+
+			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
+				registry.storage<beforechange_storage<C>>();
+				registry.storage<component_changed<C>>();
+			});
+
+			mp_for_each<typename package::system_removables>([&]<typename C>(C) {
+				registry.storage<temp_storage<C>>();
+				registry.storage<component_removed<C>>();
+			});
+		}
 
 		template<typename C> requires(std::is_empty_v<C>)
 		void add_component
