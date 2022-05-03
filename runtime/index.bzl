@@ -1,13 +1,12 @@
 load("@ecsact//:index.bzl", "ecsact_codegen")
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
 
-def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_VIEW_HEADER = None, ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
+def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
     ecsact_codegen(
         name = "%s__private_srcs" % name,
         main = main,
         srcs = srcs,
         plugins = {
-            "@ecsact_entt//ecsact_entt_view_codegen": {},
             "@ecsact//generator/cpp_systems/source/static": {},
         },
         **kwargs
@@ -40,7 +39,6 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_VIE
     )
 
     _cc_local_defines = [
-        "ECSACT_ENTT_VIEW_HEADER=\\\"{}\\\"".format(ECSACT_ENTT_VIEW_HEADER),
         "ECSACT_ENTT_RUNTIME_USER_HEADER=\\\"{}\\\"".format(ECSACT_ENTT_RUNTIME_USER_HEADER),
         "ECSACT_ENTT_RUNTIME_PACKAGE={}".format(ECSACT_ENTT_RUNTIME_PACKAGE),
     ]

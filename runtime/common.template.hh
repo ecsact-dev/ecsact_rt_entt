@@ -6,12 +6,6 @@
 #	include ECSACT_ENTT_RUNTIME_USER_HEADER
 #endif
 
-#ifndef ECSACT_ENTT_VIEW_HEADER
-#	error ECSACT_ENTT_VIEW_HEADER must be defined
-#else
-#	include ECSACT_ENTT_VIEW_HEADER
-#endif
-
 #include "runtime.hh"
 
 #ifndef ECSACT_ENTT_RUNTIME_PACKAGE
