@@ -14,33 +14,9 @@ jobs:
     runs-on: [self-hosted, windows]
     steps:
       - uses: actions/checkout@v3
-        with: {lfs: true}
-      - run: bazel run --config=ci //script/prepare_workspace
       - run: bazel build --config=ci -- //...
-  test-windows:
-    runs-on: [self-hosted, windows]
-    needs: build-windows
-    steps:
-      - uses: actions/checkout@v3
-        with: {lfs: true}
-      - run: bazel run --config=ci //script/prepare_workspace
-      - run: bazel test --config=ci -- //...
   build-linux:
     runs-on: [self-hosted, linux]
     steps:
       - uses: actions/checkout@v3
-        with: {lfs: true}
-      - run: bazel run --config=ci //script/prepare_workspace
-      - run: bazel build --config=ci -- //authority/... //node/... //script/...
-  check-unity-warnings:
-    runs-on: [self-hosted, windows]
-    needs: build-windows
-    steps:
-      - uses: actions/checkout@v3
-        with: {lfs: true}
-      - uses: actions/cache@v2
-        with:
-          path: unity/Library
-          key: unity-library
-      - run: bazel run --config=ci //script/prepare_workspace
-      - run: bazel run --config=ci //script:CheckUnityWarnings -- --bootstrap
+      - run: bazel build --config=ci -- //...
