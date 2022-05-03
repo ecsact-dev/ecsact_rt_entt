@@ -106,7 +106,7 @@ namespace ecsact_entt_rt {
 #ifndef NDEBUG
 			{
 				const bool already_has_component =
-					info.registry.all_of<pending_add<C>>(entity);
+					info.registry.template all_of<pending_add<C>>(entity);
 				if(already_has_component) {
 					std::string err_msg = "Cannot call ctx.add() multiple times. ";
 					err_msg += "Added component: "s + typeid(C).name();
@@ -116,16 +116,16 @@ namespace ecsact_entt_rt {
 #endif
 
 			if constexpr(std::is_empty_v<C>) {
-				info.registry.emplace<pending_add<C>>(entity);
+				info.registry.template emplace<pending_add<C>>(entity);
 			} else {
-				info.registry.emplace<pending_add<C>>(entity, component);
+				info.registry.template emplace<pending_add<C>>(entity, component);
 			}
 
 			if constexpr(!C::transient) {
-				if(info.registry.all_of<component_removed<C>>(entity)) {
-					info.registry.remove<component_removed<C>>(entity);
+				if(info.registry.template all_of<component_removed<C>>(entity)) {
+					info.registry.template remove<component_removed<C>>(entity);
 				} else {
-					info.registry.emplace<component_added<C>>(entity);
+					info.registry.template emplace<component_added<C>>(entity);
 				}
 			}
 		}
@@ -155,7 +155,8 @@ namespace ecsact_entt_rt {
 			[[maybe_unused]] auto component_name = typeid(C).name();
 
 			{
-				const bool already_has_component = info.registry.all_of<C>(entity);
+				const bool already_has_component =
+					info.registry.template all_of<C>(entity);
 				if(!already_has_component) {
 					std::string err_msg = "Cannot call ctx.remove() multiple times. ";
 					err_msg += "Removed component: ";
@@ -166,25 +167,25 @@ namespace ecsact_entt_rt {
 #endif
 
 			if constexpr(!C::transient) {
-				if(info.registry.all_of<component_added<C>>(entity)) {
-					info.registry.remove<component_added<C>>(entity);
+				if(info.registry.template all_of<component_added<C>>(entity)) {
+					info.registry.template remove<component_added<C>>(entity);
 				}
 				if constexpr(!std::is_empty_v<C>) {
-					auto& temp = info.registry.storage<temp_storage<C>>();
+					auto& temp = info.registry.template storage<temp_storage<C>>();
 
 					// Store current value of component for the before_remove event later
 					if(temp.contains(entity)) {
-						temp.get(entity).value = info.registry.get<C>(entity);
+						temp.get(entity).value = info.registry.template get<C>(entity);
 					} else {
-						temp.emplace(entity, info.registry.get<C>(entity));
+						temp.emplace(entity, info.registry.template get<C>(entity));
 					}
 				}
 			}
 
-			info.registry.emplace<pending_remove<C>>(entity);
+			info.registry.template emplace<pending_remove<C>>(entity);
 
 			if constexpr(!C::transient) {
-				info.registry.emplace<component_removed<C>>(entity);
+				info.registry.template emplace<component_removed<C>>(entity);
 			}
 		}
 
@@ -211,19 +212,21 @@ namespace ecsact_entt_rt {
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
 
-			C& comp = view.get<C>(entity);
+			C& comp = view.template get<C>(entity);
 			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
 				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
 				typename SystemT::writables
 			>>::value;
 
 			if constexpr(is_writable) {
-				auto& beforechange = view.get<beforechange_storage<C>>(entity);
+				auto& beforechange = view.template get<beforechange_storage<C>>(entity);
 				if(!beforechange.set) {
 					beforechange.value = comp;
 					beforechange.set = true;
 
-					info.registry.emplace_or_replace<component_changed<C>>(entity);
+					info.registry.template emplace_or_replace<component_changed<C>>(
+						entity
+					);
 				}
 			}
 
@@ -256,7 +259,7 @@ namespace ecsact_entt_rt {
 
 		template<typename ComponentT>
 		bool has() {
-			return info.registry.all_of<ComponentT>(entity);
+			return info.registry.template all_of<ComponentT>(entity);
 		}
 
 		bool has
@@ -291,15 +294,15 @@ namespace ecsact_entt_rt {
 				mp_for_each<typename package::components>([&]<typename C>(const C&) {
 					if(C::id == component_id) {
 						if constexpr(std::is_empty_v<C>) {
-							info.registry.emplace<pending_add<C>>(new_entity);
+							info.registry.template emplace<pending_add<C>>(new_entity);
 						} else {
-							info.registry.emplace<pending_add<C>>(
+							info.registry.template emplace<pending_add<C>>(
 								new_entity,
 								*static_cast<const C*>(component_data)
 							);
 						}
 
-						info.registry.emplace<component_added<C>>(new_entity);
+						info.registry.template emplace<component_added<C>>(new_entity);
 					}
 				});
 			}
