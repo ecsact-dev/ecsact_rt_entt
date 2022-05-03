@@ -52,7 +52,6 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_VIE
     ]
 
     _cc_deps = [
-        "@ecsact_entt//strict_registry",
         "@boost//libs/mp11",
         "@ecsact//lib/runtime",
         "@ecsact//lib/runtime-cpp",
