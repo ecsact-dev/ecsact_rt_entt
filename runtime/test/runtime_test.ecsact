@@ -1,0 +1,7 @@
+main package runtime_test;
+
+component ComponentA {
+  int32 a;
+}
+
+component EmptyComponent {}

@@ -1,0 +1,20 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//runtime:index.bzl", "ecsact_entt_runtime")
+
+ecsact_entt_runtime(
+    name = "runtime",
+    srcs = ["runtime_test.ecsact"],
+    main = "runtime_test.ecsact",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "runtime/test/runtime_test.ecsact.meta.hh",
+    ECSACT_ENTT_RUNTIME_PACKAGE = "::runtime_test::package",
+)
+
+cc_test(
+    name = "test",
+    srcs = ["runtime_test.cc"],
+    deps = [
+        ":runtime",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
