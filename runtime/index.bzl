@@ -17,6 +17,7 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_RUN
         main = main,
         srcs = srcs,
         plugins = {
+            "@ecsact//generator/systems/header": {},
             "@ecsact//generator/cpp/header": {
                 "constexpr_component_ids": True,
             },

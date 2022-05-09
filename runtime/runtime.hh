@@ -1115,6 +1115,14 @@ namespace ecsact::entt {
 		}
 
 	public:
+		bool set_system_execution_impl
+			( ::ecsact::system_id           system_id
+			, ecsact_system_execution_impl  system_exec_impl
+			)
+		{
+			return true;
+		}
+
 		void execute_systems
 			( ::ecsact::registry_id                      reg_id
 			, int                                        execution_count
