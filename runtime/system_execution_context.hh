@@ -203,37 +203,11 @@ namespace ecsact_entt_rt {
 		}
 
 		template<typename C> requires(!std::is_empty_v<C>)
-		C& get() {
-			using boost::mp11::mp_apply;
-			using boost::mp11::mp_bind_front;
-			using boost::mp11::mp_transform_q;
-			using boost::mp11::mp_any;
-
-			using ecsact::entt::detail::beforechange_storage;
-			using ecsact::entt::component_changed;
-
-			C& comp = view.template get<C>(entity);
-			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
-				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
-				typename SystemT::writables
-			>>::value;
-
-			if constexpr(is_writable) {
-				auto& beforechange = view.template get<beforechange_storage<C>>(entity);
-				if(!beforechange.set) {
-					beforechange.value = comp;
-					beforechange.set = true;
-
-					info.registry.template emplace_or_replace<component_changed<C>>(
-						entity
-					);
-				}
-			}
-
-			return comp;
+		const C& get() {
+			return view.template get<C>(entity);
 		}
 
-		void* get
+		const void* get
 			( ::ecsact::component_id  component_id
 			)
 		{
@@ -255,6 +229,50 @@ namespace ecsact_entt_rt {
 				}
 			});
 			return component;
+		}
+
+		template<typename C> requires(!std::is_empty_v<C>)
+		void update(const C& c) {
+			using boost::mp11::mp_apply;
+			using boost::mp11::mp_bind_front;
+			using boost::mp11::mp_transform_q;
+			using boost::mp11::mp_any;
+
+			using ecsact::entt::detail::beforechange_storage;
+			using ecsact::entt::component_changed;
+
+			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
+				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
+				typename SystemT::writables
+			>>::value;
+
+			static_assert(is_writable);
+
+			C& comp = view.template get<C>(entity);
+			auto& beforechange = view.template get<beforechange_storage<C>>(entity);
+			if(!beforechange.set) {
+				beforechange.value = comp;
+				beforechange.set = true;
+
+				info.registry.template emplace_or_replace<component_changed<C>>(
+					entity
+				);
+			}
+			comp = c;
+		}
+
+		void update
+			( ::ecsact::component_id  component_id
+			, const void*             component_data
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename SystemT::writables>([&]<typename C>(const C&) {
+				if(C::id == component_id) {
+					update<C>(*reinterpret_cast<const C*>(component_data));
+				}
+			});
 		}
 
 		template<typename ComponentT>

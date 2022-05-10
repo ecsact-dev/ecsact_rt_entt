@@ -69,18 +69,42 @@ void ecsact_system_execution_context_remove
 	});
 }
 
-void* ecsact_system_execution_context_get
+void ecsact_system_execution_context_get
 	( ecsact_system_execution_context*  context
 	, ecsact_component_id               component_id
+	, void*                             out_component_data
 	)
 {
-	void* component = nullptr;
+	using boost::mp11::mp_for_each;
 
-	cast_and_use_ctx(context, [&](auto& context) {
-		component = context.get(static_cast<::ecsact::component_id>(component_id));
+	mp_for_each<typename package::components>([&]<typename C>(C) {
+		if constexpr(!std::is_empty_v<C>) {
+			if(C::id == static_cast<::ecsact::component_id>(component_id)) {
+				cast_and_use_ctx(context, [&](auto& context) {
+					C& out_component = *reinterpret_cast<C*>(out_component_data);
+					out_component = context.template get<C>();
+				});
+			}
+		}
 	});
+}
 
-	return component;
+void ecsact_system_execution_context_update
+	( ecsact_system_execution_context*  context
+	, ecsact_component_id               component_id
+	, const void*                       component_data
+	)
+{
+	using boost::mp11::mp_for_each;
+
+	mp_for_each<typename package::system_writables>([&]<typename C>(C) {
+		if(C::id == static_cast<::ecsact::component_id>(component_id)) {
+			cast_and_use_ctx(context, [&](auto& context) {
+				const C& comp = *reinterpret_cast<const C*>(component_data);
+				context.template update<C>(comp);
+			});
+		}
+	});
 }
 
 bool ecsact_system_execution_context_has
