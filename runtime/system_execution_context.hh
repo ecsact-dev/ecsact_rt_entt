@@ -58,8 +58,8 @@ namespace ecsact_entt_rt {
 			, const void*                              action
 			)
 			: system_execution_context_base{entity, parent, action}
-			, view(view)
 			, info(info)
+			, view(view)
 		{
 			_c_ctx.system_id = static_cast<::ecsact::system_id>(SystemT::id);
 			_c_ctx.impl = this;
@@ -207,8 +207,9 @@ namespace ecsact_entt_rt {
 			return view.template get<C>(entity);
 		}
 
-		const void* get
+		void get
 			( ::ecsact::component_id  component_id
+			, void*                   out_component_data
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -216,7 +217,6 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_push_back;
 			using boost::mp11::mp_flatten;
 
-			void* component = nullptr;
 			using gettable_components = mp_unique<mp_flatten<mp_push_back<
 				typename SystemT::writables,
 				typename SystemT::readables
@@ -224,11 +224,11 @@ namespace ecsact_entt_rt {
 			mp_for_each<gettable_components>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
 					if constexpr(!std::is_empty_v<C>) {
-						component = &(get<C>());
+						C& out_component = *reinterpret_cast<C*>(out_component_data);
+						out_component = get<C>();
 					}
 				}
 			});
-			return component;
 		}
 
 		template<typename C> requires(!std::is_empty_v<C>)
