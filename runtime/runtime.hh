@@ -54,9 +54,12 @@ namespace ecsact::entt {
 			>;
 
 		using actions_span_t = std::span<ecsact_action, std::dynamic_extent>;
+		using sys_impl_fns_t =
+			std::unordered_map<ecsact_system_id, ecsact_system_execution_impl>;
 
 		::ecsact::registry_id _last_registry_id{};
 		registries_map_t _registries;
+		sys_impl_fns_t _sys_impl_fns;
 
 	public:
 		template<typename SystemT>
@@ -613,11 +616,14 @@ namespace ecsact::entt {
 
 			[[maybe_unused]]
 			const auto system_name = typeid(SystemT).name();
+			const auto system_id = static_cast<ecsact_system_id>(SystemT::id);
 
 			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
 
 			// Execute the user defined system implementation
-			// SystemT::dynamic_impl(ctx.cpp_ptr());
+			if(_sys_impl_fns.contains(system_id)) {
+				_sys_impl_fns.at(system_id)(ctx.cptr());
+			}
 
 			// _check_component_changes<SystemT>(ctx, view);
 
@@ -1117,9 +1123,10 @@ namespace ecsact::entt {
 	public:
 		bool set_system_execution_impl
 			( ::ecsact::system_id           system_id
-			, ecsact_system_execution_impl  system_exec_impl
+			, ecsact_system_execution_impl  exec_impl
 			)
 		{
+			_sys_impl_fns[static_cast<ecsact_system_id>(system_id)] = exec_impl;
 			return true;
 		}
 
