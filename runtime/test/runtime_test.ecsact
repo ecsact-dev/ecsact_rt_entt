@@ -5,3 +5,7 @@ component ComponentA {
 }
 
 component EmptyComponent {}
+
+system SimpleSystem {
+  required ComponentA;
+}

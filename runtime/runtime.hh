@@ -54,12 +54,15 @@ namespace ecsact::entt {
 			>;
 
 		using actions_span_t = std::span<ecsact_action, std::dynamic_extent>;
-		using sys_impl_fns_t =
-			std::unordered_map<ecsact_system_id, ecsact_system_execution_impl>;
 
 		::ecsact::registry_id _last_registry_id{};
 		registries_map_t _registries;
+
+#ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
+		using sys_impl_fns_t =
+			std::unordered_map<ecsact_system_id, ecsact_system_execution_impl>;
 		sys_impl_fns_t _sys_impl_fns;
+#endif
 
 	public:
 		template<typename SystemT>
@@ -621,11 +624,20 @@ namespace ecsact::entt {
 			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
 
 			// Execute the user defined system implementation
+#ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
 			if(_sys_impl_fns.contains(system_id)) {
 				_sys_impl_fns.at(system_id)(ctx.cptr());
 			}
+#	ifdef ECSACT_ENTT_RUNTIME_STATIC_SYSTEM_IMPLS
+			else
+#	endif
+#endif
 
-			// _check_component_changes<SystemT>(ctx, view);
+#ifdef ECSACT_ENTT_RUNTIME_STATIC_SYSTEM_IMPLS
+			{
+				SystemT::invoke_static_impl(ctx.cptr());
+			}
+#endif
 
 			mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
 				using boost::mp11::mp_first;
@@ -1121,14 +1133,20 @@ namespace ecsact::entt {
 		}
 
 	public:
+#ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
 		bool set_system_execution_impl
 			( ::ecsact::system_id           system_id
 			, ecsact_system_execution_impl  exec_impl
 			)
 		{
-			_sys_impl_fns[static_cast<ecsact_system_id>(system_id)] = exec_impl;
+			if(exec_impl == nullptr) {
+				_sys_impl_fns.erase(static_cast<ecsact_system_id>(system_id));
+			} else {
+				_sys_impl_fns[static_cast<ecsact_system_id>(system_id)] = exec_impl;
+			}
 			return true;
 		}
+#endif
 
 		void execute_systems
 			( ::ecsact::registry_id                      reg_id

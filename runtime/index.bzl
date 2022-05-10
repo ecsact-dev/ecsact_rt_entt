@@ -1,7 +1,7 @@
 load("@ecsact//:index.bzl", "ecsact_codegen")
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
 
-def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
+def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
     ecsact_codegen(
         name = "%s__private_srcs" % name,
         main = main,
@@ -43,6 +43,24 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], ECSACT_ENTT_RUN
         "ECSACT_ENTT_RUNTIME_USER_HEADER=\\\"{}\\\"".format(ECSACT_ENTT_RUNTIME_USER_HEADER),
         "ECSACT_ENTT_RUNTIME_PACKAGE={}".format(ECSACT_ENTT_RUNTIME_PACKAGE),
     ]
+
+    allowed_system_impls = [
+        'dynamic',
+        'static',
+    ]
+
+    for system_impl in system_impls:
+        found_valid = False
+        for allowed_system_impl in allowed_system_impls:
+            if system_impl == allowed_system_impl:
+                found_valid = True
+                _cc_local_defines.append('ECSACT_ENTT_RUNTIME_%s_SYSTEM_IMPLS' % system_impl.upper())
+                break
+        if not found_valid:
+            fail("Invalid value in system_impls attribute '%s'. Allowed values: %s" % (system_impl, ', '.join(allowed_system_impls)))
+
+    if len(system_impls) == 0:
+        fail("ecsact_entt_runtime: system_impls must contain at least one of the following: %s" % ', '.join(allowed_system_impls))
 
     _cc_srcs = [
         "@ecsact_entt//runtime:sources",

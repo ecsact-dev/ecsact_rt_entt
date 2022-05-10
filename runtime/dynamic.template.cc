@@ -130,6 +130,7 @@ void ecsact_system_execution_context_generate
 	});
 }
 
+#ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
 bool ecsact_set_system_execution_impl
 	( ecsact_system_id              system_id
 	, ecsact_system_execution_impl  system_exec_impl
@@ -140,6 +141,7 @@ bool ecsact_set_system_execution_impl
 		system_exec_impl
 	);
 }
+#endif
 
 ecsact_system_id ecsact_system_execution_context_id
 	( ecsact_system_execution_context* context

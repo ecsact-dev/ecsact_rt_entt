@@ -1,8 +1,16 @@
 #include "gtest/gtest.h"
 
 #include <ecsact/runtime/core.h>
+#include <ecsact/runtime/dynamic.h>
 
 #include "runtime/test/runtime_test.ecsact.hh"
+#include "runtime/test/runtime_test.ecsact.systems.hh"
+
+#ifndef ECSACT_ENTT_TEST_DYNAMIC_SYSTEM_IMPL
+void runtime_test::SimpleSystem(SimpleSystem::context& ctx) {
+	ctx.get<ComponentA>().a += 1;
+}
+#endif
 
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
@@ -139,4 +147,81 @@ TEST(Core, RemoveComponent) {
 	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
 	ecsact_remove_component(reg_id, entity, comp_id);
 	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id));
+}
+
+static void dynamic_impl(ecsact_system_execution_context* ctx) {
+	auto comp_id = static_cast<ecsact_component_id>(
+		runtime_test::ComponentA::id
+	);
+	auto comp = static_cast<runtime_test::ComponentA*>(
+		ecsact_system_execution_context_get(ctx, comp_id)
+	);
+
+	comp->a += 2;
+}
+
+TEST(Core, DynamicSystemImpl) {
+	auto reg_id = ecsact_create_registry("DynamicSystemImpl");
+	auto entity = ecsact_create_entity(reg_id);
+
+	runtime_test::ComponentA comp{.a = 42};
+	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
+	ecsact_add_component(reg_id, entity, comp_id, &comp);
+
+	auto comp_get = static_cast<const runtime_test::ComponentA*>(
+		ecsact_get_component(reg_id, entity, comp_id)
+	);
+
+	// Sanity check
+	ASSERT_EQ(*comp_get, comp);
+
+	ecsact_set_system_execution_impl(
+		static_cast<ecsact_system_id>(runtime_test::SimpleSystem::id),
+		&dynamic_impl
+	);
+	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
+
+	comp_get = static_cast<const runtime_test::ComponentA*>(
+		ecsact_get_component(reg_id, entity, comp_id)
+	);
+	
+	EXPECT_NE(*comp_get, comp);
+
+	// Simulate what the system should be doing.
+	comp.a += 2;
+	EXPECT_EQ(*comp_get, comp);
+}
+
+TEST(Core, StaticSystemImpl) {
+	auto reg_id = ecsact_create_registry("StaticSystemImpl");
+	auto entity = ecsact_create_entity(reg_id);
+
+	runtime_test::ComponentA comp{.a = 42};
+	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
+	ecsact_add_component(reg_id, entity, comp_id, &comp);
+
+	auto comp_get = static_cast<const runtime_test::ComponentA*>(
+		ecsact_get_component(reg_id, entity, comp_id)
+	);
+
+	// Sanity check
+	ASSERT_EQ(comp_get->a, comp.a);
+
+	// Clear any system impls that may already be set so we can use the static one
+	ecsact_set_system_execution_impl(
+		static_cast<ecsact_system_id>(runtime_test::SimpleSystem::id),
+		nullptr
+	);
+
+	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
+
+	comp_get = static_cast<const runtime_test::ComponentA*>(
+		ecsact_get_component(reg_id, entity, comp_id)
+	);
+	
+	EXPECT_NE(comp_get->a, comp.a);
+
+	// Simulate what the system should be doing.
+	comp.a += 1;
+	EXPECT_EQ(comp_get->a, comp.a);
 }
