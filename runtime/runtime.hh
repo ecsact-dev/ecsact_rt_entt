@@ -17,8 +17,6 @@
 #include <ecsact/lib.hh>
 #include <entt/entt.hpp>
 
-#include "runtime-util/runtime-util.hh"
-
 #include "system_execution_context.hh"
 #include "execution_events_collector.hh"
 #include "registry_info.hh"

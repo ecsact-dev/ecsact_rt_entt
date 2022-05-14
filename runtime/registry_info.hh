@@ -10,8 +10,6 @@
 #include <ecsact/runtime/common.h>
 #include <ecsact/runtime/core.h>
 
-#include "runtime-util/runtime-util.hh"
-
 #include "event_markers.hh"
 
 namespace ecsact_entt_rt {
