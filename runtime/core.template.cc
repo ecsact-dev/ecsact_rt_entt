@@ -132,6 +132,51 @@ const void* ecsact_get_component
 	);
 }
 
+int ecsact_count_components
+	( ecsact_registry_id     registry_id
+	, ecsact_entity_id       entity_id
+	)
+{
+	return runtime.count_components(
+		static_cast<ecsact::registry_id>(registry_id),
+		static_cast<ecsact::entity_id>(entity_id)
+	);
+}
+
+void ecsact_each_component
+	( ecsact_registry_id              registry_id
+	, ecsact_entity_id                entity_id
+	, ecsact_each_component_callback  callback
+	, void*                           callback_user_data
+	)
+{
+	runtime.each_component(
+		static_cast<ecsact::registry_id>(registry_id),
+		static_cast<ecsact::entity_id>(entity_id),
+		callback,
+		callback_user_data
+	);
+}
+
+void ecsact_get_components
+	( ecsact_registry_id     registry_id
+	, ecsact_entity_id       entity_id
+	, int                    max_components_count
+	, ecsact_component_id*   out_component_ids
+	, const void**           out_components_data
+	, int*                   out_components_count
+	)
+{
+	runtime.get_components(
+		static_cast<ecsact::registry_id>(registry_id),
+		static_cast<ecsact::entity_id>(entity_id),
+		max_components_count,
+		reinterpret_cast<ecsact::component_id*>(out_component_ids),
+		out_components_data,
+		out_components_count
+	);
+}
+
 void ecsact_update_component
 	( ecsact_registry_id   reg_id
 	, ecsact_entity_id     entity_id
