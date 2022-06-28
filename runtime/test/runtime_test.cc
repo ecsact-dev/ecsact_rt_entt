@@ -26,6 +26,7 @@ TEST(Core, DestroyRegistry) {
 
 TEST(Core, ClearRegistry) {
 	auto reg_id = ecsact_create_registry("ClearRegistry");
+	[[maybe_unused]]
 	auto entity = ecsact_create_entity(reg_id);
 	auto entity_count = ecsact_count_entities(reg_id);
 	EXPECT_EQ(entity_count, 1);
@@ -59,6 +60,7 @@ TEST(Core, DestroyEntity) {
 
 TEST(Core, CountEntities) {
 	auto reg_id = ecsact_create_registry("CountEntities");
+	[[maybe_unused]]
 	auto entity = ecsact_create_entity(reg_id);
 	EXPECT_EQ(ecsact_count_entities(reg_id), 1);
 }
