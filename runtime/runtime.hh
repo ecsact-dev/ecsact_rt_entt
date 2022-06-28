@@ -17,8 +17,6 @@
 #include <ecsact/lib.hh>
 #include <entt/entt.hpp>
 
-#include "runtime-util/runtime-util.hh"
-
 #include "system_execution_context.hh"
 #include "execution_events_collector.hh"
 #include "registry_info.hh"
@@ -330,6 +328,84 @@ namespace ecsact::entt {
 			return component_data;
 		}
 
+		int count_components
+			( ecsact::registry_id  registry_id
+			, ecsact::entity_id    entity_id
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			int count = 0;
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				if(has_component<C>(registry_id, entity_id)) {
+					count += 1;
+				}
+			});
+			return count;
+		}
+
+		void each_component
+			( ecsact::registry_id             registry_id
+			, ecsact::entity_id               entity_id
+			, ecsact_each_component_callback  callback
+			, void*                           callback_user_data
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				if(has_component<C>(registry_id, entity_id)) {
+					if constexpr(std::is_empty_v<C>) {
+						callback(
+							static_cast<ecsact_component_id>(C::id),
+							nullptr,
+							callback_user_data
+						);
+					} else {
+						callback(
+							static_cast<ecsact_component_id>(C::id),
+							&get_component<C>(registry_id, entity_id),
+							callback_user_data
+						);
+					}
+				}
+			});
+		}
+
+		void get_components
+			( ecsact::registry_id    registry_id
+			, ecsact::entity_id      entity_id
+			, int                    max_components_count
+			, ecsact::component_id*  out_component_ids
+			, const void**           out_components_data
+			, int*                   out_components_count
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			int index = 0;
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				if(index >= max_components_count) return;
+
+				if(has_component<C>(registry_id, entity_id)) {
+					index += 1;
+					out_component_ids[index] = C::id;
+					if constexpr(std::is_empty_v<C>) {
+						out_components_data[index] = nullptr;
+					} else {
+						out_components_data[index] = &get_component<C>(
+							registry_id,
+							entity_id
+						);
+					}
+				}
+			});
+
+			if(out_components_count != nullptr) {
+				*out_components_count = index;
+			}
+		}
+
 		template<typename ComponentT>
 		void update_component
 			( ::ecsact::registry_id  reg_id
@@ -386,11 +462,41 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
+			mp_for_each<typename package::components>([&]<typename C>(C) {
 				if(C::id == component_id) {
 					remove_component<C>(reg_id, entity_id);
 				}
 			});
+		}
+
+		size_t component_size
+			( ::ecsact::component_id comp_id
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			size_t comp_size = 0;
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				if(C::id == comp_id) {
+					comp_size = sizeof(C);
+				}
+			});
+			return comp_size;
+		}
+
+		size_t action_size
+			( ::ecsact::action_id action_id
+			)
+		{
+			using boost::mp11::mp_for_each;
+
+			size_t act_size = 0;
+			mp_for_each<typename package::actions>([&]<typename A>(A) {
+				if(A::id == action_id) {
+					act_size = sizeof(A);
+				}
+			});
+			return act_size;
 		}
 
 	private:

@@ -38,11 +38,23 @@ static void cast_and_use_ctx
 	});
 }
 
-const void* ecsact_system_execution_context_action
+void ecsact_system_execution_context_action
 	( ecsact_system_execution_context*  context
+	, void*                             out_action_data
 	)
 {
-	return context->impl->action;
+	using boost::mp11::mp_for_each;
+
+	auto action_id = static_cast<ecsact::action_id>(context->system_id);
+
+	cast_and_use_ctx(context, [&](auto& context) {
+		mp_for_each<typename package::actions>([&]<typename A>(A) {
+			if(A::id == action_id) {
+				A& out_action = *reinterpret_cast<A*>(out_action_data);
+				out_action = *reinterpret_cast<const A*>(context.action);
+			}
+		});
+	});
 }
 
 void ecsact_system_execution_context_add
@@ -69,18 +81,32 @@ void ecsact_system_execution_context_remove
 	});
 }
 
-void* ecsact_system_execution_context_get
+void ecsact_system_execution_context_get
 	( ecsact_system_execution_context*  context
 	, ecsact_component_id               component_id
+	, void*                             out_component_data
 	)
 {
-	void* component = nullptr;
-
 	cast_and_use_ctx(context, [&](auto& context) {
-		component = context.get(static_cast<::ecsact::component_id>(component_id));
+		context.get(
+			static_cast<::ecsact::component_id>(component_id),
+			out_component_data
+		);
 	});
+}
 
-	return component;
+void ecsact_system_execution_context_update
+	( ecsact_system_execution_context*  context
+	, ecsact_component_id               component_id
+	, const void*                       component_data
+	)
+{
+	cast_and_use_ctx(context, [&](auto& context) {
+		context.update(
+			static_cast<::ecsact::component_id>(component_id),
+			component_data
+		);
+	});
 }
 
 bool ecsact_system_execution_context_has

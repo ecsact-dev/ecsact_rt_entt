@@ -8,7 +8,9 @@
 
 #ifndef ECSACT_ENTT_TEST_DYNAMIC_SYSTEM_IMPL
 void runtime_test::SimpleSystem(SimpleSystem::context& ctx) {
-	ctx.get<ComponentA>().a += 1;
+	auto comp = ctx.get<ComponentA>();
+	comp.a += 1;
+	ctx.update(comp);
 }
 #endif
 
@@ -24,6 +26,7 @@ TEST(Core, DestroyRegistry) {
 
 TEST(Core, ClearRegistry) {
 	auto reg_id = ecsact_create_registry("ClearRegistry");
+	[[maybe_unused]]
 	auto entity = ecsact_create_entity(reg_id);
 	auto entity_count = ecsact_count_entities(reg_id);
 	EXPECT_EQ(entity_count, 1);
@@ -57,6 +60,7 @@ TEST(Core, DestroyEntity) {
 
 TEST(Core, CountEntities) {
 	auto reg_id = ecsact_create_registry("CountEntities");
+	[[maybe_unused]]
 	auto entity = ecsact_create_entity(reg_id);
 	EXPECT_EQ(ecsact_count_entities(reg_id), 1);
 }
@@ -150,14 +154,13 @@ TEST(Core, RemoveComponent) {
 }
 
 static void dynamic_impl(ecsact_system_execution_context* ctx) {
-	auto comp_id = static_cast<ecsact_component_id>(
-		runtime_test::ComponentA::id
-	);
-	auto comp = static_cast<runtime_test::ComponentA*>(
-		ecsact_system_execution_context_get(ctx, comp_id)
-	);
+	using runtime_test::ComponentA;
 
-	comp->a += 2;
+	auto comp_id = static_cast<ecsact_component_id>(ComponentA::id);
+	ComponentA comp;
+	ecsact_system_execution_context_get(ctx, comp_id, &comp);
+	comp.a += 2;
+	ecsact_system_execution_context_update(ctx, comp_id, &comp);
 }
 
 TEST(Core, DynamicSystemImpl) {

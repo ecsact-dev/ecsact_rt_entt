@@ -58,8 +58,8 @@ namespace ecsact_entt_rt {
 			, const void*                              action
 			)
 			: system_execution_context_base{entity, parent, action}
-			, view(view)
 			, info(info)
+			, view(view)
 		{
 			_c_ctx.system_id = static_cast<::ecsact::system_id>(SystemT::id);
 			_c_ctx.impl = this;
@@ -203,7 +203,36 @@ namespace ecsact_entt_rt {
 		}
 
 		template<typename C> requires(!std::is_empty_v<C>)
-		C& get() {
+		const C& get() {
+			return view.template get<C>(entity);
+		}
+
+		void get
+			( ::ecsact::component_id  component_id
+			, void*                   out_component_data
+			)
+		{
+			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_unique;
+			using boost::mp11::mp_push_back;
+			using boost::mp11::mp_flatten;
+
+			using gettable_components = mp_unique<mp_flatten<mp_push_back<
+				typename SystemT::writables,
+				typename SystemT::readables
+			>>>;
+			mp_for_each<gettable_components>([&]<typename C>(const C&) {
+				if(C::id == component_id) {
+					if constexpr(!std::is_empty_v<C>) {
+						C& out_component = *reinterpret_cast<C*>(out_component_data);
+						out_component = get<C>();
+					}
+				}
+			});
+		}
+
+		template<typename C> requires(!std::is_empty_v<C>)
+		void update(const C& c) {
 			using boost::mp11::mp_apply;
 			using boost::mp11::mp_bind_front;
 			using boost::mp11::mp_transform_q;
@@ -212,49 +241,38 @@ namespace ecsact_entt_rt {
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
 
-			C& comp = view.template get<C>(entity);
 			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
 				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
 				typename SystemT::writables
 			>>::value;
 
-			if constexpr(is_writable) {
-				auto& beforechange = view.template get<beforechange_storage<C>>(entity);
-				if(!beforechange.set) {
-					beforechange.value = comp;
-					beforechange.set = true;
+			static_assert(is_writable);
 
-					info.registry.template emplace_or_replace<component_changed<C>>(
-						entity
-					);
-				}
+			C& comp = view.template get<C>(entity);
+			auto& beforechange = view.template get<beforechange_storage<C>>(entity);
+			if(!beforechange.set) {
+				beforechange.value = comp;
+				beforechange.set = true;
+
+				info.registry.template emplace_or_replace<component_changed<C>>(
+					entity
+				);
 			}
-
-			return comp;
+			comp = c;
 		}
 
-		void* get
+		void update
 			( ::ecsact::component_id  component_id
+			, const void*             component_data
 			)
 		{
 			using boost::mp11::mp_for_each;
-			using boost::mp11::mp_unique;
-			using boost::mp11::mp_push_back;
-			using boost::mp11::mp_flatten;
 
-			void* component = nullptr;
-			using gettable_components = mp_unique<mp_flatten<mp_push_back<
-				typename SystemT::writables,
-				typename SystemT::readables
-			>>>;
-			mp_for_each<gettable_components>([&]<typename C>(const C&) {
+			mp_for_each<typename SystemT::writables>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
-					if constexpr(!std::is_empty_v<C>) {
-						component = &(get<C>());
-					}
+					update<C>(*reinterpret_cast<const C*>(component_data));
 				}
 			});
-			return component;
 		}
 
 		template<typename ComponentT>
