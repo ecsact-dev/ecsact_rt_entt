@@ -1,11 +1,12 @@
 load("@ecsact//:index.bzl", "ecsact_codegen")
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
-def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
+def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
     ecsact_codegen(
         name = "%s__private_srcs" % name,
         main = main,
         srcs = srcs,
+        tags = tags,
         plugins = {
             "@ecsact//generator/cpp_systems/source/static": {},
         },
@@ -16,6 +17,7 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         name = "%s__public_hdrs" % name,
         main = main,
         srcs = srcs,
+        tags = tags,
         plugins = {
             "@ecsact//generator/systems/header": {},
             "@ecsact//generator/cpp/header": {
@@ -32,11 +34,12 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
     cc_library(
         name = "%s__public_cc" % name,
         hdrs = ["%s__public_hdrs" % name],
+        tags = tags,
         deps = [
             "@ecsact//lib:cc",
             "@ecsact//lib/runtime-cpp",
         ],
-        **kwargs,
+        **kwargs
     )
 
     _cc_local_defines = [
@@ -45,8 +48,8 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
     ]
 
     allowed_system_impls = [
-        'dynamic',
-        'static',
+        "dynamic",
+        "static",
     ]
 
     for system_impl in system_impls:
@@ -54,13 +57,13 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         for allowed_system_impl in allowed_system_impls:
             if system_impl == allowed_system_impl:
                 found_valid = True
-                _cc_local_defines.append('ECSACT_ENTT_RUNTIME_%s_SYSTEM_IMPLS' % system_impl.upper())
+                _cc_local_defines.append("ECSACT_ENTT_RUNTIME_%s_SYSTEM_IMPLS" % system_impl.upper())
                 break
         if not found_valid:
-            fail("Invalid value in system_impls attribute '%s'. Allowed values: %s" % (system_impl, ', '.join(allowed_system_impls)))
+            fail("Invalid value in system_impls attribute '%s'. Allowed values: %s" % (system_impl, ", ".join(allowed_system_impls)))
 
     if len(system_impls) == 0:
-        fail("ecsact_entt_runtime: system_impls must contain at least one of the following: %s" % ', '.join(allowed_system_impls))
+        fail("ecsact_entt_runtime: system_impls must contain at least one of the following: %s" % ", ".join(allowed_system_impls))
 
     _cc_srcs = [
         "@ecsact_entt//runtime:sources",
@@ -83,6 +86,7 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
             "ECSACT_DYNAMIC_API=",
             "ECSACT_META_API=",
         ],
+        tags = tags,
         deps = _cc_deps + deps,
         hdrs = [":%s__public_hdrs" % name],
         srcs = _cc_srcs,
@@ -92,7 +96,7 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
     cc_binary(
         name = "%s_shared" % name,
         linkshared = True,
-        tags = ["manual"],
+        tags = tags,
         local_defines = _cc_local_defines + [
             "ECSACT_CORE_API_EXPORT",
             "ECSACT_DYNAMIC_API_EXPORT",
