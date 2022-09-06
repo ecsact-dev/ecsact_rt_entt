@@ -1,33 +1,17 @@
-load("@ecsact//:index.bzl", "ecsact_codegen")
+load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
     ecsact_codegen(
-        name = "%s__private_srcs" % name,
-        main = main,
-        srcs = srcs,
-        tags = tags,
-        plugins = {
-            "@ecsact//generator/cpp_systems/source/static": {},
-        },
-        **kwargs
-    )
-
-    ecsact_codegen(
         name = "%s__public_hdrs" % name,
-        main = main,
         srcs = srcs,
         tags = tags,
-        plugins = {
-            "@ecsact//generator/systems/header": {},
-            "@ecsact//generator/cpp/header": {
-                "constexpr_component_ids": True,
-            },
-            "@ecsact//generator/cpp_systems/header": {
-                "constexpr_system_ids": True,
-            },
-            "@ecsact//generator/meta_cc": {},
-        },
+        plugins = [
+            "@ecsact//codegen_plugins:cpp_header",
+            "@ecsact//codegen_plugins:cpp_systems_header",
+            "@ecsact//codegen_plugins:systems_header",
+            "@ecsact//codegen_plugins:cpp_meta_header",
+        ],
         **kwargs
     )
 
@@ -36,8 +20,8 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         hdrs = ["%s__public_hdrs" % name],
         tags = tags,
         deps = [
-            "@ecsact//lib:cc",
-            "@ecsact//lib/runtime-cpp",
+            # "@ecsact//lib:cc",
+            # "@ecsact//lib/runtime-cpp",
         ],
         **kwargs
     )
@@ -66,16 +50,15 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         fail("ecsact_entt_runtime: system_impls must contain at least one of the following: %s" % ", ".join(allowed_system_impls))
 
     _cc_srcs = [
-        "@ecsact_entt//runtime:sources",
+        "@ecsact_rt_entt//runtime:sources",
         ":%s__public_hdrs" % name,
-        ":%s__private_srcs" % name,
     ]
 
     _cc_deps = [
         "@boost//libs/mp11",
-        "@ecsact//lib/runtime",
-        "@ecsact//lib/runtime-cpp",
-        "@ecsact//lib:cc",
+        # "@ecsact//lib/runtime",
+        # "@ecsact//lib/runtime-cpp",
+        # "@ecsact//lib:cc",
         "@com_github_skypjack_entt//:entt",
     ]
 

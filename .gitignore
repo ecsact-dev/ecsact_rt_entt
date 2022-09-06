@@ -1,4 +1,10 @@
+# bazel
 /bazel-*
 /user.bazelrc
-/.vscode
-compile_commands.json
+
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+/compile_commands.json
+/external
+
+# clangd
+/.cache/
