@@ -1,11 +1,11 @@
 main package runtime_test;
 
 component ComponentA {
-  int32 a;
+  i32 a;
 }
 
 component EmptyComponent {}
 
 system SimpleSystem {
-  required ComponentA;
+  readwrite ComponentA;
 }
