@@ -55,8 +55,10 @@ namespace ecsact::entt {
 		registries_map_t _registries;
 
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
-		using sys_impl_fns_t =
-			std::unordered_map<ecsact_system_id, ecsact_system_execution_impl>;
+		using sys_impl_fns_t = std::unordered_map
+			< ecsact_system_like_id
+			, ecsact_system_execution_impl
+			>;
 		sys_impl_fns_t _sys_impl_fns;
 #endif
 
@@ -238,7 +240,7 @@ namespace ecsact::entt {
 			add_component<ComponentT>(reg_id, entity_id, ComponentT{});
 		}
 
-		void add_component
+		ecsact_add_error add_component
 			( ecsact_registry_id   reg_id
 			, ecsact_entity_id     entity_id
 			, ecsact_component_id  component_id
@@ -260,6 +262,8 @@ namespace ecsact::entt {
 					}
 				}
 			});
+
+			return ECSACT_ADD_OK;
 		}
 
 		template<typename ComponentT>
@@ -405,7 +409,7 @@ namespace ecsact::entt {
 		}
 
 		template<typename ComponentT>
-		void update_component
+		ecsact_update_error update_component
 			( ecsact_registry_id  reg_id
 			, ecsact_entity_id    entity_id
 			, const ComponentT&   component_data
@@ -416,9 +420,11 @@ namespace ecsact::entt {
 	
 			auto& component = info.registry.template get<ComponentT>(entt_entity_id);
 			component = component_data;
+
+			return ECSACT_UPDATE_OK;
 		}
 
-		void update_component
+		ecsact_update_error update_component
 			( ecsact_registry_id   reg_id
 			, ecsact_entity_id     entity_id
 			, ecsact_component_id  component_id
@@ -427,10 +433,11 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
+			std::optional<ecsact_update_error> result;
 			mp_for_each<typename package::components>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
 					if constexpr(!std::is_empty_v<C>) {
-						update_component<C>(
+						result = update_component<C>(
 							reg_id,
 							entity_id,
 							*static_cast<const C*>(component_data)
@@ -438,6 +445,7 @@ namespace ecsact::entt {
 					}
 				}
 			});
+			return *result;
 		}
 
 		template<typename C>
@@ -1252,7 +1260,7 @@ namespace ecsact::entt {
 		}
 #endif
 
-		void execute_systems
+		ecsact_execute_systems_error execute_systems
 			( ecsact_registry_id                         reg_id
 			, int                                        execution_count
 			, const ecsact_execution_options*            execution_options_list
@@ -1286,6 +1294,7 @@ namespace ecsact::entt {
 			_clear_event_markers(info);
 
 			info.mutex = std::nullopt;
+			return ECSACT_EXEC_SYS_OK;
 		}
 
 	};

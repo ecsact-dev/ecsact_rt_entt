@@ -1,4 +1,4 @@
-#include <ecsact/runtime/core.h>
+#include "ecsact/runtime/core.h"
 
 #include "common.template.hh"
 
@@ -17,23 +17,21 @@ void ecsact_destroy_registry
 	( ecsact_registry_id reg_id
 	)
 {
-	runtime.destroy_registry(static_cast<ecsact::registry_id>(reg_id));
+	runtime.destroy_registry(reg_id);
 }
 
 void ecsact_clear_registry
 	( ecsact_registry_id reg_id
 	)
 {
-	runtime.clear_registry(static_cast<ecsact::registry_id>(reg_id));
+	runtime.clear_registry(reg_id);
 }
 
 ecsact_entity_id ecsact_create_entity
 	( ecsact_registry_id reg_id
 	)
 {
-	return static_cast<ecsact_entity_id>(
-		runtime.create_entity(static_cast<ecsact::registry_id>(reg_id))
-	);
+	return runtime.create_entity(reg_id);
 }
 
 void ecsact_ensure_entity
@@ -82,14 +80,14 @@ void ecsact_get_entities
 	);
 }
 
-void ecsact_add_component
+ecsact_add_error ecsact_add_component
 	( ecsact_registry_id   reg_id
 	, ecsact_entity_id     entity_id
 	, ecsact_component_id  component_id
 	, const void*          component_data
 	)
 {
-	runtime.add_component(
+	return runtime.add_component(
 		reg_id,
 		entity_id,
 		component_id,
@@ -116,11 +114,7 @@ const void* ecsact_get_component
 	, ecsact_component_id  component_id
 	)
 {
-	return runtime.get_component(
-		reg_id,
-		entity_id,
-		component_id
-	);
+	return runtime.get_component(reg_id, entity_id, component_id);
 }
 
 int ecsact_count_components
@@ -128,10 +122,7 @@ int ecsact_count_components
 	, ecsact_entity_id       entity_id
 	)
 {
-	return runtime.count_components(
-		registry_id,
-		entity_id
-	);
+	return runtime.count_components(registry_id, entity_id);
 }
 
 void ecsact_each_component
@@ -168,14 +159,14 @@ void ecsact_get_components
 	);
 }
 
-void ecsact_update_component
+ecsact_update_error ecsact_update_component
 	( ecsact_registry_id   reg_id
 	, ecsact_entity_id     entity_id
 	, ecsact_component_id  component_id
 	, const void*          component_data
 	)
 {
-	runtime.update_component(
+	return runtime.update_component(
 		reg_id,
 		entity_id,
 		component_id,
@@ -196,7 +187,7 @@ void ecsact_remove_component
 	);
 }
 
-void ecsact_execute_systems
+ecsact_execute_systems_error ecsact_execute_systems
 	( ecsact_registry_id                        registry_id
 	, int                                       execution_count
 	, const ecsact_execution_options*           execution_options_list
@@ -211,7 +202,7 @@ void ecsact_execute_systems
 		events_collector.target = c_events_collector;
 	}
 
-	runtime.execute_systems(
+	return runtime.execute_systems(
 		registry_id,
 		execution_count,
 		execution_options_list,

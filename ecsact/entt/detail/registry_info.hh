@@ -47,20 +47,11 @@ namespace ecsact_entt_rt {
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				registry.storage<C>();
-			});
-
-			mp_for_each<typename package::system_addables>([&]<typename C>(C) {
-				registry.storage<component_added<C>>();
-			});
-
-			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
-				registry.storage<beforechange_storage<C>>();
-				registry.storage<component_changed<C>>();
-			});
-
-			mp_for_each<typename package::system_removables>([&]<typename C>(C) {
 				registry.storage<temp_storage<C>>();
+				registry.storage<component_added<C>>();
+				registry.storage<component_changed<C>>();
 				registry.storage<component_removed<C>>();
+				registry.storage<beforechange_storage<C>>();
 			});
 		}
 
