@@ -6,7 +6,7 @@
 #	include ECSACT_ENTT_RUNTIME_USER_HEADER
 #endif
 
-#include "runtime.hh"
+#include "ecsact/entt/runtime.hh"
 
 #ifndef ECSACT_ENTT_RUNTIME_PACKAGE
 # error ECSACT_ENTT_RUNTIME_PACKAGE Must be defined with the fully qualified \

@@ -11,20 +11,18 @@
 #include <execution>
 #include <span>
 #include <boost/mp11.hpp>
-#include <ecsact/runtime.hh>
-#include <ecsact/runtime/common.h>
-#include <ecsact/runtime/core.h>
-#include <ecsact/lib.hh>
+#include "ecsact/runtime/common.h"
+#include "ecsact/runtime/core.h"
+#include "ecsact/lib.hh"
 #include <entt/entt.hpp>
-
-#include "system_execution_context.hh"
-#include "execution_events_collector.hh"
-#include "registry_info.hh"
-#include "event_markers.hh"
-#include "system_entt_view.hh"
+#include "ecsact/entt/detail/system_execution_context.hh"
+#include "ecsact/entt/detail/execution_events_collector.hh"
+#include "ecsact/entt/detail/registry_info.hh"
+#include "ecsact/entt/event_markers.hh"
+#include "ecsact/entt/system_view.hh"
 
 namespace ecsact::entt {
-	template<::ecsact::package Package>
+	template<typename Package>
 	class runtime {
 		/**
 		 * Checks if type T is listd as one of the actions in the ecact package.
@@ -47,13 +45,13 @@ namespace ecsact::entt {
 		using registry_info = ecsact_entt_rt::registry_info<Package>;
 
 		using registries_map_t = std::unordered_map
-			< ::ecsact::registry_id
+			< ecsact_registry_id
 			, registry_info
 			>;
 
 		using actions_span_t = std::span<ecsact_action, std::dynamic_extent>;
 
-		::ecsact::registry_id _last_registry_id{};
+		ecsact_registry_id _last_registry_id{};
 		registries_map_t _registries;
 
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
@@ -72,14 +70,14 @@ namespace ecsact::entt {
 		using entt_entity_type = typename registry_type::entity_type;
 		using package = Package;
 
-		::ecsact::registry_id create_registry
+		ecsact_registry_id create_registry
 			( const char* registry_name
 			)
 		{
 			using boost::mp11::mp_for_each;
 
 			// Using the index of _registries as an ID
-			const auto reg_id = static_cast<::ecsact::registry_id>(
+			const auto reg_id = static_cast<ecsact_registry_id>(
 				static_cast<int>(_last_registry_id) + 1
 			);
 
@@ -98,14 +96,14 @@ namespace ecsact::entt {
 		}
 
 		void destroy_registry
-			( ::ecsact::registry_id reg_id
+			( ecsact_registry_id reg_id
 			)
 		{
 			_registries.erase(reg_id);
 		}
 
 		void clear_registry
-			( ::ecsact::registry_id reg_id
+			( ecsact_registry_id reg_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -119,8 +117,8 @@ namespace ecsact::entt {
 			info.last_entity_id = {};
 		}
 
-		::ecsact::entity_id create_entity
-			( ::ecsact::registry_id reg_id
+		ecsact_entity_id create_entity
+			( ecsact_registry_id reg_id
 			)
 		{
 			std::mutex mutex;
@@ -132,8 +130,8 @@ namespace ecsact::entt {
 		}
 
 		void ensure_entity
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -146,8 +144,8 @@ namespace ecsact::entt {
 		}
 
 		bool entity_exists
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -155,8 +153,8 @@ namespace ecsact::entt {
 		}
 
 		void destroy_entity
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -169,19 +167,19 @@ namespace ecsact::entt {
 		}
 
 		int count_entities
-			( ::ecsact::registry_id reg_id
+			( ecsact_registry_id reg_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
 			return static_cast<int>(info.registry.size());
 		}
 
-		std::vector<ecsact::entity_id> get_entities
-			( ::ecsact::registry_id reg_id
+		std::vector<ecsact_entity_id> get_entities
+			( ecsact_registry_id reg_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
-			std::vector<ecsact::entity_id> result;
+			std::vector<ecsact_entity_id> result;
 			for(auto& entry: info.entities_map) {
 				result.push_back(entry.first);
 			}
@@ -190,10 +188,10 @@ namespace ecsact::entt {
 		}
 
 		void get_entities
-			( ::ecsact::registry_id  reg_id
-			, int                    max_entities_count
-			, ::ecsact::entity_id*   out_entities
-			, int*                   out_entities_count
+			( ecsact_registry_id  reg_id
+			, int                 max_entities_count
+			, ecsact_entity_id*   out_entities
+			, int*                out_entities_count
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -216,9 +214,9 @@ namespace ecsact::entt {
 
 		template<typename C>
 		void add_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
-			, const C&               component_data
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
+			, const C&            component_data
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -233,18 +231,18 @@ namespace ecsact::entt {
 
 		template<typename ComponentT>
 		void add_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			add_component<ComponentT>(reg_id, entity_id, ComponentT{});
 		}
 
 		void add_component
-			( ::ecsact::registry_id   reg_id
-			, ::ecsact::entity_id     entity_id
-			, ::ecsact::component_id  component_id
-			, const void*             component_data
+			( ecsact_registry_id   reg_id
+			, ecsact_entity_id     entity_id
+			, ecsact_component_id  component_id
+			, const void*          component_data
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -266,8 +264,8 @@ namespace ecsact::entt {
 
 		template<typename ComponentT>
 		bool has_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -277,9 +275,9 @@ namespace ecsact::entt {
 		}
 
 		bool has_component
-			( ::ecsact::registry_id   reg_id
-			, ::ecsact::entity_id     entity_id
-			, ::ecsact::component_id  component_id
+			( ecsact_registry_id   reg_id
+			, ecsact_entity_id     entity_id
+			, ecsact_component_id  component_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -295,8 +293,8 @@ namespace ecsact::entt {
 
 		template<typename ComponentT>
 		const ComponentT& get_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -306,9 +304,9 @@ namespace ecsact::entt {
 		}
 
 		const void* get_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
-			, ::ecsact::component_id  component_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
+			, ecsact_component_id  component_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -329,8 +327,8 @@ namespace ecsact::entt {
 		}
 
 		int count_components
-			( ecsact::registry_id  registry_id
-			, ecsact::entity_id    entity_id
+			( ecsact_registry_id  registry_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -345,8 +343,8 @@ namespace ecsact::entt {
 		}
 
 		void each_component
-			( ecsact::registry_id             registry_id
-			, ecsact::entity_id               entity_id
+			( ecsact_registry_id             registry_id
+			, ecsact_entity_id               entity_id
 			, ecsact_each_component_callback  callback
 			, void*                           callback_user_data
 			)
@@ -373,12 +371,12 @@ namespace ecsact::entt {
 		}
 
 		void get_components
-			( ecsact::registry_id    registry_id
-			, ecsact::entity_id      entity_id
-			, int                    max_components_count
-			, ecsact::component_id*  out_component_ids
-			, const void**           out_components_data
-			, int*                   out_components_count
+			( ecsact_registry_id    registry_id
+			, ecsact_entity_id      entity_id
+			, int                   max_components_count
+			, ecsact_component_id*  out_component_ids
+			, const void**          out_components_data
+			, int*                  out_components_count
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -408,9 +406,9 @@ namespace ecsact::entt {
 
 		template<typename ComponentT>
 		void update_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
-			, const ComponentT&      component_data
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
+			, const ComponentT&   component_data
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -421,10 +419,10 @@ namespace ecsact::entt {
 		}
 
 		void update_component
-			( ::ecsact::registry_id   reg_id
-			, ::ecsact::entity_id     entity_id
-			, ::ecsact::component_id  component_id
-			, const void*             component_data
+			( ecsact_registry_id   reg_id
+			, ecsact_entity_id     entity_id
+			, ecsact_component_id  component_id
+			, const void*          component_data
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -444,8 +442,8 @@ namespace ecsact::entt {
 
 		template<typename C>
 		void remove_component
-			( ::ecsact::registry_id  reg_id
-			, ::ecsact::entity_id    entity_id
+			( ecsact_registry_id  reg_id
+			, ecsact_entity_id    entity_id
 			)
 		{
 			auto& info = _registries.at(reg_id);
@@ -455,9 +453,9 @@ namespace ecsact::entt {
 		}
 
 		void remove_component
-			( ::ecsact::registry_id   reg_id
-			, ::ecsact::entity_id     entity_id
-			, ::ecsact::component_id  component_id
+			( ecsact_registry_id   reg_id
+			, ecsact_entity_id     entity_id
+			, ecsact_component_id  component_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -470,7 +468,7 @@ namespace ecsact::entt {
 		}
 
 		size_t component_size
-			( ::ecsact::component_id comp_id
+			( ecsact_component_id comp_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -485,7 +483,7 @@ namespace ecsact::entt {
 		}
 
 		size_t action_size
-			( ::ecsact::action_id action_id
+			( ecsact_action_id action_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -584,12 +582,12 @@ namespace ecsact::entt {
 
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_trivial_default_itr
-			( registry_info&                    info
-			, system_view_type<SystemT>&        view
-			, entt_entity_type                  entity
-			, ecsact_system_execution_context*  parent
-			, const void*                       action
-			, const actions_span_t&             actions
+			( registry_info&                       info
+			, system_view_type<package, SystemT>&  view
+			, entt_entity_type                     entity
+			, ecsact_system_execution_context*     parent
+			, const void*                          action
+			, const actions_span_t&                actions
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -713,12 +711,12 @@ namespace ecsact::entt {
 
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user_itr
-			( registry_info&                    info
-			, system_view_type<SystemT>&        view
-			, entt_entity_type                  entity
-			, ecsact_system_execution_context*  parent
-			, const void*                       action
-			, const actions_span_t&             actions
+			( registry_info&                       info
+			, system_view_type<package, SystemT>&  view
+			, entt_entity_type                     entity
+			, ecsact_system_execution_context*     parent
+			, const void*                          action
+			, const actions_span_t&                actions
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -1162,12 +1160,12 @@ namespace ecsact::entt {
 						if constexpr(std::is_empty_v<C>) {
 							_pre_exec_add_component<C>(
 								info,
-								info.entities_map.at(static_cast<::ecsact::entity_id>(entity))
+								info.entities_map.at(static_cast<ecsact_entity_id>(entity))
 							);
 						} else {
 							_pre_exec_add_component<C>(
 								info,
-								info.entities_map.at(static_cast<::ecsact::entity_id>(entity)),
+								info.entities_map.at(static_cast<ecsact_entity_id>(entity)),
 								*static_cast<const C*>(comp.component_data)
 							);
 						}
@@ -1186,7 +1184,7 @@ namespace ecsact::entt {
 						if constexpr(!std::is_empty_v<C>) {
 							_pre_exec_update_component<C>(
 								info,
-								info.entities_map.at(static_cast<::ecsact::entity_id>(entity)),
+								info.entities_map.at(entity),
 								*static_cast<const C*>(comp.component_data)
 							);
 						} else {
@@ -1206,7 +1204,7 @@ namespace ecsact::entt {
 					if(component_id == static_cast<ecsact_component_id>(C::id)) {
 						_pre_exec_remove_component<C>(
 							info,
-							info.entities_map.at(static_cast<::ecsact::entity_id>(entity))
+							info.entities_map.at(static_cast<ecsact_entity_id>(entity))
 						);
 					}
 				});
@@ -1241,21 +1239,21 @@ namespace ecsact::entt {
 	public:
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
 		bool set_system_execution_impl
-			( ::ecsact::system_id           system_id
+			( ecsact_system_like_id         system_id
 			, ecsact_system_execution_impl  exec_impl
 			)
 		{
 			if(exec_impl == nullptr) {
-				_sys_impl_fns.erase(static_cast<ecsact_system_id>(system_id));
+				_sys_impl_fns.erase(system_id);
 			} else {
-				_sys_impl_fns[static_cast<ecsact_system_id>(system_id)] = exec_impl;
+				_sys_impl_fns[system_id] = exec_impl;
 			}
 			return true;
 		}
 #endif
 
 		void execute_systems
-			( ::ecsact::registry_id                      reg_id
+			( ecsact_registry_id                         reg_id
 			, int                                        execution_count
 			, const ecsact_execution_options*            execution_options_list
 			, std::optional<execution_events_collector>  events_collector

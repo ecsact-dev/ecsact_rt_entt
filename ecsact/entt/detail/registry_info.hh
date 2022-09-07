@@ -6,15 +6,14 @@
 #include <mutex>
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
-#include <ecsact/runtime.hh>
-#include <ecsact/runtime/common.h>
-#include <ecsact/runtime/core.h>
+#include "ecsact/runtime/common.h"
+#include "ecsact/runtime/core.h"
 
-#include "event_markers.hh"
+#include "ecsact/entt/event_markers.hh"
 
 namespace ecsact_entt_rt {
 	using entity_id_map_t = std::unordered_map
-		< ::ecsact::entity_id
+		< ecsact_entity_id
 		, entt::entity
 		>;
 
@@ -29,13 +28,13 @@ namespace ecsact_entt_rt {
 		/**
 		 * Index of this vector is a statically casted EnTT ID
 		 */
-		std::vector<::ecsact::entity_id> _ecsact_entity_ids;
+		std::vector<ecsact_entity_id> _ecsact_entity_ids;
 
-		::ecsact::entity_id last_entity_id{};
+		ecsact_entity_id last_entity_id{};
 
 		struct create_new_entity_result {
 			entt::entity entt_entity_id;
-			::ecsact::entity_id ecsact_entity_id;
+			ecsact_entity_id ecsact_entity_id;
 		};
 
 		void init_registry() {
@@ -119,7 +118,7 @@ namespace ecsact_entt_rt {
 
 		/** @internal */
 		inline auto _create_entity
-			( ::ecsact::entity_id ecsact_entity_id
+			( ecsact_entity_id ecsact_entity_id
 			)
 		{
 			auto new_entt_entity_id = registry.create();
@@ -131,11 +130,11 @@ namespace ecsact_entt_rt {
 
 		/** @internal */
 		inline create_new_entity_result _create_entity() {
-			auto new_entity_id = static_cast<::ecsact::entity_id>(
+			auto new_entity_id = static_cast<ecsact_entity_id>(
 				static_cast<int>(last_entity_id) + 1
 			);
 			while(entities_map.contains(new_entity_id)) {
-				new_entity_id = static_cast<::ecsact::entity_id>(
+				new_entity_id = static_cast<ecsact_entity_id>(
 					static_cast<int>(new_entity_id) + 1
 				);
 			}
@@ -149,7 +148,7 @@ namespace ecsact_entt_rt {
 		// Creates an entity and also makes sure there is a matching one in the
 		// pending registry
 		inline auto create_entity
-			( ::ecsact::entity_id ecsact_entity_id
+			( ecsact_entity_id ecsact_entity_id
 			)
 		{
 			std::scoped_lock lk(mutex->get());
@@ -160,14 +159,14 @@ namespace ecsact_entt_rt {
 			return _create_entity();
 		}
 
-		entt::entity entt_entity_id
-			( ::ecsact::entity_id ecsact_entity_id
+		entt::entity get_entt_entity_id
+			( ecsact_entity_id ecsact_entity_id
 			) const
 		{
 			return entities_map.at(ecsact_entity_id);
 		}
 
-		::ecsact::entity_id ecsact_entity_id
+		ecsact_entity_id get_ecsact_entity_id
 			( entt::entity entt_entity_id
 			) const
 		{

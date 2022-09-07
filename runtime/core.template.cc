@@ -41,10 +41,7 @@ void ecsact_ensure_entity
 	, ecsact_entity_id    entity_id
 	)
 {
-	runtime.ensure_entity(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id)
-	);
+	runtime.ensure_entity(reg_id, entity_id);
 }
 
 bool ecsact_entity_exists
@@ -52,10 +49,7 @@ bool ecsact_entity_exists
 	, ecsact_entity_id    entity_id
 	)
 {
-	return runtime.entity_exists(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id)
-	);
+	return runtime.entity_exists(reg_id, entity_id);
 }
 
 void ecsact_destroy_entity
@@ -63,17 +57,14 @@ void ecsact_destroy_entity
 	, ecsact_entity_id    entity_id
 	)
 {
-	runtime.destroy_entity(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id)
-	);
+	runtime.destroy_entity(reg_id, entity_id);
 }
 
 int ecsact_count_entities
 	( ecsact_registry_id  reg_id
 	)
 {
-	return runtime.count_entities(static_cast<ecsact::registry_id>(reg_id));
+	return runtime.count_entities(reg_id);
 }
 
 void ecsact_get_entities
@@ -84,9 +75,9 @@ void ecsact_get_entities
 	)
 {
 	runtime.get_entities(
-		static_cast<ecsact::registry_id>(reg_id),
+		reg_id,
 		max_entities_count,
-		reinterpret_cast<ecsact::entity_id*>(out_entities),
+		out_entities,
 		out_entities_count
 	);
 }
@@ -99,9 +90,9 @@ void ecsact_add_component
 	)
 {
 	runtime.add_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id),
-		static_cast<ecsact::component_id>(component_id),
+		reg_id,
+		entity_id,
+		component_id,
 		component_data
 	);
 }
@@ -113,9 +104,9 @@ bool ecsact_has_component
 	)
 {
 	return runtime.has_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id),
-		static_cast<ecsact::component_id>(component_id)
+		reg_id,
+		entity_id,
+		component_id
 	);
 }
 
@@ -126,9 +117,9 @@ const void* ecsact_get_component
 	)
 {
 	return runtime.get_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id),
-		static_cast<ecsact::component_id>(component_id)
+		reg_id,
+		entity_id,
+		component_id
 	);
 }
 
@@ -138,8 +129,8 @@ int ecsact_count_components
 	)
 {
 	return runtime.count_components(
-		static_cast<ecsact::registry_id>(registry_id),
-		static_cast<ecsact::entity_id>(entity_id)
+		registry_id,
+		entity_id
 	);
 }
 
@@ -151,8 +142,8 @@ void ecsact_each_component
 	)
 {
 	runtime.each_component(
-		static_cast<ecsact::registry_id>(registry_id),
-		static_cast<ecsact::entity_id>(entity_id),
+		registry_id,
+		entity_id,
 		callback,
 		callback_user_data
 	);
@@ -168,10 +159,10 @@ void ecsact_get_components
 	)
 {
 	runtime.get_components(
-		static_cast<ecsact::registry_id>(registry_id),
-		static_cast<ecsact::entity_id>(entity_id),
+		registry_id,
+		entity_id,
 		max_components_count,
-		reinterpret_cast<ecsact::component_id*>(out_component_ids),
+		out_component_ids,
 		out_components_data,
 		out_components_count
 	);
@@ -185,9 +176,9 @@ void ecsact_update_component
 	)
 {
 	runtime.update_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id),
-		static_cast<ecsact::component_id>(component_id),
+		reg_id,
+		entity_id,
+		component_id,
 		component_data
 	);
 }
@@ -199,9 +190,9 @@ void ecsact_remove_component
 	)
 {
 	runtime.remove_component(
-		static_cast<ecsact::registry_id>(reg_id),
-		static_cast<ecsact::entity_id>(entity_id),
-		static_cast<ecsact::component_id>(component_id)
+		reg_id,
+		entity_id,
+		component_id
 	);
 }
 
@@ -221,7 +212,7 @@ void ecsact_execute_systems
 	}
 
 	runtime.execute_systems(
-		static_cast<ecsact::registry_id>(registry_id),
+		registry_id,
 		execution_count,
 		execution_options_list,
 		events_collector_opt

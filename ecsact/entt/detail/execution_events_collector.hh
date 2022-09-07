@@ -1,8 +1,7 @@
 #pragma once
 
 #include <type_traits>
-#include <ecsact/runtime/core.h>
-#include <ecsact/runtime.hh>
+#include "ecsact/runtime/core.h"
 
 namespace ecsact_entt_rt {
 	struct execution_events_collector {
@@ -23,7 +22,7 @@ namespace ecsact_entt_rt {
 		template<typename C>
 			requires(!std::is_empty_v<C>)
 		void invoke_init_callback
-			( ::ecsact::entity_id  entity
+			( ecsact_entity_id  entity
 			, const C&             component
 			)
 		{
@@ -39,7 +38,7 @@ namespace ecsact_entt_rt {
 		template<typename C>
 			requires(std::is_empty_v<C>)
 		void invoke_init_callback
-			( ::ecsact::entity_id entity
+			( ecsact_entity_id entity
 			)
 		{
 			target->init_callback(
@@ -54,7 +53,7 @@ namespace ecsact_entt_rt {
 		template<typename C>
 			requires(!std::is_empty_v<C>)
 		void invoke_update_callback
-			( ::ecsact::entity_id  entity
+			( ecsact_entity_id  entity
 			, const C&             component
 			)
 		{
@@ -70,7 +69,7 @@ namespace ecsact_entt_rt {
 		template<typename C>
 			requires(std::is_empty_v<C>)
 		void invoke_update_callback
-			( ::ecsact::entity_id entity
+			( ecsact_entity_id entity
 			)
 		{
 			target->update_callback(
@@ -85,8 +84,8 @@ namespace ecsact_entt_rt {
 		template<typename C>
 			requires(!std::is_empty_v<C>)
 		void invoke_remove_callback
-			( ::ecsact::entity_id  entity
-			, const C&             component
+			( ecsact_entity_id  entity
+			, const C&          component
 			)
 		{
 			target->remove_callback(
@@ -101,7 +100,7 @@ namespace ecsact_entt_rt {
 		template<typename C>
 			requires(std::is_empty_v<C>)
 		void invoke_remove_callback
-			( ::ecsact::entity_id entity
+			( ecsact_entity_id entity
 			)
 		{
 			target->remove_callback(

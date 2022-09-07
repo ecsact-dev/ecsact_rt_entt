@@ -1,9 +1,8 @@
-#include <ecsact/runtime/dynamic.h>
-
 #include <boost/mp11.hpp>
+#include "ecsact/runtime/dynamic.h"
+#include "ecsact/entt/detail/system_execution_context.hh"
 
 #include "common.template.hh"
-#include "system_execution_context.hh"
 
 using namespace ecsact_entt_rt;
 
@@ -32,7 +31,7 @@ static void cast_and_use_ctx
 	mp_for_each<all_systems_identities>([&]<typename S>(mp_identity<S>) {
 		// S is a system or an action so we must cast the potential action id to a
 		// system id.
-		if(static_cast<::ecsact::system_id>(S::id) == ctx->system_id) {
+		if(ecsact_id_cast<ecsact_system_like_id>(S::id) == ctx->system_id) {
 			fn(*static_cast<system_execution_context<package, S>*>(ctx->impl));
 		}
 	});
@@ -45,7 +44,7 @@ void ecsact_system_execution_context_action
 {
 	using boost::mp11::mp_for_each;
 
-	auto action_id = static_cast<ecsact::action_id>(context->system_id);
+	auto action_id = static_cast<ecsact_action_id>(context->system_id);
 
 	cast_and_use_ctx(context, [&](auto& context) {
 		mp_for_each<typename package::actions>([&]<typename A>(A) {
@@ -64,10 +63,7 @@ void ecsact_system_execution_context_add
 	)
 {
 	cast_and_use_ctx(context, [&](auto& context) {
-		context.add(
-			static_cast<::ecsact::component_id>(component_id),
-			component_data
-		);
+		context.add(component_id, component_data);
 	});
 }
 
@@ -77,7 +73,7 @@ void ecsact_system_execution_context_remove
 	)
 {
 	cast_and_use_ctx(context, [&](auto& context) {
-		context.remove(static_cast<::ecsact::component_id>(component_id));
+		context.remove(component_id);
 	});
 }
 
@@ -88,10 +84,7 @@ void ecsact_system_execution_context_get
 	)
 {
 	cast_and_use_ctx(context, [&](auto& context) {
-		context.get(
-			static_cast<::ecsact::component_id>(component_id),
-			out_component_data
-		);
+		context.get(component_id, out_component_data);
 	});
 }
 
@@ -102,10 +95,7 @@ void ecsact_system_execution_context_update
 	)
 {
 	cast_and_use_ctx(context, [&](auto& context) {
-		context.update(
-			static_cast<::ecsact::component_id>(component_id),
-			component_data
-		);
+		context.update(component_id, component_data);
 	});
 }
 
@@ -117,9 +107,7 @@ bool ecsact_system_execution_context_has
 	bool has_component = false;
 
 	cast_and_use_ctx(context, [&](auto& context) {
-		has_component = context.has(
-			static_cast<::ecsact::component_id>(component_id)
-		);
+		has_component = context.has(component_id);
 	});
 
 	return has_component;
@@ -150,7 +138,7 @@ void ecsact_system_execution_context_generate
 	cast_and_use_ctx(context, [&](auto& context) {
 		context.generate(
 			component_count,
-			reinterpret_cast<::ecsact::component_id*>(component_ids),
+			component_ids,
 			components_data
 		);
 	});
@@ -158,20 +146,17 @@ void ecsact_system_execution_context_generate
 
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
 bool ecsact_set_system_execution_impl
-	( ecsact_system_id              system_id
+	( ecsact_system_like_id         system_id
 	, ecsact_system_execution_impl  system_exec_impl
 	)
 {
-	return runtime.set_system_execution_impl(
-		static_cast<::ecsact::system_id>(system_id),
-		system_exec_impl
-	);
+	return runtime.set_system_execution_impl(system_id, system_exec_impl);
 }
 #endif
 
-ecsact_system_id ecsact_system_execution_context_id
+ecsact_system_like_id ecsact_system_execution_context_id
 	( ecsact_system_execution_context* context
 	)
 {
-	return static_cast<ecsact_system_id>(context->system_id);
+	return context->system_id;
 }

@@ -6,17 +6,18 @@
 #include <unordered_set>
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
+#include "ecsact/runtime/common.h"
+#include "ecsact/entt/event_markers.hh"
+#include "ecsact/entt/system_view.hh"
 
 #include "registry_info.hh"
-#include "event_markers.hh"
-#include "system_entt_view.hh"
 
 namespace ecsact_entt_rt {
 	struct system_execution_context_base;
 }
 
 struct ecsact_system_execution_context {
-	ecsact::system_id system_id;
+	ecsact_system_like_id system_id;
 	// System execution context implementation. To be casted to specific derived
 	// templated type. See `system_execution_context<Package, System>`
 	ecsact_entt_rt::system_execution_context_base* impl;
@@ -27,8 +28,6 @@ namespace ecsact_entt_rt {
 	struct system_execution_context_base {
 		using cptr_t = struct ::ecsact_system_execution_context*;
 		using const_cptr_t = const struct ::ecsact_system_execution_context*;
-		using cpp_ptr_t = ecsact::detail::system_execution_context*;
-		using const_cpp_ptr_t = ecsact::detail::system_execution_context*;
 
 		::entt::entity entity;
 		const cptr_t parent;
@@ -39,11 +38,9 @@ namespace ecsact_entt_rt {
 	struct system_execution_context : system_execution_context_base {
 		using system_execution_context_base::cptr_t;
 		using system_execution_context_base::const_cptr_t;
-		using system_execution_context_base::cpp_ptr_t;
-		using system_execution_context_base::const_cpp_ptr_t;
 
 		using package = Package;
-		using view_type = ecsact::entt::system_view_type<SystemT>;
+		using view_type = ecsact::entt::system_view_type<Package, SystemT>;
 		ecsact_entt_rt::registry_info<Package>& info;
 		view_type& view;
 
@@ -61,7 +58,7 @@ namespace ecsact_entt_rt {
 			, info(info)
 			, view(view)
 		{
-			_c_ctx.system_id = static_cast<::ecsact::system_id>(SystemT::id);
+			_c_ctx.system_id = static_cast<ecsact_system_id>(SystemT::id);
 			_c_ctx.impl = this;
 		}
 
@@ -77,20 +74,6 @@ namespace ecsact_entt_rt {
 		 */
 		inline const_cptr_t cptr() const noexcept {
 			return reinterpret_cast<const_cptr_t>(&_c_ctx);
-		}
-
-		/**
-		 * Pointer for ecsact C++ system execution
-		 */
-		inline cpp_ptr_t cpp_ptr() noexcept {
-			return reinterpret_cast<cpp_ptr_t>(cptr());
-		}
-
-		/**
-		 * Pointer for ecsact C++ system execution
-		 */
-		inline const_cpp_ptr_t cpp_ptr() const noexcept {
-			return reinterpret_cast<const_cpp_ptr_t>(cptr());
 		}
 
 		template<typename C>
@@ -131,7 +114,7 @@ namespace ecsact_entt_rt {
 		}
 
 		void add
-			( ::ecsact::component_id  component_id
+			( ecsact_component_id  component_id
 			, const void*             component_data
 			)
 		{
@@ -190,7 +173,7 @@ namespace ecsact_entt_rt {
 		}
 
 		void remove
-			( ::ecsact::component_id  component_id
+			( ecsact_component_id  component_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -208,7 +191,7 @@ namespace ecsact_entt_rt {
 		}
 
 		void get
-			( ::ecsact::component_id  component_id
+			( ecsact_component_id  component_id
 			, void*                   out_component_data
 			)
 		{
@@ -262,7 +245,7 @@ namespace ecsact_entt_rt {
 		}
 
 		void update
-			( ::ecsact::component_id  component_id
+			( ecsact_component_id  component_id
 			, const void*             component_data
 			)
 		{
@@ -281,7 +264,7 @@ namespace ecsact_entt_rt {
 		}
 
 		bool has
-			( ::ecsact::component_id  component_id
+			( ecsact_component_id  component_id
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -297,7 +280,7 @@ namespace ecsact_entt_rt {
 
 		void generate
 			( int                      component_count
-			, ::ecsact::component_id*  component_ids
+			, ecsact_component_id*  component_ids
 			, const void**             components_data
 			)
 		{
