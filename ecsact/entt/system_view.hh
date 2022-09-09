@@ -61,17 +61,17 @@ namespace ecsact::entt {
 			mp_list<>
 		>;
 
-		using get_types = mp_assign<mp_list<>, mp_unique<mp_flatten<mp_push_back<
+		using get_types = mp_unique<mp_flatten<mp_push_back<
 			readonly_components,
 			readwrite_components,
 			include_components,
 			mp_transform<beforechange_storage, readwrite_components>
-		>>>>;
+		>>>;
 
-		using exclude_types = mp_assign<mp_list<>, mp_unique<mp_flatten<mp_push_back<
+		using exclude_types = mp_unique<mp_flatten<mp_push_back<
 			exclude_components,
 			removes_components
-		>>>>;
+		>>>;
 
 		return detail::system_view_helper(get_types{}, exclude_types{}, registry);
 	}

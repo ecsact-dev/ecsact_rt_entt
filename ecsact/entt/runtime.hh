@@ -790,11 +790,11 @@ namespace ecsact::entt {
 				for(entt_entity_type entity : added_view) {
 					if constexpr(std::is_empty_v<C>) {
 						events_collector.invoke_init_callback<C>(
-							info.ecsact_entity_id(entity)
+							info.get_ecsact_entity_id(entity)
 						);
 					} else {
 						events_collector.invoke_init_callback<C>(
-							info.ecsact_entity_id(entity),
+							info.get_ecsact_entity_id(entity),
 							added_view.template get<C>(entity)
 						);
 					}
@@ -826,7 +826,7 @@ namespace ecsact::entt {
 						
 						if(before.value != current) {
 							events_collector.invoke_update_callback<C>(
-								info.ecsact_entity_id(entity),
+								info.get_ecsact_entity_id(entity),
 								current
 							);
 						}
@@ -854,11 +854,11 @@ namespace ecsact::entt {
 				for(entt_entity_type entity : removed_view) {
 					if constexpr(std::is_empty_v<C>) {
 						events_collector.invoke_remove_callback<C>(
-							info.ecsact_entity_id(entity)
+							info.get_ecsact_entity_id(entity)
 						);
 					} else {
 						events_collector.invoke_remove_callback<C>(
-							info.ecsact_entity_id(entity),
+							info.get_ecsact_entity_id(entity),
 							removed_view.template get<detail::temp_storage<C>>(entity).value
 						);
 					}
