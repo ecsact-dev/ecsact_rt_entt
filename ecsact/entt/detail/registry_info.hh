@@ -51,7 +51,9 @@ namespace ecsact_entt_rt {
 				registry.storage<component_added<C>>();
 				registry.storage<component_changed<C>>();
 				registry.storage<component_removed<C>>();
-				registry.storage<beforechange_storage<C>>();
+				if constexpr(!std::is_empty_v<C>) {
+					registry.storage<beforechange_storage<C>>();
+				}
 			});
 		}
 
@@ -73,8 +75,7 @@ namespace ecsact_entt_rt {
 
 			registry.emplace<C>(entity, std::forward<Args>(args)...);
 
-			mp_for_each<typename package::system_writables>([&]<typename O>(O) {
-				if constexpr(C::transient) return;
+			mp_for_each<typename package::components>([&]<typename O>(O) {
 				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
 					using ecsact::entt::detail::beforechange_storage;
 					beforechange_storage<O> beforechange = {
@@ -98,8 +99,7 @@ namespace ecsact_entt_rt {
 
 			registry.erase<C>(entity);
 
-			mp_for_each<typename package::system_writables>([&]<typename O>(O) {
-				if constexpr(C::transient) return;
+			mp_for_each<typename package::components>([&]<typename O>(O) {
 				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
 					using ecsact::entt::detail::beforechange_storage;
 					registry.erase<beforechange_storage<O>>(entity);

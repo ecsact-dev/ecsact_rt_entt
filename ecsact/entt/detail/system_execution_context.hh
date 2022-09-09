@@ -213,11 +213,12 @@ namespace ecsact_entt_rt {
 				SystemT,
 				mp_list<>
 			>;
-			using gettable_components = mp_assign<mp_list<>, mp_unique<mp_flatten<mp_push_back<
+			using gettable_components = mp_assign<mp_list<>, mp_unique<mp_flatten<
 				readonly_components,
 				readwrite_components
-			>>>>;
-			mp_for_each<gettable_components>([&]<typename C>(const C&) {
+			>>>;
+
+			mp_for_each<gettable_components>([&]<typename C>(C) {
 				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 					if constexpr(!std::is_empty_v<C>) {
 						C& out_component = *reinterpret_cast<C*>(out_component_data);
@@ -282,7 +283,7 @@ namespace ecsact_entt_rt {
 			>;
 
 			mp_for_each<readwrite_components>([&]<typename C>(C) {
-				if(ecsact_cast_id<ecsact_component_like_id>(C::id) == component_id) {
+				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 					update<C>(*reinterpret_cast<const C*>(component_data));
 				}
 			});

@@ -25,13 +25,12 @@ namespace ecsact::entt {
 	{
 		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_unique;
-		using boost::mp11::mp_push_back;
 		using boost::mp11::mp_flatten;
 		using boost::mp11::mp_list;
-		using boost::mp11::mp_push_back;
 		using boost::mp11::mp_assign;
 		using boost::mp11::mp_transform;
 		using boost::mp11::mp_map_find;
+		using boost::mp11::mp_push_back;
 
 		using ecsact::entt::detail::temp_storage;
 		using ecsact::entt::detail::beforechange_storage;
