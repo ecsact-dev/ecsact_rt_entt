@@ -1,3 +1,6 @@
+"""
+"""
+
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
@@ -26,6 +29,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         copts = copts,
         strip_include_prefix = "%s__public_hdrs" % name,
         deps = [
+            "@ecsact_lang_cpp//:execution_context",
         ],
         **kwargs
     )

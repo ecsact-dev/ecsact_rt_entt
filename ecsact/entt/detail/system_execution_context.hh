@@ -58,7 +58,7 @@ namespace ecsact_entt_rt {
 			, info(info)
 			, view(view)
 		{
-			_c_ctx.system_id = static_cast<ecsact_system_id>(SystemT::id);
+			_c_ctx.system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
 			_c_ctx.impl = this;
 		}
 

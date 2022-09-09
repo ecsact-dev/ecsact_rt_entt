@@ -10,6 +10,7 @@
 #include <tuple>
 #include <execution>
 #include <span>
+#include <algorithm>
 #include <boost/mp11.hpp>
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/core.h"
@@ -631,45 +632,17 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
-			using boost::mp11::mp_empty;
-			using std::execution::par_unseq;
-			using std::execution::seq;
+			auto view = system_view<package, SystemT>(info.registry);
 
-#ifndef NDEBUG
-			[[maybe_unused]] auto system_name = typeid(SystemT).name();
-#endif
-
-			auto view = system_view<SystemT>(info.registry);
-
-			constexpr bool can_exec_parallel =
-				mp_empty<ChildSystemsListT>::value &&
-				mp_empty<typename SystemT::adds>::value &&
-				mp_empty<typename SystemT::removes>::value &&
-				mp_empty<typename SystemT::generates>::value;
-
-			if constexpr(can_exec_parallel) {
-				// TODO(zaucy): Make this par_unseq
-				std::for_each(par_unseq, view.begin(), view.end(), [&](auto entity) {
-					_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
-						info,
-						view,
-						entity,
-						parent,
-						action,
-						actions
-					);
-				});
-			} else {
-				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
-					_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
-						info,
-						view,
-						entity,
-						parent,
-						action,
-						actions
-					);
-				});
+			for(::entt::entity entity : view) {
+				_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
+					info,
+					view,
+					entity,
+					parent,
+					action,
+					actions
+				);
 			}
 		}
 
@@ -681,7 +654,6 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
-			using boost::mp11::mp_for_each;
 			using boost::mp11::mp_empty;
 			using boost::mp11::mp_size;
 
@@ -731,7 +703,7 @@ namespace ecsact::entt {
 
 			[[maybe_unused]]
 			const auto system_name = typeid(SystemT).name();
-			const auto system_id = static_cast<ecsact_system_id>(SystemT::id);
+			const auto system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
 
 			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
 
@@ -819,9 +791,13 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
+			if constexpr(is_trivial_system<package, SystemT>()) {
+				trivial_system_impl<package, SystemT>(info.registry);
+			}
+
 			if constexpr(is_action<SystemT>()) {
 				for(const ecsact_action& action : actions) {
-					if(action.action_id == static_cast<ecsact_system_id>(SystemT::id)) {
+					if(action.action_id == SystemT::id) {
 						if constexpr(SystemT::has_trivial_impl) {
 							_execute_system_trivial<SystemT, ChildSystemsListT>(
 								info,

@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include <ecsact/runtime/core.h>
-#include <ecsact/runtime/dynamic.h>
+#include "ecsact/runtime/core.h"
+#include "ecsact/runtime/dynamic.h"
 
-#include "runtime/test/runtime_test.ecsact.hh"
-#include "runtime/test/runtime_test.ecsact.systems.hh"
+#include "runtime_test.ecsact.hh"
+#include "runtime_test.ecsact.systems.hh"
 
 #ifndef ECSACT_ENTT_TEST_DYNAMIC_SYSTEM_IMPL
 void runtime_test::SimpleSystem(SimpleSystem::context& ctx) {
@@ -179,7 +179,7 @@ TEST(Core, DynamicSystemImpl) {
 	ASSERT_EQ(*comp_get, comp);
 
 	ecsact_set_system_execution_impl(
-		static_cast<ecsact_system_id>(runtime_test::SimpleSystem::id),
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
 		&dynamic_impl
 	);
 	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
@@ -212,7 +212,7 @@ TEST(Core, StaticSystemImpl) {
 
 	// Clear any system impls that may already be set so we can use the static one
 	ecsact_set_system_execution_impl(
-		static_cast<ecsact_system_id>(runtime_test::SimpleSystem::id),
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
 		nullptr
 	);
 
