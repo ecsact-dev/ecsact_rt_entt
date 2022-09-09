@@ -2,6 +2,7 @@
 
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
+#include "ecsact/entt/detail/mp11_util.hh"
 #include "ecsact/entt/event_markers.hh"
 
 namespace ecsact::entt::detail {
@@ -22,6 +23,7 @@ namespace ecsact::entt {
 		( ::entt::registry& registry
 		)
 	{
+		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_unique;
 		using boost::mp11::mp_push_back;
 		using boost::mp11::mp_flatten;
@@ -34,33 +36,30 @@ namespace ecsact::entt {
 		using ecsact::entt::detail::temp_storage;
 		using ecsact::entt::detail::beforechange_storage;
 
-		using readonly_components = mp_map_find<
+		using readonly_components = mp_map_find_value_or<
 			typename Package::system_readonly_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using readwrite_components = mp_map_find<
+		using readwrite_components = mp_map_find_value_or<
 			typename Package::system_readwrite_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using optional_components = mp_map_find<
-			typename Package::system_optional_components,
-			SystemT
-		>;
-		using adds_components = mp_map_find<
-			typename Package::system_adds_components,
-			SystemT
-		>;
-		using removes_components = mp_map_find<
+		using removes_components = mp_map_find_value_or<
 			typename Package::system_removes_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using include_components = mp_map_find<
+		using include_components = mp_map_find_value_or<
 			typename Package::system_include_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using exclude_components = mp_map_find<
+		using exclude_components = mp_map_find_value_or<
 			typename Package::system_exclude_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
 
 		using get_types = mp_assign<mp_list<>, mp_unique<mp_flatten<mp_push_back<
@@ -71,7 +70,8 @@ namespace ecsact::entt {
 		>>>>;
 
 		using exclude_types = mp_assign<mp_list<>, mp_unique<mp_flatten<mp_push_back<
-			exclude_components
+			exclude_components,
+			removes_components
 		>>>>;
 
 		return detail::system_view_helper(get_types{}, exclude_types{}, registry);

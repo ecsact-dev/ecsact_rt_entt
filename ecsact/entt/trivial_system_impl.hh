@@ -5,36 +5,47 @@
 
 namespace ecsact::entt {
 
+	/**
+	 * Checks if a system 'trivial' i.e. there is only a single possible
+	 * meaningful implementation.
+	 */
 	template<typename Package, typename SystemT>
 	constexpr bool is_trivial_system() {
-		using boost::mp11::mp_map_find;
+		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_filter;
 		using boost::mp11::mp_empty;
 		using boost::mp11::mp_size;
+		using boost::mp11::mp_list;
 
-		using readonly_components = mp_map_find<
+		using readonly_components = mp_map_find_value_or<
 			typename Package::system_readonly_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using readwrite_components = mp_map_find<
+		using readwrite_components = mp_map_find_value_or<
 			typename Package::system_readwrite_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using writeonly_components = mp_map_find<
+		using writeonly_components = mp_map_find_value_or<
 			typename Package::system_writeonly_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using optional_components = mp_map_find<
+		using optional_components = mp_map_find_value_or<
 			typename Package::system_optional_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using adds_components = mp_map_find<
+		using adds_components = mp_map_find_value_or<
 			typename Package::system_adds_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using removes_components = mp_map_find<
+		using removes_components = mp_map_find_value_or<
 			typename Package::system_removes_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
 		using adds_tag_components = mp_filter<std::is_empty, adds_components>;
 
@@ -60,45 +71,57 @@ namespace ecsact::entt {
 		return !can_write || !can_meaningfully_read || !can_add_non_tag_compnents;
 	}
 
-	template<typename Package, typename SystemT>
+	template<typename Package, typename SystemT, typename EachCallbackT>
 		requires (is_trivial_system<Package, SystemT>())
 	void trivial_system_impl
-		( ::entt::registry& registry
+		( ::entt::registry&  registry
+		, EachCallbackT&&    each_callback = [](auto&, auto){}
 		)
 	{
-		using boost::mp11::mp_map_find;
+		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_empty;
+		using boost::mp11::mp_list;
 		using boost::mp11::mp_for_each;
 
-		using readonly_components = mp_map_find<
+		using readonly_components = mp_map_find_value_or<
 			typename Package::system_readonly_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using readwrite_components = mp_map_find<
+		using readwrite_components = mp_map_find_value_or<
 			typename Package::system_readwrite_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using optional_components = mp_map_find<
+		using optional_components = mp_map_find_value_or<
 			typename Package::system_optional_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using adds_components = mp_map_find<
+		using adds_components = mp_map_find_value_or<
 			typename Package::system_adds_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using removes_components = mp_map_find<
+		using removes_components = mp_map_find_value_or<
 			typename Package::system_removes_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using include_components = mp_map_find<
+		using include_components = mp_map_find_value_or<
 			typename Package::system_include_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
-		using exclude_components = mp_map_find<
+		using exclude_components = mp_map_find_value_or<
 			typename Package::system_exclude_components,
-			SystemT
+			SystemT,
+			mp_list<>
 		>;
 
+		// If we have a system that can only remove and does not use any filtering
+		// i.e. simply removes all of a component, then we can use a short cut and
+		// use `registry.clear`.
 		constexpr bool is_removes_only =
 			!mp_empty<removes_components>::value &&
 			mp_empty<readonly_components>::value &&
@@ -114,15 +137,19 @@ namespace ecsact::entt {
 			});
 		} else {
 			auto view = system_view<Package, SystemT>(registry);
-
 			for(auto entity : view) {
 				mp_for_each<adds_components>([&]<typename C>(C) {
+					// Only empty comopnents should have made it into this list if the
+					// `is_trivial_system` constraint succeeded.
+					static_assert(std::is_empty_v<C>);
 					registry.emplace<C>(entity);
 				});
 
 				mp_for_each<removes_components>([&]<typename C>(C) {
 					registry.erase<C>(entity);
 				});
+
+				each_callback(view, entity);
 			}
 		}
 	}

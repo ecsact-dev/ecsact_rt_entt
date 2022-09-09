@@ -29,8 +29,6 @@ static void cast_and_use_ctx
 	using all_systems_identities = mp_transform<mp_identity, all_systems>;
 
 	mp_for_each<all_systems_identities>([&]<typename S>(mp_identity<S>) {
-		// S is a system or an action so we must cast the potential action id to a
-		// system id.
 		if(ecsact_id_cast<ecsact_system_like_id>(S::id) == ctx->system_id) {
 			fn(*static_cast<system_execution_context<package, S>*>(ctx->impl));
 		}
@@ -58,7 +56,7 @@ void ecsact_system_execution_context_action
 
 void ecsact_system_execution_context_add
 	( ecsact_system_execution_context*  context
-	, ecsact_component_id               component_id
+	, ecsact_component_like_id          component_id
 	, const void*                       component_data
 	)
 {
@@ -69,7 +67,7 @@ void ecsact_system_execution_context_add
 
 void ecsact_system_execution_context_remove
 	( ecsact_system_execution_context*  context
-	, ecsact_component_id               component_id
+	, ecsact_component_like_id          component_id
 	)
 {
 	cast_and_use_ctx(context, [&](auto& context) {
@@ -79,7 +77,7 @@ void ecsact_system_execution_context_remove
 
 void ecsact_system_execution_context_get
 	( ecsact_system_execution_context*  context
-	, ecsact_component_id               component_id
+	, ecsact_component_like_id          component_id
 	, void*                             out_component_data
 	)
 {
@@ -90,7 +88,7 @@ void ecsact_system_execution_context_get
 
 void ecsact_system_execution_context_update
 	( ecsact_system_execution_context*  context
-	, ecsact_component_id               component_id
+	, ecsact_component_like_id          component_id
 	, const void*                       component_data
 	)
 {
@@ -101,7 +99,7 @@ void ecsact_system_execution_context_update
 
 bool ecsact_system_execution_context_has
 	( ecsact_system_execution_context*  context
-	, ecsact_component_id               component_id
+	, ecsact_component_like_id          component_id
 	)
 {
 	bool has_component = false;
@@ -131,7 +129,7 @@ bool ecsact_system_execution_context_same
 void ecsact_system_execution_context_generate
 	( ecsact_system_execution_context*  context
 	, int                               component_count
-	, ecsact_component_id*              component_ids
+	, ecsact_component_like_id*         component_ids
 	, const void**                      components_data
 	)
 {

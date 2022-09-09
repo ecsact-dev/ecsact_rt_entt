@@ -114,14 +114,14 @@ namespace ecsact_entt_rt {
 		}
 
 		void add
-			( ecsact_component_id  component_id
-			, const void*             component_data
+			( ecsact_component_like_id  component_id
+			, const void*               component_data
 			)
 		{
 			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
+				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 					add<C>(*static_cast<const C*>(component_data));
 				}
 			});
@@ -173,13 +173,13 @@ namespace ecsact_entt_rt {
 		}
 
 		void remove
-			( ecsact_component_id  component_id
+			( ecsact_component_like_id  component_id
 			)
 		{
 			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
+				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 					remove<C>();
 				}
 			});
@@ -191,21 +191,34 @@ namespace ecsact_entt_rt {
 		}
 
 		void get
-			( ecsact_component_id  component_id
-			, void*                   out_component_data
+			( ecsact_component_like_id  component_id
+			, void*                     out_component_data
 			)
 		{
+			using ecsact::entt_mp11_util::mp_map_find_value_or;
 			using boost::mp11::mp_for_each;
 			using boost::mp11::mp_unique;
 			using boost::mp11::mp_push_back;
 			using boost::mp11::mp_flatten;
+			using boost::mp11::mp_assign;
+			using boost::mp11::mp_list;
 
-			using gettable_components = mp_unique<mp_flatten<mp_push_back<
-				typename SystemT::writables,
-				typename SystemT::readables
-			>>>;
+			using readonly_components = mp_map_find_value_or<
+				typename Package::system_readonly_components,
+				SystemT,
+				mp_list<>
+			>;
+			using readwrite_components = mp_map_find_value_or<
+				typename Package::system_readwrite_components,
+				SystemT,
+				mp_list<>
+			>;
+			using gettable_components = mp_assign<mp_list<>, mp_unique<mp_flatten<mp_push_back<
+				readonly_components,
+				readwrite_components
+			>>>>;
 			mp_for_each<gettable_components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
+				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 					if constexpr(!std::is_empty_v<C>) {
 						C& out_component = *reinterpret_cast<C*>(out_component_data);
 						out_component = get<C>();
@@ -216,17 +229,25 @@ namespace ecsact_entt_rt {
 
 		template<typename C> requires(!std::is_empty_v<C>)
 		void update(const C& c) {
+			using ecsact::entt_mp11_util::mp_map_find_value_or;
 			using boost::mp11::mp_apply;
 			using boost::mp11::mp_bind_front;
 			using boost::mp11::mp_transform_q;
 			using boost::mp11::mp_any;
+			using boost::mp11::mp_list;
 
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
 
+			using readwrite_components = mp_map_find_value_or<
+				typename Package::system_readwrite_components,
+				SystemT,
+				mp_list<>
+			>;
+
 			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
 				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
-				typename SystemT::writables
+				readwrite_components
 			>>::value;
 
 			static_assert(is_writable);
@@ -245,14 +266,23 @@ namespace ecsact_entt_rt {
 		}
 
 		void update
-			( ecsact_component_id  component_id
-			, const void*             component_data
+			( ecsact_component_like_id  component_id
+			, const void*               component_data
 			)
 		{
+			using ecsact::entt_mp11_util::mp_map_find_value_or;
 			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_map_find;
+			using boost::mp11::mp_list;
 
-			mp_for_each<typename SystemT::writables>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
+			using readwrite_components = mp_map_find_value_or<
+				typename Package::system_readwrite_components,
+				SystemT,
+				mp_list<>
+			>;
+
+			mp_for_each<readwrite_components>([&]<typename C>(C) {
+				if(ecsact_cast_id<ecsact_component_like_id>(C::id) == component_id) {
 					update<C>(*reinterpret_cast<const C*>(component_data));
 				}
 			});
@@ -264,14 +294,23 @@ namespace ecsact_entt_rt {
 		}
 
 		bool has
-			( ecsact_component_id  component_id
+			( ecsact_component_like_id  component_id
 			)
 		{
+			using ecsact::entt_mp11_util::mp_map_find_value_or;
 			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_map_find;
+			using boost::mp11::mp_list;
+
+			using optional_components = mp_map_find_value_or<
+				typename Package::system_optional_components,
+				SystemT,
+				mp_list<>
+			>;
 
 			bool result = false;
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
-				if(C::id == component_id) {
+			mp_for_each<optional_components>([&]<typename C>(C) {
+				if(ecsact_cast_id<ecsact_component_like_id>(C::id) == component_id) {
 					result = has<C>();
 				}
 			});
@@ -279,9 +318,9 @@ namespace ecsact_entt_rt {
 		}
 
 		void generate
-			( int                      component_count
-			, ecsact_component_id*  component_ids
-			, const void**             components_data
+			( int                        component_count
+			, ecsact_component_like_id*  component_ids
+			, const void**               components_data
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -293,7 +332,7 @@ namespace ecsact_entt_rt {
 				auto component_id = component_ids[i];
 				auto component_data = components_data[i];
 				mp_for_each<typename package::components>([&]<typename C>(const C&) {
-					if(C::id == component_id) {
+					if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 						if constexpr(std::is_empty_v<C>) {
 							info.registry.template emplace<pending_add<C>>(new_entity);
 						} else {

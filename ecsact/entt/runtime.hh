@@ -574,41 +574,14 @@ namespace ecsact::entt {
 			});
 		}
 
-		template<typename SystemT, typename ChildSystemsListT>
-		void _execute_system_trivial_removes_only
+		template<typename ChildSystemsListT>
+		void _execute_systems_list
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
-			, const void*                       action
 			, const actions_span_t&             actions
 			)
 		{
 			using boost::mp11::mp_for_each;
-
-			mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
-				info.registry.template clear<C>();
-			});
-		}
-
-		template<typename SystemT, typename ChildSystemsListT>
-		void _execute_system_trivial_default_itr
-			( registry_info&                       info
-			, system_view_type<package, SystemT>&  view
-			, entt_entity_type                     entity
-			, ecsact_system_execution_context*     parent
-			, const void*                          action
-			, const actions_span_t&                actions
-			)
-		{
-			using boost::mp11::mp_for_each;
-
-			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
-
-			mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
-				ctx.template remove<C>();
-			});
-			mp_for_each<typename SystemT::adds>([&]<typename C>(C) {
-				ctx.template add<C>(C{});
-			});
 
 			mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
 				using boost::mp11::mp_first;
@@ -618,73 +591,53 @@ namespace ecsact::entt {
 
 				_execute_system<ChildSystemT, GrandChildSystemsListT>(
 					info,
-					ctx.cptr(),
+					parent,
 					actions
 				);
 			});
 		}
 
 		template<typename SystemT, typename ChildSystemsListT>
-		void _execute_system_trivial_default
-			( registry_info&                    info
-			, ecsact_system_execution_context*  parent
-			, const void*                       action
-			, const actions_span_t&             actions
-			)
-		{
-			auto view = system_view<package, SystemT>(info.registry);
-
-			for(::entt::entity entity : view) {
-				_execute_system_trivial_default_itr<SystemT, ChildSystemsListT>(
-					info,
-					view,
-					entity,
-					parent,
-					action,
-					actions
-				);
-			}
-		}
-
-		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_trivial
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
-			, const void*                       action
 			, const actions_span_t&             actions
 			)
 		{
 			using boost::mp11::mp_empty;
-			using boost::mp11::mp_size;
 
-			static_assert(SystemT::has_trivial_impl);
+			const void* action_data = nullptr;
+			auto each_cb = [&](auto& view, auto entity) {
+				if constexpr(!mp_empty<ChildSystemsListT>::value) {
+					system_execution_context<SystemT> ctx(
+						info,
+						view,
+						entity,
+						parent,
+						action_data
+					);
+					_execute_systems_list<ChildSystemsListT>(
+						info,
+						ctx.cptr(),
+						actions
+					);
+				}
+			};
 
-			using excludes_list = typename SystemT::excludes;
-			using includes_list = typename SystemT::includes;
-			using removes_list = typename SystemT::removes;
-			using adds_list = typename SystemT::adds;
-
-			// Check if we are doing a blanket remove for an optimized system
-			// implementation.
-			constexpr bool is_removes_only =
-				mp_empty<excludes_list>::value && 
-				mp_empty<adds_list>::value &&
-				mp_empty<includes_list>::value &&
-				(mp_size<removes_list>::value == 1);
-
-			if constexpr(is_removes_only) {
-				_execute_system_trivial_removes_only<SystemT, ChildSystemsListT>(
-					info,
-					parent,
-					action,
-					actions
-				);
+			if constexpr(is_action<SystemT>()) {
+				for(auto& action : actions) {
+					if(action.action_id == SystemT::id) {
+						action_data = action.action_data;
+						trivial_system_impl<package, SystemT>(
+							info.registry,
+							each_cb
+						);
+					}
+				}
 			} else {
-				_execute_system_trivial_default<SystemT, ChildSystemsListT>(
-					info,
-					parent,
-					action,
-					actions
+				trivial_system_impl<package, SystemT>(
+					info.registry,
+					each_cb
 				);
 			}
 		}
@@ -699,8 +652,6 @@ namespace ecsact::entt {
 			, const actions_span_t&                actions
 			)
 		{
-			using boost::mp11::mp_for_each;
-
 			[[maybe_unused]]
 			const auto system_name = typeid(SystemT).name();
 			const auto system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
@@ -719,68 +670,45 @@ namespace ecsact::entt {
 
 #ifdef ECSACT_ENTT_RUNTIME_STATIC_SYSTEM_IMPLS
 			{
-				SystemT::invoke_static_impl(ctx.cptr());
+				typename SystemT::context sys_cpp_ctx{ctx.cptr()};
+				SystemT::impl(sys_cpp_ctx);
 			}
 #endif
 
-			mp_for_each<ChildSystemsListT>([&]<typename SystemPair>(SystemPair) {
-				using boost::mp11::mp_first;
-				using boost::mp11::mp_second;
-				using ChildSystemT = mp_first<SystemPair>;
-				using GrandChildSystemsListT = mp_second<SystemPair>;
-
-				_execute_system<ChildSystemT, GrandChildSystemsListT>(
-					info,
-					ctx.cptr(),
-					actions
-				);
-			});
+			_execute_systems_list<ChildSystemsListT>(info, ctx.cptr(), actions);
 		}
 
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user
 			( registry_info&                    info
 			, ecsact_system_execution_context*  parent
-			, const void*                       action
 			, const actions_span_t&             actions
 			)
 		{
-			using boost::mp11::mp_empty;
-			using std::execution::seq;
-			using std::execution::par_unseq;
-
-			static_assert(!SystemT::has_trivial_impl);
-
-			auto view = system_view<SystemT>(info.registry);
-
-			constexpr bool can_exec_parallel =
-				mp_empty<ChildSystemsListT>::value &&
-				mp_empty<typename SystemT::adds>::value &&
-				mp_empty<typename SystemT::removes>::value;
-
-			if constexpr(can_exec_parallel) {
-				// TODO(zaucy): Make this par_unseq
-				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
+			auto view = system_view<package, SystemT>(info.registry);
+			const void* action_data = nullptr;
+			auto itr_view = [&] {
+				for(auto entity : view) {
 					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
 						view,
 						entity,
 						parent,
-						action,
+						action_data,
 						actions
 					);
-				});
+				}
+			};
+
+			if constexpr(is_action<SystemT>()) {
+				for(auto& action : actions) {
+					if(action.action_id == SystemT::id) {
+						action_data = action.action_data;
+						itr_view();
+					}
+				}
 			} else {
-				std::for_each(seq, view.begin(), view.end(), [&](auto entity) {
-					_execute_system_user_itr<SystemT, ChildSystemsListT>(
-						info,
-						view,
-						entity,
-						parent,
-						action,
-						actions
-					);
-				});
+				itr_view();
 			}
 		}
 
@@ -792,45 +720,17 @@ namespace ecsact::entt {
 			)
 		{
 			if constexpr(is_trivial_system<package, SystemT>()) {
-				trivial_system_impl<package, SystemT>(info.registry);
-			}
-
-			if constexpr(is_action<SystemT>()) {
-				for(const ecsact_action& action : actions) {
-					if(action.action_id == SystemT::id) {
-						if constexpr(SystemT::has_trivial_impl) {
-							_execute_system_trivial<SystemT, ChildSystemsListT>(
-								info,
-								parent,
-								static_cast<const SystemT*>(action.action_data),
-								actions
-							);
-						} else {
-							_execute_system_user<SystemT, ChildSystemsListT>(
-								info,
-								parent,
-								static_cast<const SystemT*>(action.action_data),
-								actions
-							);
-						}
-					}
-				}
+				_execute_system_trivial<SystemT, ChildSystemsListT>(
+					info,
+					parent,
+					actions
+				);
 			} else {
-				if constexpr(SystemT::has_trivial_impl) {
-					_execute_system_trivial<SystemT, ChildSystemsListT>(
-						info,
-						parent,
-						nullptr,
-						actions
-					);
-				} else {
-					_execute_system_user<SystemT, ChildSystemsListT>(
-						info,
-						parent,
-						nullptr,
-						actions
-					);
-				}
+				_execute_system_user<SystemT, ChildSystemsListT>(
+					info,
+					parent,
+					actions
+				);
 			}
 
 			_apply_pending_removes<SystemT>(info);
@@ -983,7 +883,6 @@ namespace ecsact::entt {
 					using boost::mp11::mp_empty;
 					using boost::mp11::mp_first;
 					using boost::mp11::mp_second;
-					using std::execution::par_unseq;
 
 					if constexpr(mp_size<SystemList>::value > 1) {
 						mp_for_each<SystemList>([&]<typename SystemPair>(SystemPair) {
