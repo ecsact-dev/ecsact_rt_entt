@@ -156,7 +156,7 @@ TEST(Core, RemoveComponent) {
 static void dynamic_impl(ecsact_system_execution_context* ctx) {
 	using runtime_test::ComponentA;
 
-	auto comp_id = static_cast<ecsact_component_id>(ComponentA::id);
+	auto comp_id = static_cast<ecsact_component_like_id>(ComponentA::id);
 	ComponentA comp;
 	ecsact_system_execution_context_get(ctx, comp_id, &comp);
 	comp.a += 2;

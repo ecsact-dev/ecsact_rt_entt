@@ -99,12 +99,14 @@ namespace ecsact_entt_rt {
 
 			registry.erase<C>(entity);
 
-			mp_for_each<typename package::components>([&]<typename O>(O) {
-				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
-					using ecsact::entt::detail::beforechange_storage;
-					registry.erase<beforechange_storage<O>>(entity);
-				}
-			});
+			if constexpr(!std::is_empty_v<C>) {
+				mp_for_each<typename package::components>([&]<typename O>(O) {
+					if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
+						using ecsact::entt::detail::beforechange_storage;
+						registry.erase<beforechange_storage<O>>(entity);
+					}
+				});
+			}
 		}
 
 		/** @internal */

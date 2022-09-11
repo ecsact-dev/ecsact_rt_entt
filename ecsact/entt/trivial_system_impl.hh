@@ -32,11 +32,6 @@ namespace ecsact::entt {
 			SystemT,
 			mp_list<>
 		>;
-		using optional_components = mp_map_find_value_or<
-			typename Package::system_optional_components,
-			SystemT,
-			mp_list<>
-		>;
 		using adds_components = mp_map_find_value_or<
 			typename Package::system_adds_components,
 			SystemT,

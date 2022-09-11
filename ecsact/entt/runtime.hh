@@ -16,11 +16,13 @@
 #include "ecsact/runtime/core.h"
 #include "ecsact/lib.hh"
 #include <entt/entt.hpp>
+#include "ecsact/entt/detail/mp11_util.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
 #include "ecsact/entt/detail/registry_info.hh"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/system_view.hh"
+#include "ecsact/entt/trivial_system_impl.hh"
 
 namespace ecsact::entt {
 	template<typename Package>
@@ -561,10 +563,17 @@ namespace ecsact::entt {
 			( registry_info& info
 			)
 		{
+			using ecsact::entt_mp11_util::mp_map_find_value_or;
 			using boost::mp11::mp_for_each;
 			using ecsact::entt::detail::pending_remove;
 
-			mp_for_each<typename SystemT::removes>([&]<typename C>(C) {
+			using removes_components = mp_map_find_value_or<
+				typename package::system_removes_components,
+				SystemT,
+				::ecsact::mp_list<>
+			>;
+
+			mp_for_each<removes_components>([&]<typename C>(C) {
 				auto view = info.registry.template view<pending_remove<C>>();
 				view.each([&](auto entity) {
 					info.template remove_component<C>(entity);
@@ -878,32 +887,17 @@ namespace ecsact::entt {
 			using boost::mp11::mp_for_each;
 
 			mp_for_each<typename package::execution_order>(
-				[&]<typename SystemList>(SystemList) {
-					using boost::mp11::mp_size;
-					using boost::mp11::mp_empty;
+				[&]<typename SystemPair>(SystemPair) {
 					using boost::mp11::mp_first;
 					using boost::mp11::mp_second;
 
-					if constexpr(mp_size<SystemList>::value > 1) {
-						mp_for_each<SystemList>([&]<typename SystemPair>(SystemPair) {
-							using SystemT = mp_first<SystemPair>;
-							using ChildSystemsListT = mp_second<SystemPair>;
-							_execute_system<SystemT, ChildSystemsListT>(
-								info,
-								nullptr,
-								actions
-							);
-						});
-					} else if constexpr(!mp_empty<SystemList>::value) {
-						using SystemPair = mp_first<SystemList>;
-						using SystemT = mp_first<SystemPair>;
-						using ChildSystemsListT = mp_second<SystemPair>;
-						_execute_system<SystemT, ChildSystemsListT>(
-							info,
-							nullptr,
-							actions
-						);
-					}
+					using SystemT = mp_first<SystemPair>;
+					using ChildSystemsListT = mp_second<SystemPair>;
+					_execute_system<SystemT, ChildSystemsListT>(
+						info,
+						nullptr,
+						actions
+					);
 				}
 			);
 		}
