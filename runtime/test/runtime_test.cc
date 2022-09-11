@@ -7,7 +7,7 @@
 #include "runtime_test.ecsact.systems.hh"
 
 #ifndef ECSACT_ENTT_TEST_DYNAMIC_SYSTEM_IMPL
-void runtime_test::SimpleSystem(SimpleSystem::context& ctx) {
+void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
 	comp.a += 1;
 	ctx.update(comp);
