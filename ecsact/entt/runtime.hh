@@ -518,14 +518,34 @@ namespace ecsact::entt {
 			using boost::mp11::mp_unique;
 			using boost::mp11::mp_flatten;
 			using boost::mp11::mp_push_back;
+			using boost::mp11::mp_map_find;
 			using ecsact::entt::detail::pending_add;
+			using ecsact::entt_mp11_util::mp_map_find_value_or;
 
-			// using flattened_generates = typename SystmT::generates
+			using system_generates = mp_map_find_value_or<
+				typename package::generates,
+				SystemT,
+				::ecsact::mp_list<>
+			>;
+			using adds_components = mp_map_find_value_or<
+				typename Package::system_adds_components,
+				SystemT,
+				::ecsact::mp_list<>
+			>;
+			static_assert(!std::is_same_v<system_generates, void>);
 
-			using addables = mp_unique<mp_flatten<mp_push_back<
-				typename SystemT::generates,
-				typename SystemT::adds
-			>>>;
+			using addables = mp_unique<
+				mp_flatten<
+					mp_flatten<
+						mp_push_back<
+							system_generates,
+							adds_components
+						>,
+						::ecsact::mp_list<>
+					>,
+					::ecsact::mp_list<>
+				>
+			>;
 
 			mp_for_each<addables>([&]<typename C>(C) {
 				using boost::mp11::mp_apply;
