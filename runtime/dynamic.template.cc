@@ -17,7 +17,6 @@ static void cast_and_use_ctx
 	)
 {
 	using boost::mp11::mp_for_each;
-	using boost::mp11::mp_identity;
 	using boost::mp11::mp_transform;
 	using boost::mp11::mp_flatten;
 	using boost::mp11::mp_push_back;
@@ -26,9 +25,8 @@ static void cast_and_use_ctx
 		typename package::actions,
 		typename package::systems
 	>>;
-	using all_systems_identities = mp_transform<mp_identity, all_systems>;
 
-	mp_for_each<all_systems_identities>([&]<typename S>(mp_identity<S>) {
+	mp_for_each<all_systems>([&]<typename S>(S) {
 		if(ecsact_id_cast<ecsact_system_like_id>(S::id) == ctx->system_id) {
 			fn(*static_cast<system_execution_context<package, S>*>(ctx->impl));
 		}
