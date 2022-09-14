@@ -24,6 +24,13 @@
 #include "ecsact/entt/system_view.hh"
 #include "ecsact/entt/trivial_system_impl.hh"
 
+#ifndef NDEBUG
+#	define DEBUG_TYPE_NAME(Type)\
+	[[maybe_unused]] const auto _##Type = typeid(Type).name()
+#else
+#	define DEBUG_TYPE_NAME(Type)
+#endif
+
 namespace ecsact::entt {
 	template<typename Package>
 	class runtime {
@@ -748,6 +755,9 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
+			DEBUG_TYPE_NAME(SystemT);
+			DEBUG_TYPE_NAME(ChildSystemsListT);
+
 			if constexpr(is_trivial_system<package, SystemT>()) {
 				_execute_system_trivial<SystemT, ChildSystemsListT>(
 					info,
@@ -1189,3 +1199,5 @@ namespace ecsact::entt {
 	};
 
 }
+
+#undef DEBUG_TYPE_NAME
