@@ -188,11 +188,11 @@ TEST(Core, DynamicSystemImpl) {
 		ecsact_get_component(reg_id, entity, comp_id)
 	);
 	
-	EXPECT_NE(*comp_get, comp);
+	EXPECT_NE(comp_get->a, comp.a);
 
 	// Simulate what the system should be doing.
 	comp.a += 2;
-	EXPECT_EQ(*comp_get, comp);
+	EXPECT_EQ(comp_get->a, comp.a);
 }
 
 TEST(Core, StaticSystemImpl) {
