@@ -11,11 +11,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # test-windows:
-  #   runs-on: windows-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - run: bazel test --config=ci -- //...
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: bazel test --config=ci -- //...
   test-linux:
     runs-on: ubuntu-latest
     steps:
