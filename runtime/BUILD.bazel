@@ -1,17 +1,11 @@
 package(default_visibility = ["//visibility:public"])
 
+# keep sorted
 _srcs = [
+    "common.template.cc",
     "common.template.hh",
     "core.template.cc",
-    "meta.template.cc",
     "dynamic.template.cc",
-    "runtime.template.cc",
-    "system_execution_context.hh",
-    "execution_events_collector.hh",
-    "registry_info.hh",
-    "event_markers.hh",
-    "runtime.hh",
-    "system_entt_view.hh",
 ]
 
 exports_files(_srcs)

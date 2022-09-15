@@ -1,18 +1,22 @@
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel:copts.bzl", "copts")
 load("//runtime:index.bzl", "ecsact_entt_runtime")
 
 ecsact_entt_runtime(
     name = "runtime",
     srcs = ["runtime_test.ecsact"],
-    main = "runtime_test.ecsact",
-    system_impls = ["static", "dynamic"],
-    ECSACT_ENTT_RUNTIME_USER_HEADER = "runtime/test/runtime_test.ecsact.meta.hh",
     ECSACT_ENTT_RUNTIME_PACKAGE = "::runtime_test::package",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "runtime_test.ecsact.meta.hh",
+    system_impls = [
+        # "static",
+        "dynamic",
+    ],
 )
 
 cc_test(
     name = "test",
     srcs = ["runtime_test.cc"],
+    copts = copts,
     deps = [
         ":runtime",
         "@com_google_googletest//:gtest",

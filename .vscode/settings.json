@@ -1,0 +1,13 @@
+{
+	"[starlark]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "BazelBuild.vscode-bazel"
+	},
+	"lldb.launch.sourceMap": {
+		"/proc/self/cwd": "${workspaceFolder}"
+	},
+	"files.insertFinalNewline": true,
+	"files.eol": "\n",
+	"editor.insertSpaces": false,
+	"C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json"
+}

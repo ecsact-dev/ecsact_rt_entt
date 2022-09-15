@@ -1,43 +1,35 @@
-load("@ecsact//:index.bzl", "ecsact_codegen")
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+"""
+"""
 
-def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
-    ecsact_codegen(
-        name = "%s__private_srcs" % name,
-        main = main,
-        srcs = srcs,
-        tags = tags,
-        plugins = {
-            "@ecsact//generator/cpp_systems/source/static": {},
-        },
-        **kwargs
-    )
+load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
+
+def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
+    """
+    """
 
     ecsact_codegen(
         name = "%s__public_hdrs" % name,
-        main = main,
         srcs = srcs,
         tags = tags,
-        plugins = {
-            "@ecsact//generator/systems/header": {},
-            "@ecsact//generator/cpp/header": {
-                "constexpr_component_ids": True,
-            },
-            "@ecsact//generator/cpp_systems/header": {
-                "constexpr_system_ids": True,
-            },
-            "@ecsact//generator/meta_cc": {},
-        },
+        plugins = [
+            "@ecsact//codegen_plugins:cpp_header",
+            "@ecsact//codegen_plugins:cpp_systems_header",
+            "@ecsact//codegen_plugins:systems_header",
+            "@ecsact//codegen_plugins:cpp_meta_header",
+        ],
         **kwargs
     )
 
     cc_library(
         name = "%s__public_cc" % name,
-        hdrs = ["%s__public_hdrs" % name],
+        hdrs = [":%s__public_hdrs" % name],
         tags = tags,
+        copts = copts,
+        strip_include_prefix = "%s__public_hdrs" % name,
         deps = [
-            "@ecsact//lib:cc",
-            "@ecsact//lib/runtime-cpp",
+            "@ecsact_lang_cpp//:execution_context",
         ],
         **kwargs
     )
@@ -66,17 +58,18 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         fail("ecsact_entt_runtime: system_impls must contain at least one of the following: %s" % ", ".join(allowed_system_impls))
 
     _cc_srcs = [
-        "@ecsact_entt//runtime:sources",
-        ":%s__public_hdrs" % name,
-        ":%s__private_srcs" % name,
+        "@ecsact_rt_entt//runtime:sources",
     ]
 
+    # keep sorted
     _cc_deps = [
         "@boost//libs/mp11",
-        "@ecsact//lib/runtime",
-        "@ecsact//lib/runtime-cpp",
-        "@ecsact//lib:cc",
         "@com_github_skypjack_entt//:entt",
+        "@ecsact_rt_entt//:lib",
+        "@ecsact_runtime//:core",
+        "@ecsact_runtime//:dynamic",
+        "@ecsact_runtime//:lib",
+        "%s__public_cc" % name,
     ]
 
     cc_library(
@@ -84,8 +77,8 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         defines = _cc_local_defines + [
             "ECSACT_CORE_API=",
             "ECSACT_DYNAMIC_API=",
-            "ECSACT_META_API=",
         ],
+        copts = copts,
         tags = tags,
         deps = _cc_deps + deps,
         hdrs = [":%s__public_hdrs" % name],
@@ -100,8 +93,8 @@ def ecsact_entt_runtime(name, srcs = [], main = None, deps = [], system_impls = 
         local_defines = _cc_local_defines + [
             "ECSACT_CORE_API_EXPORT",
             "ECSACT_DYNAMIC_API_EXPORT",
-            "ECSACT_META_API_EXPORT",
         ],
+        copts = copts,
         srcs = _cc_srcs,
         deps = _cc_deps + deps,
         **kwargs

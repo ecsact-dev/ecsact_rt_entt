@@ -6,15 +6,14 @@
 #include <mutex>
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
-#include <ecsact/runtime.hh>
-#include <ecsact/runtime/common.h>
-#include <ecsact/runtime/core.h>
+#include "ecsact/runtime/common.h"
+#include "ecsact/runtime/core.h"
 
-#include "event_markers.hh"
+#include "ecsact/entt/event_markers.hh"
 
 namespace ecsact_entt_rt {
 	using entity_id_map_t = std::unordered_map
-		< ::ecsact::entity_id
+		< ecsact_entity_id
 		, entt::entity
 		>;
 
@@ -29,13 +28,13 @@ namespace ecsact_entt_rt {
 		/**
 		 * Index of this vector is a statically casted EnTT ID
 		 */
-		std::vector<::ecsact::entity_id> _ecsact_entity_ids;
+		std::vector<ecsact_entity_id> _ecsact_entity_ids;
 
-		::ecsact::entity_id last_entity_id{};
+		ecsact_entity_id last_entity_id{};
 
 		struct create_new_entity_result {
 			entt::entity entt_entity_id;
-			::ecsact::entity_id ecsact_entity_id;
+			ecsact_entity_id ecsact_entity_id;
 		};
 
 		void init_registry() {
@@ -48,20 +47,13 @@ namespace ecsact_entt_rt {
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				registry.storage<C>();
-			});
-
-			mp_for_each<typename package::system_addables>([&]<typename C>(C) {
-				registry.storage<component_added<C>>();
-			});
-
-			mp_for_each<typename package::system_writables>([&]<typename C>(C) {
-				registry.storage<beforechange_storage<C>>();
-				registry.storage<component_changed<C>>();
-			});
-
-			mp_for_each<typename package::system_removables>([&]<typename C>(C) {
 				registry.storage<temp_storage<C>>();
+				registry.storage<component_added<C>>();
+				registry.storage<component_changed<C>>();
 				registry.storage<component_removed<C>>();
+				if constexpr(!std::is_empty_v<C>) {
+					registry.storage<beforechange_storage<C>>();
+				}
 			});
 		}
 
@@ -83,8 +75,7 @@ namespace ecsact_entt_rt {
 
 			registry.emplace<C>(entity, std::forward<Args>(args)...);
 
-			mp_for_each<typename package::system_writables>([&]<typename O>(O) {
-				if constexpr(C::transient) return;
+			mp_for_each<typename package::components>([&]<typename O>(O) {
 				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
 					using ecsact::entt::detail::beforechange_storage;
 					beforechange_storage<O> beforechange = {
@@ -108,18 +99,19 @@ namespace ecsact_entt_rt {
 
 			registry.erase<C>(entity);
 
-			mp_for_each<typename package::system_writables>([&]<typename O>(O) {
-				if constexpr(C::transient) return;
-				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
-					using ecsact::entt::detail::beforechange_storage;
-					registry.erase<beforechange_storage<O>>(entity);
-				}
-			});
+			if constexpr(!std::is_empty_v<C>) {
+				mp_for_each<typename package::components>([&]<typename O>(O) {
+					if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
+						using ecsact::entt::detail::beforechange_storage;
+						registry.erase<beforechange_storage<O>>(entity);
+					}
+				});
+			}
 		}
 
 		/** @internal */
 		inline auto _create_entity
-			( ::ecsact::entity_id ecsact_entity_id
+			( ecsact_entity_id ecsact_entity_id
 			)
 		{
 			auto new_entt_entity_id = registry.create();
@@ -131,11 +123,11 @@ namespace ecsact_entt_rt {
 
 		/** @internal */
 		inline create_new_entity_result _create_entity() {
-			auto new_entity_id = static_cast<::ecsact::entity_id>(
+			auto new_entity_id = static_cast<ecsact_entity_id>(
 				static_cast<int>(last_entity_id) + 1
 			);
 			while(entities_map.contains(new_entity_id)) {
-				new_entity_id = static_cast<::ecsact::entity_id>(
+				new_entity_id = static_cast<ecsact_entity_id>(
 					static_cast<int>(new_entity_id) + 1
 				);
 			}
@@ -149,7 +141,7 @@ namespace ecsact_entt_rt {
 		// Creates an entity and also makes sure there is a matching one in the
 		// pending registry
 		inline auto create_entity
-			( ::ecsact::entity_id ecsact_entity_id
+			( ecsact_entity_id ecsact_entity_id
 			)
 		{
 			std::scoped_lock lk(mutex->get());
@@ -160,14 +152,14 @@ namespace ecsact_entt_rt {
 			return _create_entity();
 		}
 
-		entt::entity entt_entity_id
-			( ::ecsact::entity_id ecsact_entity_id
+		entt::entity get_entt_entity_id
+			( ecsact_entity_id ecsact_entity_id
 			) const
 		{
 			return entities_map.at(ecsact_entity_id);
 		}
 
-		::ecsact::entity_id ecsact_entity_id
+		ecsact_entity_id get_ecsact_entity_id
 			( entt::entity entt_entity_id
 			) const
 		{

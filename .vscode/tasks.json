@@ -1,0 +1,25 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Refresh compile_commands.json",
+			"command": "bazel",
+			"type": "shell",
+			"args": [
+				"run",
+				"@hedron_compile_commands//:refresh_all"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "build //runtime/test:test",
+			"command": "bazel",
+			"type": "shell",
+			"args": [
+				"build",
+				"//runtime/test:test"
+			],
+			"group": "build"
+		}
+	]
+}
