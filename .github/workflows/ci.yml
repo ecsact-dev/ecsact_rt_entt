@@ -21,7 +21,7 @@ jobs:
             /Users/runneradmin/.cache/bazel-disk-cache
           key: ${{runner.os}}-bazel-cache
       - uses: actions/checkout@v3
-      - run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc test //...
+      - run: bazel --bazelrc=.github/workflows/ci.bazelrc test //...
   test-linux:
     runs-on: ubuntu-latest
     steps:
