@@ -49,21 +49,16 @@ namespace ecsact::entt {
 				mp_size<adds_tag_components>::value !=
 				mp_size<adds_components>::value
 			);
-
-		const bool can_write =
-			!mp_empty<readwrite_components>::value ||
-			!mp_empty<writeonly_components>::value;
-
-		const bool can_add_or_remove =
-			!mp_empty<adds_components>::value ||
-			!mp_empty<removes_components>::value;
-
-		const bool can_meaningfully_read = can_add_or_remove && (
-			!mp_empty<readonly_components>::value ||
-			!mp_empty<readwrite_components>::value
-		);
+		const bool cant_write =
+			mp_empty<readwrite_components>::value &&
+			mp_empty<writeonly_components>::value;
+		const bool cant_add = mp_empty<adds_components>::value;
+		const bool cant_remove = mp_empty<removes_components>::value;
+		const bool cant_read =
+			mp_empty<readonly_components>::value &&
+			mp_empty<readwrite_components>::value;
 		
-		return !can_write || !can_meaningfully_read || !can_add_non_tag_compnents;
+		return cant_write && cant_add && cant_remove && cant_read;
 	}
 
 	template<typename Package, typename SystemT, typename EachCallbackT>

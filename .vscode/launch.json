@@ -12,7 +12,10 @@
 				"type": "cppvsdbg",
 				"program": "${workspaceFolder}/bazel-bin/runtime/test/test.exe"
 			},
-			"preLaunchTask": "build //runtime/test:test"
+			"preLaunchTask": "build //runtime/test:test",
+			"sourceFileMap": {
+				"E:/.cache/bazel/output_base/execroot/ecsact_rt_entt": "${workspaceFolder}"
+			}
 		}
 	],
 	"compounds": []

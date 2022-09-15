@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <string>
+#include <cassert>
 #include <unordered_set>
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
@@ -201,31 +202,48 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_push_back;
 			using boost::mp11::mp_flatten;
 			using boost::mp11::mp_assign;
-			using boost::mp11::mp_list;
 
 			using readonly_components = mp_map_find_value_or<
 				typename Package::system_readonly_components,
 				SystemT,
-				mp_list<>
+				::ecsact::mp_list<>
 			>;
 			using readwrite_components = mp_map_find_value_or<
 				typename Package::system_readwrite_components,
 				SystemT,
-				mp_list<>
+				::ecsact::mp_list<>
 			>;
-			using gettable_components = mp_assign<mp_list<>, mp_unique<mp_flatten<
-				readonly_components,
-				readwrite_components
-			>>>;
+			using gettable_components = mp_assign<::ecsact::mp_list<>, mp_unique<
+				mp_flatten<
+					mp_push_back<
+						readonly_components,
+						readwrite_components
+					>,
+					::ecsact::mp_list<>
+				>
+			>>;
+
+#ifndef NDEBUG
+			bool found_fettable_component = false;
+			const char* get_component_name = "";
+#endif//NDEBUG
 
 			mp_for_each<gettable_components>([&]<typename C>(C) {
 				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 					if constexpr(!std::is_empty_v<C>) {
 						C& out_component = *reinterpret_cast<C*>(out_component_data);
 						out_component = get<C>();
+#ifndef NDEBUG
+						get_component_name = typeid(C).name();
+						found_fettable_component = true;
+#endif//NDEBUG
 					}
 				}
 			});
+
+#ifndef NDEBUG
+			assert(found_fettable_component);
+#endif//NDEBUG
 		}
 
 		template<typename C> requires(!std::is_empty_v<C>)
