@@ -3,6 +3,11 @@ load("//bazel:copts.bzl", "copts")
 
 package(default_visibility = ["//visibility:public"])
 
+filgroup(
+    name = "headers",
+    srcs = glob(["ecsact/**/*.hh"]),
+)
+
 cc_library(
     name = "lib",
     hdrs = glob(["ecsact/**/*.hh"]),
