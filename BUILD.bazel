@@ -3,7 +3,7 @@ load("//bazel:copts.bzl", "copts")
 
 package(default_visibility = ["//visibility:public"])
 
-filgroup(
+filegroup(
     name = "headers",
     srcs = glob(["ecsact/**/*.hh"]),
 )
