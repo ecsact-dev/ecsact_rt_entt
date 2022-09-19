@@ -393,7 +393,6 @@ namespace ecsact::entt {
 				if(index >= max_components_count) return;
 
 				if(has_component<C>(registry_id, entity_id)) {
-					index += 1;
 					out_component_ids[index] = C::id;
 					if constexpr(std::is_empty_v<C>) {
 						out_components_data[index] = nullptr;
@@ -403,6 +402,7 @@ namespace ecsact::entt {
 							entity_id
 						);
 					}
+					index += 1;
 				}
 			});
 
