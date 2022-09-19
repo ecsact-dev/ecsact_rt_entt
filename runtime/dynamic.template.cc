@@ -127,7 +127,7 @@ bool ecsact_system_execution_context_same
 void ecsact_system_execution_context_generate
 	( ecsact_system_execution_context*  context
 	, int                               component_count
-	, ecsact_component_like_id*         component_ids
+	, ecsact_component_id*              component_ids
 	, const void**                      components_data
 	)
 {

@@ -337,9 +337,9 @@ namespace ecsact_entt_rt {
 		}
 
 		void generate
-			( int                        component_count
-			, ecsact_component_like_id*  component_ids
-			, const void**               components_data
+			( int                   component_count
+			, ecsact_component_id*  component_ids
+			, const void**          components_data
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -351,7 +351,7 @@ namespace ecsact_entt_rt {
 				auto component_id = component_ids[i];
 				auto component_data = components_data[i];
 				mp_for_each<typename package::components>([&]<typename C>(const C&) {
-					if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
+					if(C::id == component_id) {
 						if constexpr(std::is_empty_v<C>) {
 							info.registry.template emplace<pending_add<C>>(new_entity);
 						} else {
