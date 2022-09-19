@@ -772,11 +772,8 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
-			mp_for_each<typename package::components>([&]<typename C>(C) {
-				// Transients require no processing, just clear.
-				if constexpr(C::transient) {
-					info.registry.template clear<C>();
-				}
+			mp_for_each<typename package::transients>([&]<typename C>(C) {
+				info.registry.template clear<C>();
 			});
 		}
 
