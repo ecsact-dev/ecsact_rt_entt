@@ -35,13 +35,13 @@ namespace ecsact_entt_rt {
 		const void* action;
 	};
 
-	template<typename Package, typename SystemT>
+	template<typename Package, typename SystemT, typename AssocT = void>
 	struct system_execution_context : system_execution_context_base {
 		using system_execution_context_base::cptr_t;
 		using system_execution_context_base::const_cptr_t;
 
 		using package = Package;
-		using view_type = ecsact::entt::system_view_type<Package, SystemT>;
+		using view_type = ecsact::entt::system_view_type<Package, SystemT, AssocT>;
 		ecsact_entt_rt::registry_info<Package>& info;
 		view_type& view;
 
@@ -365,6 +365,13 @@ namespace ecsact_entt_rt {
 					}
 				});
 			}
+		}
+
+		ecsact_system_execution_context* other
+			( ecsact_entity_id entity
+			)
+		{
+			return nullptr;
 		}
 	};
 }

@@ -19,7 +19,7 @@ namespace ecsact::entt::detail {
 }
 
 namespace ecsact::entt {
-	template<typename Package, typename SystemT>
+	template<typename Package, typename SystemT, typename AssocT = void>
 	auto system_view
 		( ::entt::registry& registry
 		)
@@ -82,8 +82,8 @@ namespace ecsact::entt {
 		return detail::system_view_helper(get_types{}, exclude_types{}, registry);
 	}
 
-	template<typename Package, typename SystemT>
+	template<typename Package, typename SystemT, typename AssocT = void>
 	using system_view_type = decltype(
-		system_view<Package, SystemT>(std::declval<::entt::registry&>())
+		system_view<Package, SystemT, AssocT>(std::declval<::entt::registry&>())
 	);
 }

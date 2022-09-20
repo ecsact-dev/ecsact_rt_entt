@@ -1,11 +1,22 @@
 main package runtime_test;
 
 component ComponentA {
-  i32 a;
+	i32 a;
+}
+
+component OtherEntityComponent {
+	i32 num;
+	entity target;
 }
 
 component EmptyComponent {}
 
 system SimpleSystem {
-  readwrite ComponentA;
+	readwrite ComponentA;
+}
+
+system OtherEntitySystem {
+	readwrite OtherEntityComponent target {
+		readwrite ComponentA;
+	}
 }

@@ -156,3 +156,15 @@ ecsact_system_like_id ecsact_system_execution_context_id
 {
 	return context->system_id;
 }
+
+ecsact_system_execution_context* ecsact_system_execution_context_other
+	( ecsact_system_execution_context*  context
+	, ecsact_entity_id                  entity_id
+	)
+{
+	ecsact_system_execution_context* other = nullptr;
+	cast_and_use_ctx(context, [&](auto& context) {
+		other = context.other(entity_id);
+	});
+	return other;
+}
