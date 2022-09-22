@@ -522,16 +522,10 @@ namespace ecsact::entt {
 			using ecsact::entt::detail::pending_add;
 			using ecsact::entt_mp11_util::mp_map_find_value_or;
 
-			using system_generates = mp_map_find_value_or<
-				typename package::generates,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
-			using adds_components = mp_map_find_value_or<
-				typename Package::system_adds_components,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+			using system_generates = typename caps_info::generates;
+			using adds_components = typename caps_info::adds_components;
 			static_assert(!std::is_same_v<system_generates, void>);
 
 			using addables = mp_unique<
@@ -587,11 +581,9 @@ namespace ecsact::entt {
 			using boost::mp11::mp_for_each;
 			using ecsact::entt::detail::pending_remove;
 
-			using removes_components = mp_map_find_value_or<
-				typename package::system_removes_components,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+			using removes_components = typename caps_info::removes_components;
 
 			mp_for_each<removes_components>([&]<typename C>(C) {
 				auto view = info.registry.template view<pending_remove<C>>();
@@ -674,7 +666,7 @@ namespace ecsact::entt {
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user_itr
 			( registry_info&                       info
-			, system_view_type<package, SystemT>&  view
+			, system_view_type<SystemT>&           view
 			, entt_entity_type                     entity
 			, ecsact_system_execution_context*     parent
 			, const void*                          action
@@ -714,7 +706,7 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
-			auto view = system_view<package, SystemT>(info.registry);
+			auto view = system_view<SystemT>(info.registry);
 			const void* action_data = nullptr;
 			auto itr_view = [&] {
 				for(auto entity : view) {

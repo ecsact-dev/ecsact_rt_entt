@@ -41,7 +41,7 @@ namespace ecsact_entt_rt {
 		using system_execution_context_base::const_cptr_t;
 
 		using package = Package;
-		using view_type = ecsact::entt::system_view_type<Package, SystemT, AssocT>;
+		using view_type = ecsact::entt::system_view_type<SystemT>;
 		ecsact_entt_rt::registry_info<Package>& info;
 		view_type& view;
 
@@ -203,16 +203,10 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_flatten;
 			using boost::mp11::mp_assign;
 
-			using readonly_components = mp_map_find_value_or<
-				typename Package::system_readonly_components,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
-			using readwrite_components = mp_map_find_value_or<
-				typename Package::system_readwrite_components,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+			using readonly_components = typename caps_info::readonly_components;
+			using readwrite_components = typename caps_info::readwrite_components;
 			using gettable_components = mp_assign<::ecsact::mp_list<>, mp_unique<
 				mp_flatten<
 					mp_push_back<
@@ -258,15 +252,11 @@ namespace ecsact_entt_rt {
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
 
-			using readwrite_components = mp_map_find_value_or<
-				typename Package::system_readwrite_components,
-				SystemT,
-				mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
 
 			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
 				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
-				readwrite_components
+				typename caps_info::readwrite_components
 			>>::value;
 
 			static_assert(is_writable);
@@ -294,11 +284,8 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_map_find;
 			using boost::mp11::mp_list;
 
-			using readwrite_components = mp_map_find_value_or<
-				typename Package::system_readwrite_components,
-				SystemT,
-				mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+			using readwrite_components = typename caps_info::readwrite_components;
 
 			mp_for_each<readwrite_components>([&]<typename C>(C) {
 				if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
@@ -321,11 +308,8 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_map_find;
 			using boost::mp11::mp_list;
 
-			using optional_components = mp_map_find_value_or<
-				typename Package::system_optional_components,
-				SystemT,
-				mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+			using optional_components = typename caps_info::optional_components;
 
 			bool result = false;
 			mp_for_each<optional_components>([&]<typename C>(C) {

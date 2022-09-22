@@ -9,14 +9,14 @@ component OtherEntityComponent {
 	entity target;
 }
 
-component EmptyComponent {}
+component EmptyComponent;
 
 system SimpleSystem {
 	readwrite ComponentA;
 }
 
 system OtherEntitySystem {
-	readwrite OtherEntityComponent target {
+	readwrite OtherEntityComponent with target {
 		readwrite ComponentA;
 	}
 }

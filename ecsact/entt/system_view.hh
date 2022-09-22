@@ -5,6 +5,7 @@
 #include "ecsact/lib.hh"
 #include "ecsact/entt/detail/mp11_util.hh"
 #include "ecsact/entt/event_markers.hh"
+#include "ecsact/cpp/type_info.hh"
 
 namespace ecsact::entt::detail {
 	template<typename... C, typename... E>
@@ -19,7 +20,7 @@ namespace ecsact::entt::detail {
 }
 
 namespace ecsact::entt {
-	template<typename Package, typename SystemT, typename AssocT = void>
+	template<typename SystemT>
 	auto system_view
 		( ::entt::registry& registry
 		)
@@ -35,31 +36,13 @@ namespace ecsact::entt {
 		using ecsact::entt::detail::temp_storage;
 		using ecsact::entt::detail::beforechange_storage;
 
-		using readonly_components = mp_map_find_value_or<
-			typename Package::system_readonly_components,
-			SystemT,
-			::ecsact::mp_list<>
-		>;
-		using readwrite_components = mp_map_find_value_or<
-			typename Package::system_readwrite_components,
-			SystemT,
-			::ecsact::mp_list<>
-		>;
-		using removes_components = mp_map_find_value_or<
-			typename Package::system_removes_components,
-			SystemT,
-			::ecsact::mp_list<>
-		>;
-		using include_components = mp_map_find_value_or<
-			typename Package::system_include_components,
-			SystemT,
-			::ecsact::mp_list<>
-		>;
-		using exclude_components = mp_map_find_value_or<
-			typename Package::system_exclude_components,
-			SystemT,
-			::ecsact::mp_list<>
-		>;
+		using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+		using readonly_components = typename caps_info::readonly_components;
+		using readwrite_components = typename caps_info::readwrite_components;
+		using removes_components = typename caps_info::removes_components;
+		using include_components = typename caps_info::include_components;
+		using exclude_components = typename caps_info::exclude_components;
 
 		using get_types = mp_unique<mp_flatten<
 			mp_push_back<
@@ -82,8 +65,8 @@ namespace ecsact::entt {
 		return detail::system_view_helper(get_types{}, exclude_types{}, registry);
 	}
 
-	template<typename Package, typename SystemT, typename AssocT = void>
+	template<typename SystemT>
 	using system_view_type = decltype(
-		system_view<Package, SystemT, AssocT>(std::declval<::entt::registry&>())
+		system_view<SystemT>(std::declval<::entt::registry&>())
 	);
 }
