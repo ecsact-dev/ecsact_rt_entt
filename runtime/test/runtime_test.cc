@@ -7,6 +7,7 @@
 #include "runtime_test.ecsact.systems.hh"
 
 using runtime_test::ComponentA;
+using runtime_test::OtherEntityComponent;
 
 void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
@@ -15,7 +16,14 @@ void runtime_test::SimpleSystem::impl(context& ctx) {
 }
 
 void runtime_test::OtherEntitySystem::impl(context& ctx) {
-	
+	auto comp = ctx.get<OtherEntityComponent>();
+	auto other = ctx._ctx.other(comp.target);
+	auto other_comp = other.get<OtherEntityComponent>();
+
+	comp.num += -other_comp.num;
+
+	ctx.update(comp);
+	other.update(other_comp);
 }
 
 TEST(Core, CreateRegistry) {
@@ -95,9 +103,29 @@ TEST(Core, AddComponent) {
 	runtime_test::ComponentA comp{.a = 42};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 
-	ecsact_add_component(reg_id, entity, comp_id, &comp);
+	auto add_err = ecsact_add_component(reg_id, entity, comp_id, &comp);
+	EXPECT_EQ(add_err, ECSACT_ADD_OK);
 
 	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+}
+
+TEST(Core, AddComponentError) {
+	auto reg = ecsact::core::registry("AddComponentError");
+	auto entity = reg.create_entity();
+	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
+		(int)entity + 1
+	);
+
+	OtherEntityComponent comp{.num = 42, .target = invalid_entity};
+
+	auto add_err = reg.add_component(entity, comp);
+	// We tried to add a component with an invalid entity ID. We should get an
+	// invalid entity error.
+	EXPECT_EQ(add_err, ECSACT_ADD_ERR_ENTITY_INVALID);
+
+	// When we receive an error when adding a component our component will not be
+	// added to the registry.
+	EXPECT_FALSE(reg.has_component<OtherEntityComponent>(entity));
 }
 
 TEST(Core, HasComponent) {
@@ -170,9 +198,17 @@ static void dynamic_impl(ecsact_system_execution_context* ctx) {
 TEST(Core, DynamicSystemImpl) {
 	ecsact::core::registry reg("DynamicSystemImpl");
 	auto entity = reg.create_entity();
+	auto other_entity = reg.create_entity();
 
 	ComponentA comp{.a = 42};
 	reg.add_component(entity, comp);
+	reg.add_component(other_entity, comp);
+	
+	OtherEntityComponent other_comp{.num = 3, .target = other_entity};
+	ASSERT_EQ(
+		reg.add_component(entity, other_comp),
+		ECSACT_ADD_OK
+	);
 
 	// Sanity check
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));

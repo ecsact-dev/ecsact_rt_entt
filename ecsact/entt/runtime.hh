@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <boost/mp11.hpp>
 #include "ecsact/runtime/common.h"
+#include "ecsact/runtime/definitions.h"
 #include "ecsact/runtime/core.h"
 #include "ecsact/lib.hh"
 #include <entt/entt.hpp>
@@ -218,7 +219,7 @@ namespace ecsact::entt {
 		}
 
 		template<typename C>
-		void add_component
+		ecsact_add_error add_component
 			( ecsact_registry_id  reg_id
 			, ecsact_entity_id    entity_id
 			, const C&            component_data
@@ -227,20 +228,34 @@ namespace ecsact::entt {
 			auto& info = _registries.at(reg_id);
 			auto entt_entity_id = info.entities_map.at(entity_id);
 
+			constexpr auto fields_info = ecsact::fields_info<C>();
+			if constexpr(!fields_info.empty()) {
+				for(auto& field : fields_info) {
+					if(field.storage_type == ECSACT_ENTITY_TYPE) {
+						auto entity_field = field.get<ecsact_entity_id>(component_data);
+						if(!info.entities_map.contains(entity_field)) {
+							return ECSACT_ADD_ERR_ENTITY_INVALID;
+						}
+					}
+				}
+			}
+
 			if constexpr(std::is_empty_v<C>) {
 				info.template add_component<C>(entt_entity_id);
 			} else {
 				info.template add_component<C>(entt_entity_id, component_data);
 			}
+
+			return ECSACT_ADD_OK;
 		}
 
 		template<typename ComponentT>
-		void add_component
+		ecsact_add_error add_component
 			( ecsact_registry_id  reg_id
 			, ecsact_entity_id    entity_id
 			)
 		{
-			add_component<ComponentT>(reg_id, entity_id, ComponentT{});
+			return add_component<ComponentT>(reg_id, entity_id, ComponentT{});
 		}
 
 		ecsact_add_error add_component
@@ -252,12 +267,14 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
+			ecsact_add_error err = ECSACT_ADD_OK;
+
 			mp_for_each<typename package::components>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
 					if constexpr(std::is_empty_v<C>) {
-						add_component<C>(reg_id, entity_id);
+						err = add_component<C>(reg_id, entity_id);
 					} else {
-						add_component<C>(
+						err = add_component<C>(
 							reg_id,
 							entity_id,
 							*static_cast<const C*>(component_data)
@@ -266,7 +283,7 @@ namespace ecsact::entt {
 				}
 			});
 
-			return ECSACT_ADD_OK;
+			return err;
 		}
 
 		template<typename ComponentT>
