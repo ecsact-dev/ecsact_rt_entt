@@ -232,7 +232,9 @@ namespace ecsact::entt {
 			if constexpr(!fields_info.empty()) {
 				for(auto& field : fields_info) {
 					if(field.storage_type == ECSACT_ENTITY_TYPE) {
-						auto entity_field = field.get<ecsact_entity_id>(component_data);
+						auto entity_field = field.template get<ecsact_entity_id>(
+							component_data
+						);
 						if(!info.entities_map.contains(entity_field)) {
 							return ECSACT_ADD_ERR_ENTITY_INVALID;
 						}
@@ -438,6 +440,20 @@ namespace ecsact::entt {
 			auto& info = _registries.at(reg_id);
 			auto entt_entity_id = info.entities_map.at(entity_id);
 	
+			constexpr auto fields_info = ecsact::fields_info<ComponentT>();
+			if constexpr(!fields_info.empty()) {
+				for(auto& field : fields_info) {
+					if(field.storage_type == ECSACT_ENTITY_TYPE) {
+						auto entity_field = field.template get<ecsact_entity_id>(
+							component_data
+						);
+						if(!info.entities_map.contains(entity_field)) {
+							return ECSACT_UPDATE_ERR_ENTITY_INVALID;
+						}
+					}
+				}
+			}
+
 			auto& component = info.registry.template get<ComponentT>(entt_entity_id);
 			component = component_data;
 

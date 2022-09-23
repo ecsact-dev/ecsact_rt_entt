@@ -177,7 +177,7 @@ TEST(Core, UpdateComponentError) {
 	auto entity = reg.create_entity();
 	auto other_entity = reg.create_entity();
 	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
-		(int)entity + 1
+		(int)other_entity + 1
 	);
 
 	OtherEntityComponent comp{.num = 42, .target = other_entity};
