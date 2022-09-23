@@ -172,6 +172,27 @@ TEST(Core, UpdateComponent) {
 	EXPECT_EQ(*comp_get, upped_comp);
 }
 
+TEST(Core, UpdateComponentError) {
+	auto reg = ecsact::core::registry("UpdateComponentError");
+	auto entity = reg.create_entity();
+	auto other_entity = reg.create_entity();
+	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
+		(int)entity + 1
+	);
+
+	OtherEntityComponent comp{.num = 42, .target = other_entity};
+
+	auto add_err = reg.add_component(entity, comp);
+	ASSERT_EQ(add_err, ECSACT_ADD_OK);
+	
+	comp.num = 43;
+	comp.target = invalid_entity;
+	auto update_err = reg.update_component(entity, comp);
+
+	// We tried to update the component with an invalid entity ID. We should get
+	// an invalid entity error.
+	EXPECT_EQ(update_err, ECSACT_UPDATE_ERR_ENTITY_INVALID);
+}
 
 TEST(Core, RemoveComponent) {
 	auto reg_id = ecsact_create_registry("RemoveComponent");

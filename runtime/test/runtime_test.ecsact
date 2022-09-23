@@ -20,3 +20,4 @@ system OtherEntitySystem {
 		readwrite ComponentA;
 	}
 }
+
