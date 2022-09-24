@@ -5,6 +5,7 @@
 #include "ecsact/lib.hh"
 #include "ecsact/entt/detail/mp11_util.hh"
 #include "ecsact/entt/event_markers.hh"
+#include "ecsact/entt/detail/internal_markers.hh"
 #include "ecsact/cpp/type_info.hh"
 
 namespace ecsact::entt::detail {

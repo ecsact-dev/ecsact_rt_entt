@@ -10,6 +10,7 @@
 #include "ecsact/runtime/core.h"
 
 #include "ecsact/entt/event_markers.hh"
+#include "ecsact/entt/detail/internal_markers.hh"
 
 namespace ecsact_entt_rt {
 	using entity_id_map_t = std::unordered_map
