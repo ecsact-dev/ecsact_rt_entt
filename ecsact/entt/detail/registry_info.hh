@@ -58,6 +58,38 @@ namespace ecsact_entt_rt {
 			});
 		}
 
+		template<typename C>
+		void _add_association
+			( const C&                   component
+			, const ecsact::field_info&  field
+			)
+		{
+			using ecsact::entt::detail::association;
+			using boost::mp11::mp_with_index;
+
+			auto entity_field = field.template get<ecsact_entity_id>(component);
+			auto entity_field_entt = entities_map.at(entity_field);
+			mp_with_index<64>(field.offset, [&](auto I) {
+				registry.emplace<association<C, I>>(entity_field_entt);
+			});
+		}
+
+		template<typename C>
+		void _remove_association
+			( const C&                   component
+			, const ecsact::field_info&  field
+			)
+		{
+			using ecsact::entt::detail::association;
+			using boost::mp11::mp_with_index;
+
+			auto entity_field = field.template get<ecsact_entity_id>(component);
+			auto entity_field_entt = entities_map.at(entity_field);
+			mp_with_index<64>(field.offset, [&](auto I) {
+				registry.erase<association<C, I>>(entity_field_entt);
+			});
+		}
+
 		template<typename C> requires(std::is_empty_v<C>)
 		void add_component
 			( ::entt::entity entity
@@ -73,8 +105,9 @@ namespace ecsact_entt_rt {
 			)
 		{
 			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_with_index;
 
-			registry.emplace<C>(entity, std::forward<Args>(args)...);
+			auto& comp = registry.emplace<C>(entity, std::forward<Args>(args)...);
 
 			mp_for_each<typename package::components>([&]<typename O>(O) {
 				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
@@ -89,6 +122,15 @@ namespace ecsact_entt_rt {
 					);
 				}
 			});
+
+			constexpr auto fields_info = ecsact::fields_info<C>();
+			if constexpr(!fields_info.empty()) {
+				for(auto& field : fields_info) {
+					if(field.storage_type == ECSACT_ENTITY_TYPE) {
+						_add_association(comp, field);
+					}
+				}
+			}
 		}
 
 		template<typename C>
@@ -97,6 +139,16 @@ namespace ecsact_entt_rt {
 			)
 		{
 			using boost::mp11::mp_for_each;
+
+			constexpr auto fields_info = ecsact::fields_info<C>();
+			if constexpr(!fields_info.empty()) {
+				auto& comp = registry.get<C>(entity);
+				for(auto& field : fields_info) {
+					if(field.storage_type == ECSACT_ENTITY_TYPE) {
+						_remove_association(comp, field);
+					}
+				}
+			}
 
 			registry.erase<C>(entity);
 
