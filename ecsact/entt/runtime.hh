@@ -68,8 +68,10 @@ namespace ecsact::entt {
 
 	public:
 		template<typename SystemT>
-		using system_execution_context =
-			ecsact_entt_rt::system_execution_context<Package, SystemT>;
+		using system_execution_context = ecsact_entt_rt::system_execution_context
+			< Package
+			, ecsact::system_capabilities_info<SystemT>
+			>;
 		using execution_events_collector =
 			ecsact_entt_rt::execution_events_collector;
 		using registry_type = ::entt::registry;
@@ -698,19 +700,27 @@ namespace ecsact::entt {
 
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user_itr
-			( registry_info&                       info
-			, system_view_type<SystemT>&           view
-			, entt_entity_type                     entity
-			, ecsact_system_execution_context*     parent
-			, const void*                          action
-			, const actions_span_t&                actions
+			( registry_info&                           info
+			, system_view_type<SystemT>&               view
+			, system_association_views_type<SystemT>&  assoc_views
+			, entt_entity_type                         entity
+			, ecsact_system_execution_context*         parent
+			, const void*                              action
+			, const actions_span_t&                    actions
 			)
 		{
 			[[maybe_unused]]
 			const auto system_name = typeid(SystemT).name();
 			const auto system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
 
-			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
+			system_execution_context<SystemT> ctx(
+				info,
+				system_id,
+				view,
+				entity,
+				parent,
+				action
+			);
 
 			// Execute the user defined system implementation
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
@@ -740,12 +750,14 @@ namespace ecsact::entt {
 			)
 		{
 			auto view = system_view<SystemT>(info.registry);
+			auto assoc_views = system_association_views<SystemT>(info.registry);
 			const void* action_data = nullptr;
 			auto itr_view = [&] {
 				for(auto entity : view) {
 					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
 						view,
+						assoc_views,
 						entity,
 						parent,
 						action_data,

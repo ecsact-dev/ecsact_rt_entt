@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
 #include "ecsact/lib.hh"
@@ -21,11 +22,14 @@ namespace ecsact::entt::detail {
 }
 
 namespace ecsact::entt {
-	template<typename SystemT>
-	auto system_view
+
+	template<typename SystemCapabilitiesInfo>
+	auto view_from_system_capabilities
 		( ::entt::registry& registry
 		)
 	{
+		using caps_info = SystemCapabilitiesInfo;
+
 		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_unique;
 		using boost::mp11::mp_flatten;
@@ -36,8 +40,6 @@ namespace ecsact::entt {
 
 		using ecsact::entt::detail::temp_storage;
 		using ecsact::entt::detail::beforechange_storage;
-
-		using caps_info = ecsact::system_capabilities_info<SystemT>;
 
 		using readonly_components = typename caps_info::readonly_components;
 		using readwrite_components = typename caps_info::readwrite_components;
@@ -66,8 +68,60 @@ namespace ecsact::entt {
 		return detail::system_view_helper(get_types{}, exclude_types{}, registry);
 	}
 
+	template<typename SystemCapabilitiesInfo>
+	using view_from_system_capabilities_type = decltype(
+		view_from_system_capabilities<SystemCapabilitiesInfo>(
+			std::declval<::entt::registry&>()
+		)
+	);
+
+	template<typename SystemT>
+	auto system_view
+		( ::entt::registry& registry
+		)
+	{
+		using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+		return view_from_system_capabilities<caps_info>(registry);
+	}
+
 	template<typename SystemT>
 	using system_view_type = decltype(
 		system_view<SystemT>(std::declval<::entt::registry&>())
+	);
+
+	template<typename SystemT>
+	auto system_association_views
+		( ::entt::registry& registry
+		)
+	{
+		using boost::mp11::mp_for_each;
+		using boost::mp11::mp_transform;
+		using boost::mp11::mp_rename;
+
+		using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+		using result_type = mp_rename<
+			mp_transform<
+				view_from_system_capabilities_type,
+				typename caps_info::associations
+			>,
+			std::tuple
+		>;
+
+		result_type result;
+
+		mp_for_each<typename caps_info::associations>([&]<typename Assoc>(Assoc) {
+			using view_type = view_from_system_capabilities_type<Assoc>;
+			std::get<view_type>(result) =
+				view_from_system_capabilities<Assoc>(registry);
+		});
+
+		return result;
+	}
+
+	template<typename SystemT>
+	using system_association_views_type = decltype(
+		system_association_views<SystemT>(std::declval<::entt::registry&>())
 	);
 }

@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <string>
 #include <cassert>
+#include <optional>
 #include <unordered_set>
 #include <boost/mp11.hpp>
 #include <entt/entt.hpp>
@@ -35,22 +36,50 @@ namespace ecsact_entt_rt {
 		const void* action;
 	};
 
-	template<typename Package, typename SystemT>
+	template<typename Package, typename SystemCapabilitiesInfo>
 	struct system_execution_context : system_execution_context_base {
 		using system_execution_context_base::cptr_t;
 		using system_execution_context_base::const_cptr_t;
 
+		template<typename T>
+		using other_system_execution_context =
+			std::optional<system_execution_context<Package, T>>;
+
+		using caps_info = SystemCapabilitiesInfo;
 		using package = Package;
-		using view_type = ecsact::entt::system_view_type<SystemT>;
+		using view_type =
+			ecsact::entt::view_from_system_capabilities_type<caps_info>;
+		using association_views_type =
+			ecsact::entt::system_association_views_type<caps_info>;
+
+		static_assert(
+			boost::mp11::mp_size<typename caps_info::associations>::value ==
+			std::tuple_size_v<association_views_type>,
+			"Invalid associations or association views type"
+		);
+
 		ecsact_entt_rt::registry_info<Package>& info;
 		view_type& view;
+		association_views_type& assoc_views;
+
+		using others_t = boost::mp11::mp_transform<
+			other_system_execution_context,
+			boost::mp11::mp_rename<
+				typename caps_info::associations,
+				std::tuple
+			>
+		>;
+
+		others_t others;
 
 		/** @internal */
 		ecsact_system_execution_context _c_ctx;
 
 		system_execution_context
 			( ecsact_entt_rt::registry_info<Package>&  info
+			, ecsact_system_like_id                    system_id
 			, view_type&                               view
+			, association_views_type&                  assoc_views
 			, ::entt::entity                           entity
 			, const cptr_t                             parent
 			, const void*                              action
@@ -58,8 +87,9 @@ namespace ecsact_entt_rt {
 			: system_execution_context_base{entity, parent, action}
 			, info(info)
 			, view(view)
+			, assoc_views(assoc_views)
 		{
-			_c_ctx.system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
+			_c_ctx.system_id = system_id;
 			_c_ctx.impl = this;
 		}
 
@@ -203,8 +233,6 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_flatten;
 			using boost::mp11::mp_assign;
 
-			using caps_info = ecsact::system_capabilities_info<SystemT>;
-
 			using readonly_components = typename caps_info::readonly_components;
 			using readwrite_components = typename caps_info::readwrite_components;
 			using gettable_components = mp_assign<::ecsact::mp_list<>, mp_unique<
@@ -252,8 +280,6 @@ namespace ecsact_entt_rt {
 			using ecsact::entt::detail::beforechange_storage;
 			using ecsact::entt::component_changed;
 
-			using caps_info = ecsact::system_capabilities_info<SystemT>;
-
 			constexpr bool is_writable = mp_apply<mp_any, mp_transform_q<
 				mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
 				typename caps_info::readwrite_components
@@ -284,7 +310,6 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_map_find;
 			using boost::mp11::mp_list;
 
-			using caps_info = ecsact::system_capabilities_info<SystemT>;
 			using readwrite_components = typename caps_info::readwrite_components;
 
 			mp_for_each<readwrite_components>([&]<typename C>(C) {
@@ -308,7 +333,6 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_map_find;
 			using boost::mp11::mp_list;
 
-			using caps_info = ecsact::system_capabilities_info<SystemT>;
 			using optional_components = typename caps_info::optional_components;
 
 			bool result = false;
@@ -355,7 +379,55 @@ namespace ecsact_entt_rt {
 			( ecsact_entity_id entity
 			)
 		{
-			return nullptr;
+			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_first;
+			using boost::mp11::mp_second;
+			using boost::mp11::mp_with_index;
+			using boost::mp11::mp_size;
+
+			auto entt_entity_id = info.get_entt_entity_id(entity);
+
+			ecsact_system_execution_context* return_context = nullptr;
+
+			constexpr auto assoc_count =
+				mp_size<typename caps_info::associations>::value;
+
+			std::size_t assoc_index = 0;
+			if constexpr(assoc_count > 0) {
+				mp_for_each<typename caps_info::associations>([&]<typename Assoc>(Assoc) {
+					using ComponentT = typename Assoc::component_type;
+					constexpr std::size_t offset = Assoc::field_offset;
+					const ComponentT& comp = info.registry.template get<ComponentT>(
+						entt_entity_id
+					);
+
+					auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
+						reinterpret_cast<const char*>(&comp) + offset
+					);
+
+					if(field_entity_value == entity) {
+						auto entt_field_entity_value =
+							info.get_entt_entity_id(field_entity_value);
+						using boost::mp11::mp_size;
+						mp_with_index<mp_size<typename caps_info::associations>::value>(assoc_index, [&](auto I) {
+							auto& other_context = std::get<I>(others);
+							other_context.emplace(
+								info,
+								_c_ctx.system_id,
+								std::get<I>(assoc_views),
+								{},
+								entt_field_entity_value,
+								parent,
+								action
+							);
+						});
+
+						assoc_index += 1;
+					}
+				});
+			}
+
+			return return_context;
 		}
 	};
 }

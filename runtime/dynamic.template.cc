@@ -28,7 +28,9 @@ static void cast_and_use_ctx
 
 	mp_for_each<all_systems>([&]<typename S>(S) {
 		if(ecsact_id_cast<ecsact_system_like_id>(S::id) == ctx->system_id) {
-			fn(*static_cast<system_execution_context<package, S>*>(ctx->impl));
+			using caps_info = ecsact::system_capabilities_info<S>;
+			using context_type = system_execution_context<package, caps_info>;
+			fn(*static_cast<context_type*>(ctx->impl));
 		}
 	});
 }
