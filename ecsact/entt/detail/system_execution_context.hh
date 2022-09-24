@@ -50,7 +50,7 @@ namespace ecsact_entt_rt {
 		using view_type =
 			ecsact::entt::view_from_system_capabilities_type<caps_info>;
 		using association_views_type =
-			ecsact::entt::system_association_views_type<caps_info>;
+			ecsact::entt::association_views_type<caps_info>;
 
 		static_assert(
 			boost::mp11::mp_size<typename caps_info::associations>::value ==
@@ -385,16 +385,17 @@ namespace ecsact_entt_rt {
 			using boost::mp11::mp_with_index;
 			using boost::mp11::mp_size;
 
+			using associations = typename caps_info::associations;
+
 			auto entt_entity_id = info.get_entt_entity_id(entity);
 
 			ecsact_system_execution_context* return_context = nullptr;
 
-			constexpr auto assoc_count =
-				mp_size<typename caps_info::associations>::value;
+			constexpr auto assoc_count = mp_size<associations>::value;
 
 			std::size_t assoc_index = 0;
 			if constexpr(assoc_count > 0) {
-				mp_for_each<typename caps_info::associations>([&]<typename Assoc>(Assoc) {
+				mp_for_each<associations>([&]<typename Assoc>(Assoc) {
 					using ComponentT = typename Assoc::component_type;
 					constexpr std::size_t offset = Assoc::field_offset;
 					const ComponentT& comp = info.registry.template get<ComponentT>(
@@ -409,18 +410,36 @@ namespace ecsact_entt_rt {
 						auto entt_field_entity_value =
 							info.get_entt_entity_id(field_entity_value);
 						using boost::mp11::mp_size;
-						mp_with_index<mp_size<typename caps_info::associations>::value>(assoc_index, [&](auto I) {
-							auto& other_context = std::get<I>(others);
-							other_context.emplace(
-								info,
-								_c_ctx.system_id,
-								std::get<I>(assoc_views),
-								{},
-								entt_field_entity_value,
-								parent,
-								action
-							);
-						});
+						mp_with_index<mp_size<associations>::value>(
+							assoc_index,
+							[&](auto I) {
+								using other_context_t = std::tuple_element_t<I, others_t>;
+								auto& other_context = std::get<I>(others);
+								auto& assoc_view = std::get<I>(assoc_views);
+
+								static_assert(
+									std::tuple_size_v<
+										typename other_context_t::value_type::association_views_type
+									> == 0,
+									"Recursive associations not supported yet."
+								);
+
+								if(!other_context) {
+									static std::tuple<> empty_views;
+									other_context.emplace(
+										info,
+										_c_ctx.system_id,
+										assoc_view,
+										empty_views, // see static assertion above
+										entt_field_entity_value,
+										parent,
+										action
+									);
+								}
+
+								return_context = &other_context->_c_ctx;
+							}
+						);
 
 						assoc_index += 1;
 					}

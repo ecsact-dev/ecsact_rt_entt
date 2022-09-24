@@ -75,6 +75,47 @@ namespace ecsact::entt {
 		)
 	);
 
+	template<typename SystemCapabilitiesInfo>
+	auto association_views
+		( ::entt::registry& registry
+		)
+	{
+		using boost::mp11::mp_for_each;
+		using boost::mp11::mp_transform;
+		using boost::mp11::mp_rename;
+
+		using caps_info = SystemCapabilitiesInfo;
+
+		using result_type = mp_rename<
+			mp_transform<
+				view_from_system_capabilities_type,
+				typename caps_info::associations
+			>,
+			std::tuple
+		>;
+
+		static_assert(
+			boost::mp11::mp_size<typename caps_info::associations>::value ==
+			std::tuple_size_v<result_type>,
+			"[INTERNAL] result_type failure"
+		);
+
+		result_type result;
+
+		mp_for_each<typename caps_info::associations>([&]<typename Assoc>(Assoc) {
+			using view_type = view_from_system_capabilities_type<Assoc>;
+			std::get<view_type>(result) =
+				view_from_system_capabilities<Assoc>(registry);
+		});
+
+		return result;
+	}
+
+	template<typename SystemCapabilitiesInfo>
+	using association_views_type = decltype(
+		association_views<SystemCapabilitiesInfo>(std::declval<::entt::registry&>())
+	);
+
 	template<typename SystemT>
 	auto system_view
 		( ::entt::registry& registry
@@ -95,29 +136,9 @@ namespace ecsact::entt {
 		( ::entt::registry& registry
 		)
 	{
-		using boost::mp11::mp_for_each;
-		using boost::mp11::mp_transform;
-		using boost::mp11::mp_rename;
-
 		using caps_info = ecsact::system_capabilities_info<SystemT>;
 
-		using result_type = mp_rename<
-			mp_transform<
-				view_from_system_capabilities_type,
-				typename caps_info::associations
-			>,
-			std::tuple
-		>;
-
-		result_type result;
-
-		mp_for_each<typename caps_info::associations>([&]<typename Assoc>(Assoc) {
-			using view_type = view_from_system_capabilities_type<Assoc>;
-			std::get<view_type>(result) =
-				view_from_system_capabilities<Assoc>(registry);
-		});
-
-		return result;
+		return association_views<caps_info>(registry);
 	}
 
 	template<typename SystemT>

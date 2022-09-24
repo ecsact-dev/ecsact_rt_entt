@@ -717,6 +717,7 @@ namespace ecsact::entt {
 				info,
 				system_id,
 				view,
+				assoc_views,
 				entity,
 				parent,
 				action
