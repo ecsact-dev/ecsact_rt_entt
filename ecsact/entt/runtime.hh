@@ -774,6 +774,7 @@ namespace ecsact::entt {
 						auto& assoc_view = std::get<I>(assoc_views);
 						auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
 						constexpr std::size_t offset = Assoc::field_offset;
+						assert(view.contains(entity));
 						auto& comp = view.get<ComponentT>(entity);
 						auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
 							reinterpret_cast<const char*>(&comp) + offset

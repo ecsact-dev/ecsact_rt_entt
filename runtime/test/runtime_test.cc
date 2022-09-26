@@ -18,9 +18,9 @@ void runtime_test::SimpleSystem::impl(context& ctx) {
 void runtime_test::OtherEntitySystem::impl(context& ctx) {
 	auto comp = ctx.get<OtherEntityComponent>();
 	auto other = ctx._ctx.other(comp.target);
-	auto other_comp = other.get<OtherEntityComponent>();
+	auto other_comp = other.get<ComponentA>();
 
-	comp.num += -other_comp.num;
+	comp.num += -other_comp.a;
 
 	ctx.update(comp);
 	other.update(other_comp);

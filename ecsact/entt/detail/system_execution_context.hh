@@ -218,6 +218,14 @@ namespace ecsact_entt_rt {
 
 		template<typename C> requires(!std::is_empty_v<C>)
 		const C& get() {
+#ifndef NDEBUG
+			assert(
+				info.registry.all_of<C>(entity) &&
+				"context get called for wrong component type. "
+				"Check system capabilities."
+			);
+#endif
+
 			return view.template get<C>(entity);
 		}
 
@@ -246,8 +254,9 @@ namespace ecsact_entt_rt {
 			>>;
 
 #ifndef NDEBUG
-			bool found_fettable_component = false;
+			bool found_gettable_component = false;
 			const char* get_component_name = "";
+			auto gettable_components_type_name = typeid(gettable_components).name();
 #endif//NDEBUG
 
 			mp_for_each<gettable_components>([&]<typename C>(C) {
@@ -257,14 +266,14 @@ namespace ecsact_entt_rt {
 						out_component = get<C>();
 #ifndef NDEBUG
 						get_component_name = typeid(C).name();
-						found_fettable_component = true;
+						found_gettable_component = true;
 #endif//NDEBUG
 					}
 				}
 			});
 
 #ifndef NDEBUG
-			assert(found_fettable_component);
+			assert(found_gettable_component);
 #endif//NDEBUG
 		}
 
@@ -376,7 +385,7 @@ namespace ecsact_entt_rt {
 		}
 
 		ecsact_system_execution_context* other
-			( ecsact_entity_id entity
+			( ecsact_entity_id other_entity
 			)
 		{
 			using boost::mp11::mp_for_each;
@@ -387,7 +396,7 @@ namespace ecsact_entt_rt {
 
 			using associations = typename caps_info::associations;
 
-			auto entt_entity_id = info.get_entt_entity_id(entity);
+			auto other_entt_entity_id = info.get_entt_entity_id(other_entity);
 
 			ecsact_system_execution_context* return_context = nullptr;
 
@@ -398,15 +407,16 @@ namespace ecsact_entt_rt {
 				mp_for_each<associations>([&]<typename Assoc>(Assoc) {
 					using ComponentT = typename Assoc::component_type;
 					constexpr std::size_t offset = Assoc::field_offset;
+					auto compnent_name = typeid(ComponentT).name();
 					const ComponentT& comp = info.registry.template get<ComponentT>(
-						entt_entity_id
+						entity
 					);
 
 					auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
 						reinterpret_cast<const char*>(&comp) + offset
 					);
 
-					if(field_entity_value == entity) {
+					if(field_entity_value == other_entity) {
 						auto entt_field_entity_value =
 							info.get_entt_entity_id(field_entity_value);
 						using boost::mp11::mp_size;
