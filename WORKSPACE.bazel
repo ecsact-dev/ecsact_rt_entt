@@ -18,9 +18,9 @@ http_archive(
 
 http_archive(
     name = "ecsact_lang_cpp",
-    sha256 = "469e82256d48137213e0373c306669bef971f9017376225542a50afc4d849b4f",
-    strip_prefix = "ecsact_lang_cpp-986478492f751a7d27e52559262317225ceefc68",
-    url = "https://github.com/ecsact-dev/ecsact_lang_cpp/archive/986478492f751a7d27e52559262317225ceefc68.zip",
+    sha256 = "937de89cc5d594904219075f440ce0361a3dc30cc7de906bd4a797f9dbe8fdeb",
+    strip_prefix = "ecsact_lang_cpp-34badd18ea6abeb3a6f5df588c99dde6d6881ae1",
+    url = "https://github.com/ecsact-dev/ecsact_lang_cpp/archive/34badd18ea6abeb3a6f5df588c99dde6d6881ae1.zip",
 )
 
 load("@rules_ecsact//ecsact:repositories.bzl", "ecsact_register_toolchains", "rules_ecsact_dependencies")
