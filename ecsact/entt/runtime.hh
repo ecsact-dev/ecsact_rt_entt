@@ -750,11 +750,49 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
+			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_iota_c;
+			using boost::mp11::mp_size;
+			using boost::mp11::mp_size_t;
+
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+			using associations = typename caps_info::associations;
+
 			auto view = system_view<SystemT>(info.registry);
 			auto assoc_views = system_association_views<SystemT>(info.registry);
+			auto assoc_views_itrs = system_association_views_iterators(assoc_views);
 			const void* action_data = nullptr;
 			auto itr_view = [&] {
 				for(auto entity : view) {
+					mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+						using boost::mp11::mp_at;
+						using boost::mp11::mp_size_t;
+
+						using Assoc = mp_at<associations, mp_size_t<I>>;
+						using ComponentT = typename Assoc::component_type;
+
+						auto& assoc_view = std::get<I>(assoc_views);
+						auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
+						constexpr std::size_t offset = Assoc::field_offset;
+						auto& comp = view.get<ComponentT>(entity);
+						auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
+							reinterpret_cast<const char*>(&comp) + offset
+						);
+						auto entt_field_entity_value =
+							info.get_entt_entity_id(field_entity_value);
+
+						bool found_associated_entity = false;
+						for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
+							found_associated_entity =
+								*assoc_view_itr == entt_field_entity_value;
+							if(found_associated_entity) {
+								break;
+							}
+						}
+
+						assert(found_associated_entity);
+					});
+					
 					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
 						view,

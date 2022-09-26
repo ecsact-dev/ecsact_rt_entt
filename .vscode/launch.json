@@ -2,7 +2,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "test //test:test",
+			"name": "test //runtime/test:test",
 			"request": "launch",
 			"program": "${workspaceFolder}/bazel-bin/runtime/test/test",
 			"cwd": "${workspaceFolder}",

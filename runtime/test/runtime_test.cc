@@ -11,7 +11,7 @@ using runtime_test::OtherEntityComponent;
 
 void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
-	comp.a += 1;
+	comp.a += 2;
 	ctx.update(comp);
 }
 
@@ -234,10 +234,19 @@ TEST(Core, DynamicSystemImpl) {
 	// Sanity check
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
 	ASSERT_EQ(reg.get_component<ComponentA>(entity), comp);
+	ASSERT_TRUE(reg.has_component<ComponentA>(other_entity));
+	ASSERT_EQ(reg.get_component<ComponentA>(other_entity), comp);
+	ASSERT_TRUE(reg.has_component<OtherEntityComponent>(entity));
+	ASSERT_EQ(reg.get_component<OtherEntityComponent>(entity), other_comp);
 
 	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
-		&dynamic_impl
+		&runtime_test__SimpleSystem
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::OtherEntitySystem::id),
+		&runtime_test__OtherEntitySystem
 	);
 
 	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
@@ -285,7 +294,7 @@ TEST(Core, StaticSystemImpl) {
 	EXPECT_NE(comp_get->a, comp.a);
 
 	// Simulate what the system should be doing.
-	comp.a += 1;
+	comp.a += 2;
 	EXPECT_EQ(comp_get->a, comp.a);
 }
 #endif//ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL

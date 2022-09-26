@@ -145,4 +145,14 @@ namespace ecsact::entt {
 	using system_association_views_type = decltype(
 		system_association_views<SystemT>(std::declval<::entt::registry&>())
 	);
+
+	template<typename AssocViews>
+	auto system_association_views_iterators
+		( AssocViews& assoc_views
+		)
+	{
+		return std::apply([&](auto&... views) {
+			return std::make_tuple(views.begin()...);
+		}, assoc_views);
+	}
 }

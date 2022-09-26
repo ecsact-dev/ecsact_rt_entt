@@ -52,6 +52,6 @@ system AttackDamage {
 ```
 
 ```cpp
-entt::basic_view<entt::entity, entt:get_t<example::Attacking, ecsact::entt::association<Attacking, 0/*target*/>>, entt::exclude_t<>>
-entt::basic_view<entt::entity, entt:get_t<example::Health>, entt::exclude_t<>>
+entt::basic_view<entt::entity, entt:get_t<example::Attacking>, entt::exclude_t<>>
+entt::basic_view<entt::entity, entt:get_t<example::Health, ecsact::entt::association<example::Attacking, 0/*target*/>>, entt::exclude_t<>>
 ```
