@@ -30,6 +30,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         strip_include_prefix = "%s__public_hdrs" % name,
         deps = [
             "@ecsact_lang_cpp//:execution_context",
+            "@ecsact_lang_cpp//:type_info",
         ],
         **kwargs
     )

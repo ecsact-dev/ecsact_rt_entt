@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/mp11.hpp>
+#include "ecsact/cpp/type_info.hh"
 #include "ecsact/entt/system_view.hh"
 
 namespace ecsact::entt {
@@ -11,37 +12,18 @@ namespace ecsact::entt {
 	 */
 	template<typename Package, typename SystemT>
 	constexpr bool is_trivial_system() {
-		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_filter;
 		using boost::mp11::mp_empty;
 		using boost::mp11::mp_size;
 		using boost::mp11::mp_list;
 
-		using readonly_components = mp_map_find_value_or<
-			typename Package::system_readonly_components,
-			SystemT,
-			mp_list<>
-		>;
-		using readwrite_components = mp_map_find_value_or<
-			typename Package::system_readwrite_components,
-			SystemT,
-			mp_list<>
-		>;
-		using writeonly_components = mp_map_find_value_or<
-			typename Package::system_writeonly_components,
-			SystemT,
-			mp_list<>
-		>;
-		using adds_components = mp_map_find_value_or<
-			typename Package::system_adds_components,
-			SystemT,
-			mp_list<>
-		>;
-		using removes_components = mp_map_find_value_or<
-			typename Package::system_removes_components,
-			SystemT,
-			mp_list<>
-		>;
+		using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+		using readonly_components = typename caps_info::readonly_components;
+		using readwrite_components = typename caps_info::readwrite_components;
+		using writeonly_components = typename caps_info::writeonly_components;
+		using adds_components = typename caps_info::adds_components;
+		using removes_components = typename caps_info::removes_components;
 		using adds_tag_components = mp_filter<std::is_empty, adds_components>;
 
 		const bool can_add_non_tag_compnents =
@@ -68,46 +50,20 @@ namespace ecsact::entt {
 		, EachCallbackT&&    each_callback = [](auto&, auto){}
 		)
 	{
-		using ecsact::entt_mp11_util::mp_map_find_value_or;
 		using boost::mp11::mp_empty;
 		using boost::mp11::mp_list;
 		using boost::mp11::mp_for_each;
 
-		using readonly_components = mp_map_find_value_or<
-			typename Package::system_readonly_components,
-			SystemT,
-			mp_list<>
-		>;
-		using readwrite_components = mp_map_find_value_or<
-			typename Package::system_readwrite_components,
-			SystemT,
-			mp_list<>
-		>;
-		using optional_components = mp_map_find_value_or<
-			typename Package::system_optional_components,
-			SystemT,
-			mp_list<>
-		>;
-		using adds_components = mp_map_find_value_or<
-			typename Package::system_adds_components,
-			SystemT,
-			mp_list<>
-		>;
-		using removes_components = mp_map_find_value_or<
-			typename Package::system_removes_components,
-			SystemT,
-			mp_list<>
-		>;
-		using include_components = mp_map_find_value_or<
-			typename Package::system_include_components,
-			SystemT,
-			mp_list<>
-		>;
-		using exclude_components = mp_map_find_value_or<
-			typename Package::system_exclude_components,
-			SystemT,
-			mp_list<>
-		>;
+		using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+		using readonly_components = typename caps_info::readonly_components;
+		using readwrite_components = typename caps_info::readwrite_components;
+		using writeonly_components = typename caps_info::writeonly_components;
+		using adds_components = typename caps_info::adds_components;
+		using removes_components = typename caps_info::removes_components;
+		using include_components = typename caps_info::include_components;
+		using exclude_components = typename caps_info::exclude_components;
+		using optional_components = typename caps_info::optional_components;
 
 		// If we have a system that can only remove and does not use any filtering
 		// i.e. simply removes all of a component, then we can use a short cut and

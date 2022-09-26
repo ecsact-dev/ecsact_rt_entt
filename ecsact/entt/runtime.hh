@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <boost/mp11.hpp>
 #include "ecsact/runtime/common.h"
+#include "ecsact/runtime/definitions.h"
 #include "ecsact/runtime/core.h"
 #include "ecsact/lib.hh"
 #include <entt/entt.hpp>
@@ -67,8 +68,10 @@ namespace ecsact::entt {
 
 	public:
 		template<typename SystemT>
-		using system_execution_context =
-			ecsact_entt_rt::system_execution_context<Package, SystemT>;
+		using system_execution_context = ecsact_entt_rt::system_execution_context
+			< Package
+			, ecsact::system_capabilities_info<SystemT>
+			>;
 		using execution_events_collector =
 			ecsact_entt_rt::execution_events_collector;
 		using registry_type = ::entt::registry;
@@ -218,7 +221,7 @@ namespace ecsact::entt {
 		}
 
 		template<typename C>
-		void add_component
+		ecsact_add_error add_component
 			( ecsact_registry_id  reg_id
 			, ecsact_entity_id    entity_id
 			, const C&            component_data
@@ -227,20 +230,36 @@ namespace ecsact::entt {
 			auto& info = _registries.at(reg_id);
 			auto entt_entity_id = info.entities_map.at(entity_id);
 
+			constexpr auto fields_info = ecsact::fields_info<C>();
+			if constexpr(!fields_info.empty()) {
+				for(auto& field : fields_info) {
+					if(field.storage_type == ECSACT_ENTITY_TYPE) {
+						auto entity_field = field.template get<ecsact_entity_id>(
+							component_data
+						);
+						if(!info.entities_map.contains(entity_field)) {
+							return ECSACT_ADD_ERR_ENTITY_INVALID;
+						}
+					}
+				}
+			}
+
 			if constexpr(std::is_empty_v<C>) {
 				info.template add_component<C>(entt_entity_id);
 			} else {
 				info.template add_component<C>(entt_entity_id, component_data);
 			}
+
+			return ECSACT_ADD_OK;
 		}
 
 		template<typename ComponentT>
-		void add_component
+		ecsact_add_error add_component
 			( ecsact_registry_id  reg_id
 			, ecsact_entity_id    entity_id
 			)
 		{
-			add_component<ComponentT>(reg_id, entity_id, ComponentT{});
+			return add_component<ComponentT>(reg_id, entity_id, ComponentT{});
 		}
 
 		ecsact_add_error add_component
@@ -252,12 +271,14 @@ namespace ecsact::entt {
 		{
 			using boost::mp11::mp_for_each;
 
+			ecsact_add_error err = ECSACT_ADD_OK;
+
 			mp_for_each<typename package::components>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
 					if constexpr(std::is_empty_v<C>) {
-						add_component<C>(reg_id, entity_id);
+						err = add_component<C>(reg_id, entity_id);
 					} else {
-						add_component<C>(
+						err = add_component<C>(
 							reg_id,
 							entity_id,
 							*static_cast<const C*>(component_data)
@@ -266,7 +287,7 @@ namespace ecsact::entt {
 				}
 			});
 
-			return ECSACT_ADD_OK;
+			return err;
 		}
 
 		template<typename ComponentT>
@@ -421,6 +442,20 @@ namespace ecsact::entt {
 			auto& info = _registries.at(reg_id);
 			auto entt_entity_id = info.entities_map.at(entity_id);
 	
+			constexpr auto fields_info = ecsact::fields_info<ComponentT>();
+			if constexpr(!fields_info.empty()) {
+				for(auto& field : fields_info) {
+					if(field.storage_type == ECSACT_ENTITY_TYPE) {
+						auto entity_field = field.template get<ecsact_entity_id>(
+							component_data
+						);
+						if(!info.entities_map.contains(entity_field)) {
+							return ECSACT_UPDATE_ERR_ENTITY_INVALID;
+						}
+					}
+				}
+			}
+
 			auto& component = info.registry.template get<ComponentT>(entt_entity_id);
 			component = component_data;
 
@@ -522,16 +557,10 @@ namespace ecsact::entt {
 			using ecsact::entt::detail::pending_add;
 			using ecsact::entt_mp11_util::mp_map_find_value_or;
 
-			using system_generates = mp_map_find_value_or<
-				typename package::generates,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
-			using adds_components = mp_map_find_value_or<
-				typename Package::system_adds_components,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+			using system_generates = typename caps_info::generates;
+			using adds_components = typename caps_info::adds_components;
 			static_assert(!std::is_same_v<system_generates, void>);
 
 			using addables = mp_unique<
@@ -587,11 +616,9 @@ namespace ecsact::entt {
 			using boost::mp11::mp_for_each;
 			using ecsact::entt::detail::pending_remove;
 
-			using removes_components = mp_map_find_value_or<
-				typename package::system_removes_components,
-				SystemT,
-				::ecsact::mp_list<>
-			>;
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+
+			using removes_components = typename caps_info::removes_components;
 
 			mp_for_each<removes_components>([&]<typename C>(C) {
 				auto view = info.registry.template view<pending_remove<C>>();
@@ -673,19 +700,28 @@ namespace ecsact::entt {
 
 		template<typename SystemT, typename ChildSystemsListT>
 		void _execute_system_user_itr
-			( registry_info&                       info
-			, system_view_type<package, SystemT>&  view
-			, entt_entity_type                     entity
-			, ecsact_system_execution_context*     parent
-			, const void*                          action
-			, const actions_span_t&                actions
+			( registry_info&                           info
+			, system_view_type<SystemT>&               view
+			, system_association_views_type<SystemT>&  assoc_views
+			, entt_entity_type                         entity
+			, ecsact_system_execution_context*         parent
+			, const void*                              action
+			, const actions_span_t&                    actions
 			)
 		{
 			[[maybe_unused]]
 			const auto system_name = typeid(SystemT).name();
 			const auto system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
 
-			system_execution_context<SystemT> ctx(info, view, entity, parent, action);
+			system_execution_context<SystemT> ctx(
+				info,
+				system_id,
+				view,
+				assoc_views,
+				entity,
+				parent,
+				action
+			);
 
 			// Execute the user defined system implementation
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
@@ -714,13 +750,54 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
-			auto view = system_view<package, SystemT>(info.registry);
+			using boost::mp11::mp_for_each;
+			using boost::mp11::mp_iota_c;
+			using boost::mp11::mp_size;
+			using boost::mp11::mp_size_t;
+
+			using caps_info = ecsact::system_capabilities_info<SystemT>;
+			using associations = typename caps_info::associations;
+
+			auto view = system_view<SystemT>(info.registry);
+			auto assoc_views = system_association_views<SystemT>(info.registry);
+			auto assoc_views_itrs = system_association_views_iterators(assoc_views);
 			const void* action_data = nullptr;
 			auto itr_view = [&] {
 				for(auto entity : view) {
+					mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+						using boost::mp11::mp_at;
+						using boost::mp11::mp_size_t;
+
+						using Assoc = mp_at<associations, mp_size_t<I>>;
+						using ComponentT = typename Assoc::component_type;
+
+						auto& assoc_view = std::get<I>(assoc_views);
+						auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
+						constexpr std::size_t offset = Assoc::field_offset;
+						assert(view.contains(entity));
+						auto& comp = view.get<ComponentT>(entity);
+						auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
+							reinterpret_cast<const char*>(&comp) + offset
+						);
+						auto entt_field_entity_value =
+							info.get_entt_entity_id(field_entity_value);
+
+						bool found_associated_entity = false;
+						for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
+							found_associated_entity =
+								*assoc_view_itr == entt_field_entity_value;
+							if(found_associated_entity) {
+								break;
+							}
+						}
+
+						assert(found_associated_entity);
+					});
+					
 					_execute_system_user_itr<SystemT, ChildSystemsListT>(
 						info,
 						view,
+						assoc_views,
 						entity,
 						parent,
 						action_data,

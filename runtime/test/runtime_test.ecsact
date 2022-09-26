@@ -1,11 +1,24 @@
 main package runtime_test;
 
 component ComponentA {
-  i32 a;
+	i32 a;
 }
 
-component EmptyComponent {}
+component OtherEntityComponent {
+	i32 num;
+	entity target;
+}
+
+component EmptyComponent;
 
 system SimpleSystem {
-  readwrite ComponentA;
+	readwrite ComponentA;
 }
+
+system OtherEntitySystem {
+	readwrite OtherEntityComponent with target {
+		readwrite ComponentA;
+	}
+}
+
+// force refresh cache 2

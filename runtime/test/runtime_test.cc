@@ -7,11 +7,23 @@
 #include "runtime_test.ecsact.systems.hh"
 
 using runtime_test::ComponentA;
+using runtime_test::OtherEntityComponent;
 
 void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
-	comp.a += 1;
+	comp.a += 2;
 	ctx.update(comp);
+}
+
+void runtime_test::OtherEntitySystem::impl(context& ctx) {
+	auto comp = ctx.get<OtherEntityComponent>();
+	auto other = ctx._ctx.other(comp.target);
+	auto other_comp = other.get<ComponentA>();
+
+	comp.num += -other_comp.a;
+
+	ctx.update(comp);
+	other.update(other_comp);
 }
 
 TEST(Core, CreateRegistry) {
@@ -91,9 +103,29 @@ TEST(Core, AddComponent) {
 	runtime_test::ComponentA comp{.a = 42};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 
-	ecsact_add_component(reg_id, entity, comp_id, &comp);
+	auto add_err = ecsact_add_component(reg_id, entity, comp_id, &comp);
+	EXPECT_EQ(add_err, ECSACT_ADD_OK);
 
 	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+}
+
+TEST(Core, AddComponentError) {
+	auto reg = ecsact::core::registry("AddComponentError");
+	auto entity = reg.create_entity();
+	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
+		(int)entity + 1
+	);
+
+	OtherEntityComponent comp{.num = 42, .target = invalid_entity};
+
+	auto add_err = reg.add_component(entity, comp);
+	// We tried to add a component with an invalid entity ID. We should get an
+	// invalid entity error.
+	EXPECT_EQ(add_err, ECSACT_ADD_ERR_ENTITY_INVALID);
+
+	// When we receive an error when adding a component our component will not be
+	// added to the registry.
+	EXPECT_FALSE(reg.has_component<OtherEntityComponent>(entity));
 }
 
 TEST(Core, HasComponent) {
@@ -140,6 +172,27 @@ TEST(Core, UpdateComponent) {
 	EXPECT_EQ(*comp_get, upped_comp);
 }
 
+TEST(Core, UpdateComponentError) {
+	auto reg = ecsact::core::registry("UpdateComponentError");
+	auto entity = reg.create_entity();
+	auto other_entity = reg.create_entity();
+	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
+		(int)other_entity + 1
+	);
+
+	OtherEntityComponent comp{.num = 42, .target = other_entity};
+
+	auto add_err = reg.add_component(entity, comp);
+	ASSERT_EQ(add_err, ECSACT_ADD_OK);
+	
+	comp.num = 43;
+	comp.target = invalid_entity;
+	auto update_err = reg.update_component(entity, comp);
+
+	// We tried to update the component with an invalid entity ID. We should get
+	// an invalid entity error.
+	EXPECT_EQ(update_err, ECSACT_UPDATE_ERR_ENTITY_INVALID);
+}
 
 TEST(Core, RemoveComponent) {
 	auto reg_id = ecsact_create_registry("RemoveComponent");
@@ -166,17 +219,34 @@ static void dynamic_impl(ecsact_system_execution_context* ctx) {
 TEST(Core, DynamicSystemImpl) {
 	ecsact::core::registry reg("DynamicSystemImpl");
 	auto entity = reg.create_entity();
+	auto other_entity = reg.create_entity();
 
 	ComponentA comp{.a = 42};
 	reg.add_component(entity, comp);
+	reg.add_component(other_entity, comp);
+	
+	OtherEntityComponent other_comp{.num = 3, .target = other_entity};
+	ASSERT_EQ(
+		reg.add_component(entity, other_comp),
+		ECSACT_ADD_OK
+	);
 
 	// Sanity check
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
 	ASSERT_EQ(reg.get_component<ComponentA>(entity), comp);
+	ASSERT_TRUE(reg.has_component<ComponentA>(other_entity));
+	ASSERT_EQ(reg.get_component<ComponentA>(other_entity), comp);
+	ASSERT_TRUE(reg.has_component<OtherEntityComponent>(entity));
+	ASSERT_EQ(reg.get_component<OtherEntityComponent>(entity), other_comp);
 
 	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
-		&dynamic_impl
+		&runtime_test__SimpleSystem
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::OtherEntitySystem::id),
+		&runtime_test__OtherEntitySystem
 	);
 
 	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
@@ -224,7 +294,7 @@ TEST(Core, StaticSystemImpl) {
 	EXPECT_NE(comp_get->a, comp.a);
 
 	// Simulate what the system should be doing.
-	comp.a += 1;
+	comp.a += 2;
 	EXPECT_EQ(comp_get->a, comp.a);
 }
 #endif//ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
