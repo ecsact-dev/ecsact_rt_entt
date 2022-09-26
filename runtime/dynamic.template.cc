@@ -28,9 +28,30 @@ static void cast_and_use_ctx
 
 	mp_for_each<all_systems>([&]<typename S>(S) {
 		if(ecsact_id_cast<ecsact_system_like_id>(S::id) == ctx->system_id) {
+			using boost::mp11::mp_size;
 			using caps_info = ecsact::system_capabilities_info<S>;
-			using context_type = system_execution_context<package, caps_info>;
-			fn(*static_cast<context_type*>(ctx->impl));
+			using associations = typename caps_info::associations;
+
+			if(ctx->association_index == -1) {
+				using context_type = system_execution_context<package, caps_info>;
+
+				fn(*static_cast<context_type*>(ctx->impl));
+			} else {
+				using boost::mp11::mp_with_index;
+
+				if constexpr(mp_size<associations>::value > 0) {
+					mp_with_index<mp_size<associations>::value>(
+						ctx->association_index,
+						[&](auto I) {
+							using boost::mp11::mp_at;
+							using boost::mp11::mp_size_t;
+							using assoc = mp_at<associations, mp_size_t<I>>;
+							using context_type = system_execution_context<package, assoc>;
+							fn(*static_cast<context_type*>(ctx->impl));
+						}
+					);
+				}
+			}
 		}
 	});
 }

@@ -23,6 +23,9 @@ struct ecsact_system_execution_context {
 	// System execution context implementation. To be casted to specific derived
 	// templated type. See `system_execution_context<Package, System>`
 	ecsact_entt_rt::system_execution_context_base* impl;
+
+	// This is set by the system_execution_context::other method
+	signed association_index = -1;
 };
 
 namespace ecsact_entt_rt {
@@ -445,6 +448,9 @@ namespace ecsact_entt_rt {
 										parent,
 										action
 									);
+
+									other_context->_c_ctx.association_index =
+										static_cast<signed>(assoc_index);
 								}
 
 								return_context = &other_context->_c_ctx;
