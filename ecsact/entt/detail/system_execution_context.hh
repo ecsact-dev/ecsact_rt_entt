@@ -223,7 +223,7 @@ namespace ecsact_entt_rt {
 		const C& get() {
 #ifndef NDEBUG
 			assert(
-				info.registry.all_of<C>(entity) &&
+				info.registry.template all_of<C>(entity) &&
 				"context get called for wrong component type. "
 				"Check system capabilities."
 			);
@@ -257,8 +257,11 @@ namespace ecsact_entt_rt {
 			>>;
 
 #ifndef NDEBUG
+			[[maybe_unused]]
 			bool found_gettable_component = false;
+			[[maybe_unused]]
 			const char* get_component_name = "";
+			[[maybe_unused]]
 			auto gettable_components_type_name = typeid(gettable_components).name();
 #endif//NDEBUG
 
