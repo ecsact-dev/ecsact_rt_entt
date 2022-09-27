@@ -136,6 +136,7 @@ const ecsact_system_execution_context* ecsact_system_execution_context_parent
 	( ecsact_system_execution_context*  context
 	)
 {
+	assert(context->impl->parent && "parent context is NULL");
 	return context->impl->parent;
 }
 
