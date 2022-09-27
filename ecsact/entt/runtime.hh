@@ -554,12 +554,20 @@ namespace ecsact::entt {
 			using boost::mp11::mp_flatten;
 			using boost::mp11::mp_push_back;
 			using boost::mp11::mp_map_find;
+			using boost::mp11::mp_first;
+			using boost::mp11::mp_transform;
 			using ecsact::entt::detail::pending_add;
 			using ecsact::entt_mp11_util::mp_map_find_value_or;
 
 			using caps_info = ecsact::system_capabilities_info<SystemT>;
 
-			using system_generates = typename caps_info::generates;
+			using system_generates = mp_transform<
+				mp_first,
+				mp_flatten<
+					typename caps_info::generates,
+					::ecsact::mp_list<>
+				>
+			>;
 			using adds_components = typename caps_info::adds_components;
 			static_assert(!std::is_same_v<system_generates, void>);
 
@@ -775,7 +783,7 @@ namespace ecsact::entt {
 						auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
 						constexpr std::size_t offset = Assoc::field_offset;
 						assert(view.contains(entity));
-						auto& comp = view.get<ComponentT>(entity);
+						auto& comp = view.template get<ComponentT>(entity);
 						auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
 							reinterpret_cast<const char*>(&comp) + offset
 						);
