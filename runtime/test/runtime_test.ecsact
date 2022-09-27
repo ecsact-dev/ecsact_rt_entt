@@ -20,3 +20,10 @@ system OtherEntitySystem {
 		readwrite ComponentA;
 	}
 }
+
+action MakeAnother {
+	readwrite ComponentA;
+	generates {
+		required OtherEntityComponent;
+	}
+}

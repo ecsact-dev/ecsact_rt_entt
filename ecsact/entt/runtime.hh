@@ -554,12 +554,20 @@ namespace ecsact::entt {
 			using boost::mp11::mp_flatten;
 			using boost::mp11::mp_push_back;
 			using boost::mp11::mp_map_find;
+			using boost::mp11::mp_first;
+			using boost::mp11::mp_transform;
 			using ecsact::entt::detail::pending_add;
 			using ecsact::entt_mp11_util::mp_map_find_value_or;
 
 			using caps_info = ecsact::system_capabilities_info<SystemT>;
 
-			using system_generates = typename caps_info::generates;
+			using system_generates = mp_transform<
+				mp_first,
+				mp_flatten<
+					typename caps_info::generates,
+					::ecsact::mp_list<>
+				>
+			>;
 			using adds_components = typename caps_info::adds_components;
 			static_assert(!std::is_same_v<system_generates, void>);
 
