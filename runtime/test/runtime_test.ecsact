@@ -27,3 +27,10 @@ action MakeAnother {
 		required OtherEntityComponent;
 	}
 }
+
+system {
+	readonly ComponentA;
+	system ExampleChildSystem {
+		readwrite ComponentA;
+	}
+}

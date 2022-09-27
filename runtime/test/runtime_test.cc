@@ -30,6 +30,11 @@ void runtime_test::MakeAnother::impl(context& ctx) {
 	
 }
 
+void runtime_test::ExampleChildSystem::impl(context& ctx) {
+	auto parent = ecsact_system_execution_context_parent(ctx._ctx._ctx);
+	ASSERT_NE(parent, nullptr);
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -251,6 +256,11 @@ TEST(Core, DynamicSystemImpl) {
 	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(runtime_test::OtherEntitySystem::id),
 		&runtime_test__OtherEntitySystem
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::ExampleChildSystem::id),
+		&runtime_test__ExampleChildSystem
 	);
 
 	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
