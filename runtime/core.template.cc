@@ -1,7 +1,6 @@
 #include "ecsact/runtime/core.h"
 
 #include "common.template.hh"
-#include <intrin.h>
 
 using namespace ecsact_entt_rt;
 
