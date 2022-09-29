@@ -12,6 +12,7 @@
 #include <span>
 #include <algorithm>
 #include <boost/mp11.hpp>
+#include <iostream>
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/definitions.h"
 #include "ecsact/runtime/core.h"
@@ -669,13 +670,16 @@ namespace ecsact::entt {
 			)
 		{
 			using boost::mp11::mp_empty;
+			const auto system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
 
 			const void* action_data = nullptr;
-			auto each_cb = [&](auto& view, auto entity) {
+			auto each_cb = [&](auto& view, auto& assoc_views, auto entity) {
 				if constexpr(!mp_empty<ChildSystemsListT>::value) {
 					system_execution_context<SystemT> ctx(
 						info,
+						system_id,
 						view,
+						assoc_views,
 						entity,
 						parent,
 						action_data
@@ -692,17 +696,11 @@ namespace ecsact::entt {
 				for(auto& action : actions) {
 					if(action.action_id == SystemT::id) {
 						action_data = action.action_data;
-						trivial_system_impl<package, SystemT>(
-							info.registry,
-							each_cb
-						);
+						trivial_system_impl<SystemT>(info, each_cb);
 					}
 				}
 			} else {
-				trivial_system_impl<package, SystemT>(
-					info.registry,
-					each_cb
-				);
+				trivial_system_impl<SystemT>(info, each_cb);
 			}
 		}
 
@@ -838,7 +836,7 @@ namespace ecsact::entt {
 			, const actions_span_t&             actions
 			)
 		{
-			if constexpr(is_trivial_system<package, SystemT>()) {
+			if constexpr(is_trivial_system<SystemT>()) {
 				_execute_system_trivial<SystemT, ChildSystemsListT>(
 					info,
 					parent,
@@ -1252,6 +1250,9 @@ namespace ecsact::entt {
 				if(execution_options_list != nullptr) {
 					_apply_execution_options(execution_options_list[n], info);
 					if(execution_options_list->actions_length > 0) {
+						std::cout << 
+							"Actions length: " << execution_options_list->actions_length 
+						<< std::endl;
 						actions = std::span(
 							execution_options_list->actions,
 							execution_options_list->actions_length

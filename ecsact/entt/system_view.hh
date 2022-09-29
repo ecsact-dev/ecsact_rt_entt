@@ -44,6 +44,7 @@ namespace ecsact::entt {
 		using readonly_components = typename caps_info::readonly_components;
 		using readwrite_components = typename caps_info::readwrite_components;
 		using removes_components = typename caps_info::removes_components;
+		using adds_components = typename caps_info::adds_components;
 		using include_components = typename caps_info::include_components;
 		using exclude_components = typename caps_info::exclude_components;
 
@@ -52,6 +53,7 @@ namespace ecsact::entt {
 				readonly_components,
 				readwrite_components,
 				include_components,
+				removes_components,
 				mp_transform<beforechange_storage, readwrite_components>
 			>,
 			::ecsact::mp_list<>
@@ -60,7 +62,7 @@ namespace ecsact::entt {
 		using exclude_types = mp_unique<mp_flatten<
 			mp_push_back<
 				exclude_components,
-				removes_components
+				adds_components
 			>,
 			::ecsact::mp_list<>
 		>>;

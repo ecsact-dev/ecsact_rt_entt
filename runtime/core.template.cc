@@ -1,6 +1,7 @@
 #include "ecsact/runtime/core.h"
 
 #include "common.template.hh"
+#include <intrin.h>
 
 using namespace ecsact_entt_rt;
 
@@ -201,6 +202,12 @@ ecsact_execute_systems_error ecsact_execute_systems
 		auto& events_collector = events_collector_opt.emplace();
 		events_collector.target = c_events_collector;
 	}
+
+
+	// if(execution_options_list->actions_length > 0) {
+	// 	__debugbreak();
+	// }
+
 
 	return runtime.execute_systems(
 		registry_id,
