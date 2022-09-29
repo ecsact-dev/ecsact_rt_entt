@@ -203,12 +203,6 @@ ecsact_execute_systems_error ecsact_execute_systems
 		events_collector.target = c_events_collector;
 	}
 
-
-	// if(execution_options_list->actions_length > 0) {
-	// 	__debugbreak();
-	// }
-
-
 	return runtime.execute_systems(
 		registry_id,
 		execution_count,

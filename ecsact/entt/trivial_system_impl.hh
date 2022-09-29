@@ -39,9 +39,6 @@ namespace ecsact::entt {
 
 		const bool can_only_add_tag =
 			mp_size<adds_tag_components>::value == mp_size<adds_components>::value;
-			//add_non_tag = Regular Modifier
-			//tag component = Trivial
-			
 
 		const bool has_only_trivial_modifiers = can_remove || can_only_add_tag;
 		const bool can_access =
@@ -61,14 +58,6 @@ namespace ecsact::entt {
 		if(cant_write && !has_modifiers) {
 			return true;
 		}
-
-			// Readwrite and Readonly are "accessor" queries
-			// Include/exclude is a filter, no data
-			// Trivial Modifier = Add/Remove with no fields
-			// Regular Modifier = Add/Remove that requires fulfillment
-			// Filter = include/exclude?
-			// Accessor = Readwrite/Readonly
-			// Trivial = filter + modifier
 		
 		return false;
 	}

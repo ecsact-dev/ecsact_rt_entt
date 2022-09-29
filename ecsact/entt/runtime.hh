@@ -12,7 +12,6 @@
 #include <span>
 #include <algorithm>
 #include <boost/mp11.hpp>
-#include <iostream>
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/definitions.h"
 #include "ecsact/runtime/core.h"
@@ -1250,9 +1249,6 @@ namespace ecsact::entt {
 				if(execution_options_list != nullptr) {
 					_apply_execution_options(execution_options_list[n], info);
 					if(execution_options_list->actions_length > 0) {
-						std::cout << 
-							"Actions length: " << execution_options_list->actions_length 
-						<< std::endl;
 						actions = std::span(
 							execution_options_list->actions,
 							execution_options_list->actions_length
