@@ -66,7 +66,7 @@ namespace ecsact::entt {
 		requires (is_trivial_system<SystemT>())
 	void trivial_system_impl
 		( auto&            info
-		, EachCallbackT&&  each_callback = [](auto&, auto){}
+		, EachCallbackT&&  each_callback = [](auto&, auto&, auto){}
 		)
 	{
 		using boost::mp11::mp_for_each;
