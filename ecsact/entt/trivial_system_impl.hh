@@ -83,11 +83,11 @@ namespace ecsact::entt {
 				// Only empty components should have made it into this list if the
 				// `is_trivial_system` constraint succeeded.
 				static_assert(std::is_empty_v<C>);
-				info.add_compnent<C>(entity);
+				info.template add_component<C>(entity);
 			});
 
 			mp_for_each<removes_components>([&]<typename C>(C) {
-				info.remove_component<C>(entity);
+				info.template remove_component<C>(entity);
 			});
 
 			each_callback(view, assoc_views, entity);
