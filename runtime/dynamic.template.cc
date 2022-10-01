@@ -148,6 +148,20 @@ bool ecsact_system_execution_context_same
 	return a->impl->entity == b->impl->entity;
 }
 
+ecsact_entity_id ecsact_system_execution_context_entity
+	( const ecsact_system_execution_context* context
+	)
+{
+	ecsact_entity_id entity = {};
+	cast_and_use_ctx(
+		const_cast<ecsact_system_execution_context*>(context),
+		[&](auto& context) {
+			entity = context.get_ecsact_entity_id();
+		}
+	);
+	return entity;
+}
+
 void ecsact_system_execution_context_generate
 	( ecsact_system_execution_context*  context
 	, int                               component_count

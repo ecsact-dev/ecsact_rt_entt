@@ -1,6 +1,15 @@
 load("@rules_cc//cc:defs.bzl", "cc_test")
 load("//bazel:copts.bzl", "copts")
 load("//runtime:index.bzl", "ecsact_entt_runtime")
+load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
+
+ecsact_codegen(
+    name = "ecsact_cc_system_impl_srcs",
+    srcs = ["runtime_test.ecsact"],
+    plugins = [
+        "@ecsact//codegen_plugins:cpp_systems_source",
+    ],
+)
 
 ecsact_entt_runtime(
     name = "runtime",
@@ -15,7 +24,10 @@ ecsact_entt_runtime(
 
 cc_test(
     name = "test",
-    srcs = ["runtime_test.cc"],
+    srcs = [
+        "runtime_test.cc",
+        ":ecsact_cc_system_impl_srcs",
+    ],
     copts = copts,
     deps = [
         ":runtime",

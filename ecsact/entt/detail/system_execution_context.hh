@@ -467,5 +467,9 @@ namespace ecsact_entt_rt {
 
 			return return_context;
 		}
+
+		ecsact_entity_id get_ecsact_entity_id() const {
+			return info.get_ecsact_entity_id(entity);
+		}
 	};
 }
