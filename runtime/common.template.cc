@@ -7,5 +7,5 @@
 #endif
 
 namespace ecsact_entt_rt {
-  ecsact::entt::runtime<ECSACT_ENTT_RUNTIME_PACKAGE> runtime;
+ecsact::entt::runtime<ECSACT_ENTT_RUNTIME_PACKAGE> runtime;
 }
