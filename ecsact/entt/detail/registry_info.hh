@@ -13,7 +13,6 @@
 #include "ecsact/entt/detail/internal_markers.hh"
 
 namespace ecsact_entt_rt {
-
 using entity_id_map_t = std::unordered_map<ecsact_entity_id, entt::entity>;
 
 template<typename Package>
@@ -111,14 +110,14 @@ struct registry_info {
 			}
 		});
 
-		// constexpr auto fields_info = ecsact::fields_info<C>();
-		// if constexpr(!fields_info.empty()) {
-		// 	for(auto& field : fields_info) {
-		// 		if(field.storage_type == ECSACT_ENTITY_TYPE) {
-		// 			_add_association(comp, field);
-		// 		}
-		// 	}
-		// }
+		constexpr auto fields_info = ecsact::fields_info<C>();
+		if constexpr(!fields_info.empty()) {
+			for(auto& field : fields_info) {
+				if(field.storage_type == ECSACT_ENTITY_TYPE) {
+					_add_association(comp, field);
+				}
+			}
+		}
 	}
 
 	template<typename C>
@@ -191,5 +190,4 @@ struct registry_info {
 		return _ecsact_entity_ids.at(static_cast<size_t>(entt_entity_id));
 	}
 };
-
 } // namespace ecsact_entt_rt
