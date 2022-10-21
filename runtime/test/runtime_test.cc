@@ -27,7 +27,6 @@ void runtime_test::OtherEntitySystem::impl(context& ctx) {
 }
 
 void runtime_test::MakeAnother::impl(context& ctx) {
-	
 }
 
 TEST(Core, CreateRegistry) {
@@ -41,10 +40,9 @@ TEST(Core, DestroyRegistry) {
 }
 
 TEST(Core, ClearRegistry) {
-	auto reg_id = ecsact_create_registry("ClearRegistry");
-	[[maybe_unused]]
-	auto entity = ecsact_create_entity(reg_id);
-	auto entity_count = ecsact_count_entities(reg_id);
+	auto                  reg_id = ecsact_create_registry("ClearRegistry");
+	[[maybe_unused]] auto entity = ecsact_create_entity(reg_id);
+	auto                  entity_count = ecsact_count_entities(reg_id);
 	EXPECT_EQ(entity_count, 1);
 	ecsact_clear_registry(reg_id);
 	entity_count = ecsact_count_entities(reg_id);
@@ -75,9 +73,8 @@ TEST(Core, DestroyEntity) {
 }
 
 TEST(Core, CountEntities) {
-	auto reg_id = ecsact_create_registry("CountEntities");
-	[[maybe_unused]]
-	auto entity = ecsact_create_entity(reg_id);
+	auto                  reg_id = ecsact_create_registry("CountEntities");
+	[[maybe_unused]] auto entity = ecsact_create_entity(reg_id);
 	EXPECT_EQ(ecsact_count_entities(reg_id), 1);
 }
 
@@ -85,19 +82,23 @@ TEST(Core, GetEntities) {
 	const int test_count = 20;
 
 	auto reg_id = ecsact_create_registry("GetEntities");
-	for(int i=0; test_count > i; ++i) {
+	for(int i = 0; test_count > i; ++i) {
 		ecsact_create_entity(reg_id);
 	}
 
-	int entities_count = 0;
+	int                           entities_count = 0;
 	std::vector<ecsact_entity_id> entities;
 	entities.resize(test_count);
-	for(auto& ent : entities) ent = ecsact_invalid_entity_id;
+	for(auto& ent : entities) {
+		ent = ecsact_invalid_entity_id;
+	}
 
 	ecsact_get_entities(reg_id, test_count, entities.data(), &entities_count);
 	ASSERT_EQ(entities_count, test_count);
 
-	for(auto& ent : entities) EXPECT_NE(ent, ecsact_invalid_entity_id);
+	for(auto& ent : entities) {
+		EXPECT_NE(ent, ecsact_invalid_entity_id);
+	}
 }
 
 TEST(Core, AddComponent) {
@@ -114,11 +115,10 @@ TEST(Core, AddComponent) {
 }
 
 TEST(Core, AddComponentError) {
-	auto reg = ecsact::core::registry("AddComponentError");
-	auto entity = reg.create_entity();
-	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
-		(int)entity + 1
-	);
+	auto             reg = ecsact::core::registry("AddComponentError");
+	auto             entity = reg.create_entity();
+	ecsact_entity_id invalid_entity =
+		static_cast<ecsact_entity_id>((int)entity + 1);
 
 	OtherEntityComponent comp{.num = 42, .target = invalid_entity};
 
@@ -177,18 +177,17 @@ TEST(Core, UpdateComponent) {
 }
 
 TEST(Core, UpdateComponentError) {
-	auto reg = ecsact::core::registry("UpdateComponentError");
-	auto entity = reg.create_entity();
-	auto other_entity = reg.create_entity();
-	ecsact_entity_id invalid_entity = static_cast<ecsact_entity_id>(
-		(int)other_entity + 1
-	);
+	auto             reg = ecsact::core::registry("UpdateComponentError");
+	auto             entity = reg.create_entity();
+	auto             other_entity = reg.create_entity();
+	ecsact_entity_id invalid_entity =
+		static_cast<ecsact_entity_id>((int)other_entity + 1);
 
 	OtherEntityComponent comp{.num = 42, .target = other_entity};
 
 	auto add_err = reg.add_component(entity, comp);
 	ASSERT_EQ(add_err, ECSACT_ADD_OK);
-	
+
 	comp.num = 43;
 	comp.target = invalid_entity;
 	auto update_err = reg.update_component(entity, comp);
@@ -213,7 +212,7 @@ TEST(Core, RemoveComponent) {
 static void dynamic_impl(ecsact_system_execution_context* ctx) {
 	using runtime_test::ComponentA;
 
-	auto comp_id = static_cast<ecsact_component_like_id>(ComponentA::id);
+	auto       comp_id = static_cast<ecsact_component_like_id>(ComponentA::id);
 	ComponentA comp;
 	ecsact_system_execution_context_get(ctx, comp_id, &comp);
 	comp.a += 2;
@@ -222,18 +221,15 @@ static void dynamic_impl(ecsact_system_execution_context* ctx) {
 
 TEST(Core, DynamicSystemImpl) {
 	ecsact::core::registry reg("DynamicSystemImpl");
-	auto entity = reg.create_entity();
-	auto other_entity = reg.create_entity();
+	auto                   entity = reg.create_entity();
+	auto                   other_entity = reg.create_entity();
 
 	ComponentA comp{.a = 42};
 	reg.add_component(entity, comp);
 	reg.add_component(other_entity, comp);
-	
+
 	OtherEntityComponent other_comp{.num = 3, .target = other_entity};
-	ASSERT_EQ(
-		reg.add_component(entity, other_comp),
-		ECSACT_ADD_OK
-	);
+	ASSERT_EQ(reg.add_component(entity, other_comp), ECSACT_ADD_OK);
 
 	// Sanity check
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
@@ -259,7 +255,7 @@ TEST(Core, DynamicSystemImpl) {
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
 
 	auto comp_get = reg.get_component<ComponentA>(entity);
-	
+
 	EXPECT_NE(comp_get.a, comp.a);
 
 	// Simulate what the system should be doing.
@@ -294,11 +290,11 @@ TEST(Core, StaticSystemImpl) {
 	comp_get = static_cast<const runtime_test::ComponentA*>(
 		ecsact_get_component(reg_id, entity, comp_id)
 	);
-	
+
 	EXPECT_NE(comp_get->a, comp.a);
 
 	// Simulate what the system should be doing.
 	comp.a += 2;
 	EXPECT_EQ(comp_get->a, comp.a);
 }
-#endif//ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
+#endif // ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
