@@ -843,25 +843,29 @@ private:
 				return;
 			}
 
-			::entt::basic_view removed_view{
-				info.registry.template storage<detail::temp_storage<C>>(),
-				info.registry.template storage<component_removed<C>>(),
-			};
-
-			for(entt_entity_type entity : removed_view) {
-				if constexpr(std::is_empty_v<C>) {
+			if constexpr(std::is_empty_v<C>) {
+				::entt::basic_view removed_view{
+					info.registry.template storage<component_removed<C>>(),
+				};
+				for(entt_entity_type entity : removed_view) {
 					events_collector.invoke_remove_callback<C>(
 						info.get_ecsact_entity_id(entity)
 					);
-				} else {
+				}
+			} else {
+				::entt::basic_view removed_view{
+					info.registry.template storage<detail::temp_storage<C>>(),
+					info.registry.template storage<component_removed<C>>(),
+				};
+				for(entt_entity_type entity : removed_view) {
 					events_collector.invoke_remove_callback<C>(
 						info.get_ecsact_entity_id(entity),
 						removed_view.template get<detail::temp_storage<C>>(entity).value
 					);
+					info.registry.template storage<detail::temp_storage<C>>().remove(
+						entity
+					);
 				}
-
-				info.registry.template storage<detail::temp_storage<C>>().remove(entity
-				);
 			}
 		});
 	}
