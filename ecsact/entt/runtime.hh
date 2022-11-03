@@ -832,42 +832,43 @@ private:
 		});
 	}
 
-		void _trigger_remove_component_events
-			( registry_info&               info
-			, execution_events_collector&  events_collector
-			)
-		{
-			using boost::mp11::mp_for_each;
+	void _trigger_remove_component_events(
+		registry_info&              info,
+		execution_events_collector& events_collector
+	) {
+		using boost::mp11::mp_for_each;
 
-			mp_for_each<typename package::components>([&]<typename C>(C) {
-				if constexpr(C::transient) return;
+		mp_for_each<typename package::components>([&]<typename C>(C) {
+			if constexpr(C::transient) {
+				return;
+			}
 
-				if constexpr(std::is_empty_v<C>) {
-					::entt::basic_view removed_view{
-						info.registry.template storage<component_removed<C>>(),
-					};
-					for(entt_entity_type entity : removed_view) {
-						events_collector.invoke_remove_callback<C>(
-							info.get_ecsact_entity_id(entity)
-						);
-					}
-				} else {
-					::entt::basic_view removed_view{
-						info.registry.template storage<detail::temp_storage<C>>(),
-						info.registry.template storage<component_removed<C>>(),
-					};
-					for(entt_entity_type entity : removed_view) {
-						events_collector.invoke_remove_callback<C>(
-							info.get_ecsact_entity_id(entity),
-							removed_view.template get<detail::temp_storage<C>>(entity).value
-						);
-						info.registry.template storage<detail::temp_storage<C>>().remove(
-							entity
-						);
-					}
+			if constexpr(std::is_empty_v<C>) {
+				::entt::basic_view removed_view{
+					info.registry.template storage<component_removed<C>>(),
+				};
+				for(entt_entity_type entity : removed_view) {
+					events_collector.invoke_remove_callback<C>(
+						info.get_ecsact_entity_id(entity)
+					);
 				}
-			});
-		}
+			} else {
+				::entt::basic_view removed_view{
+					info.registry.template storage<detail::temp_storage<C>>(),
+					info.registry.template storage<component_removed<C>>(),
+				};
+				for(entt_entity_type entity : removed_view) {
+					events_collector.invoke_remove_callback<C>(
+						info.get_ecsact_entity_id(entity),
+						removed_view.template get<detail::temp_storage<C>>(entity).value
+					);
+					info.registry.template storage<detail::temp_storage<C>>().remove(
+						entity
+					);
+				}
+			}
+		});
+	}
 
 	void _execute_systems(registry_info& info, actions_span_t& actions) {
 		using boost::mp11::mp_for_each;
