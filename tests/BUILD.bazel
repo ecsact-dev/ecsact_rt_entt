@@ -1,10 +1,19 @@
-load("@ecsact_runtime//reference/async_reference/test:index.bzl", "ecsact_reference_async_module_test")
+load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
+load("@ecsact_runtime//ecsact/reference/async_reference/test:index.bzl", "ecsact_reference_async_module_test")
 load("//bazel:copts.bzl", "copts")
 load("//runtime:index.bzl", "ecsact_entt_runtime")
 
+ecsact_codegen(
+    name = "test_system_impl_sources",
+    srcs = ["async_test.ecsact"],
+    plugins = [
+        "@ecsact//codegen_plugins:cpp_systems_source",
+    ],
+)
+
 ecsact_entt_runtime(
     name = "async_test_core_module_runtime",
-    srcs = ["@ecsact_runtime//reference/async_reference/test:async_test.ecsact"],
+    srcs = ["async_test.ecsact"],
     ECSACT_ENTT_RUNTIME_PACKAGE = "::async_test::package",
     ECSACT_ENTT_RUNTIME_USER_HEADER = "async_test.ecsact.meta.hh",
     system_impls = ["dynamic"],
@@ -12,6 +21,12 @@ ecsact_entt_runtime(
 
 ecsact_reference_async_module_test(
     name = "async_module_test",
+    srcs = [
+        "async_test.cc",
+        ":test_system_impl_sources",
+    ],
     copts = copts,
-    deps = [":async_test_core_module_runtime"],
+    deps = [
+        ":async_test_core_module_runtime",
+    ],
 )
