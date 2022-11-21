@@ -20,6 +20,16 @@
 				"//runtime/test:test"
 			],
 			"group": "build"
+		},
+		{
+			"label": "build //tests:async_module_test",
+			"command": "bazel",
+			"type": "shell",
+			"args": [
+				"build",
+				"//tests:async_module_test"
+			],
+			"group": "build"
 		}
 	]
 }

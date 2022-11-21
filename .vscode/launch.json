@@ -16,6 +16,22 @@
 			"sourceFileMap": {
 				"E:/.cache/bazel/output_base/execroot/ecsact_rt_entt": "${workspaceFolder}"
 			}
+		},
+		{
+			"name": "test //tests:async_module_test",
+			"request": "launch",
+			"program": "${workspaceFolder}/bazel-bin/tests/async_module_test",
+			"cwd": "${workspaceFolder}",
+			"args": [],
+			"type": "cppdbg",
+			"windows": {
+				"type": "cppvsdbg",
+				"program": "${workspaceFolder}/bazel-bin/tests/async_module_test.exe",
+			},
+			"preLaunchTask": "build //tests:async_module_test",
+			"sourceFileMap": {
+				"C:/users/austin/_bazel_austin/ohk2m3f2/execroot/ecsact_rt_entt": "${workspaceFolder}"
+			}
 		}
 	],
 	"compounds": []
