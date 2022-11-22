@@ -7,7 +7,7 @@ ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",
     srcs = ["runtime_test.ecsact"],
     plugins = [
-        "@ecsact//codegen_plugins:cpp_systems_source",
+        "@ecsact_lang_cpp//cpp_systems_source_codegen",
     ],
 )
 

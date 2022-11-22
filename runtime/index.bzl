@@ -14,10 +14,10 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         srcs = srcs,
         tags = tags,
         plugins = [
-            "@ecsact//codegen_plugins:cpp_header",
-            "@ecsact//codegen_plugins:cpp_systems_header",
-            "@ecsact//codegen_plugins:systems_header",
-            "@ecsact//codegen_plugins:cpp_meta_header",
+            "@ecsact_lang_cpp//cpp_header_codegen",
+            "@ecsact_lang_cpp//cpp_systems_header_codegen",
+            "@ecsact_lang_cpp//systems_header_codegen",
+            "@ecsact_lang_cpp//cpp_meta_header_codegen",
         ],
         **kwargs
     )
