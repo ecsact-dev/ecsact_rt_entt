@@ -15,6 +15,13 @@ system SimpleSystem {
 	readwrite ComponentA;
 }
 
+component WillRemoveTrivial;
+component TrivialRemoveComponent { i32 example; }
+system TrivialRemove {
+  include WillRemoveTrivial;
+  removes TrivialRemoveComponent;
+}
+
 system OtherEntitySystem {
 	readwrite OtherEntityComponent with target {
 		readwrite ComponentA;

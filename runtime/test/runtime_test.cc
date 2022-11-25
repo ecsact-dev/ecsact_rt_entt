@@ -29,6 +29,14 @@ void runtime_test::OtherEntitySystem::impl(context& ctx) {
 void runtime_test::MakeAnother::impl(context& ctx) {
 }
 
+void runtime_test::TrivialRemove::impl(context& ctx) {
+	// This trivial remove should not even be required:
+	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
+	std::cerr << "TriviaLRemove impl called (SHOULD NOT HAPPEN)\n";
+	std::cerr.flush();
+	std::abort();
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -217,6 +225,45 @@ static void dynamic_impl(ecsact_system_execution_context* ctx) {
 	ecsact_system_execution_context_get(ctx, comp_id, &comp);
 	comp.a += 2;
 	ecsact_system_execution_context_update(ctx, comp_id, &comp);
+}
+
+TEST(Core, TrivialRemoveEvent) {
+	auto reg_id = ecsact_create_registry("TrivialRemoveEvent");
+	auto entity = ecsact_create_entity(reg_id);
+
+	runtime_test::TrivialRemoveComponent comp{};
+	ecsact_add_component(
+		reg_id,
+		entity,
+		runtime_test::TrivialRemoveComponent::id,
+		&comp
+	);
+
+	ecsact_add_component(
+		reg_id,
+		entity,
+		runtime_test::WillRemoveTrivial::id,
+		nullptr
+	);
+
+	static bool                       event_happened = false;
+	ecsact_execution_events_collector ev_collector{};
+	ev_collector.remove_callback = //
+		[](
+			ecsact_event        event,
+			ecsact_entity_id    entity_id,
+			ecsact_component_id component_id,
+			const void*         component_data,
+			void*               callback_user_data
+		) {
+			event_happened = true;
+
+			EXPECT_EQ(component_id, runtime_test::TrivialRemoveComponent::id);
+		};
+
+	ecsact_execute_systems(reg_id, 1, nullptr, &ev_collector);
+
+	EXPECT_TRUE(event_happened);
 }
 
 TEST(Core, DynamicSystemImpl) {
