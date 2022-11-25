@@ -67,6 +67,9 @@ void trivial_system_impl(
 	EachCallbackT&& each_callback = [](auto&, auto&, auto) {}
 ) {
 	using boost::mp11::mp_for_each;
+	using ecsact::entt::component_removed;
+	using ecsact::entt::detail::pending_remove;
+	using ecsact::entt::detail::temp_storage;
 
 	using caps_info = ecsact::system_capabilities_info<SystemT>;
 	using adds_components = typename caps_info::adds_components;
@@ -84,7 +87,18 @@ void trivial_system_impl(
 		});
 
 		mp_for_each<removes_components>([&]<typename C>(C) {
-			info.template remove_component<C>(entity);
+			info.registry.template emplace<pending_remove<C>>(entity);
+
+			if constexpr(!C::transient) {
+				info.registry.template emplace<component_removed<C>>(entity);
+
+				auto& temp = info.registry.template storage<temp_storage<C>>();
+				if(temp.contains(entity)) {
+					temp.get(entity).value = info.registry.template get<C>(entity);
+				} else {
+					temp.emplace(entity, info.registry.template get<C>(entity));
+				}
+			}
 		});
 
 		each_callback(view, assoc_views, entity);
