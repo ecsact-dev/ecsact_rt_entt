@@ -30,7 +30,8 @@ void runtime_test::MakeAnother::impl(context& ctx) {
 }
 
 void runtime_test::TrivialRemove::impl(context& ctx) {
-	// This trivial remove should not even be required
+	// This trivial remove should not even be required:
+	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
 	std::cerr << "TriviaLRemove impl called (SHOULD NOT HAPPEN)\n";
 	std::cerr.flush();
 	std::abort();
