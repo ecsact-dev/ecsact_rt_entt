@@ -37,6 +37,14 @@ void runtime_test::TrivialRemove::impl(context& ctx) {
 	std::abort();
 }
 
+void runtime_test::AlwaysRemove::impl(context& ctx) {
+	// This trivial remove should not even be required:
+	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
+	std::cerr << "AlwaysRemove impl called (SHOULD NOT HAPPEN)\n";
+	std::cerr.flush();
+	std::abort();
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);

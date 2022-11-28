@@ -92,11 +92,13 @@ void trivial_system_impl(
 			if constexpr(!C::transient) {
 				info.registry.template emplace<component_removed<C>>(entity);
 
-				auto& temp = info.registry.template storage<temp_storage<C>>();
-				if(temp.contains(entity)) {
-					temp.get(entity).value = info.registry.template get<C>(entity);
-				} else {
-					temp.emplace(entity, info.registry.template get<C>(entity));
+				if constexpr(!std::is_empty_v<C>) {
+					auto& temp = info.registry.template storage<temp_storage<C>>();
+					if(temp.contains(entity)) {
+						temp.get(entity).value = info.registry.template get<C>(entity);
+					} else {
+						temp.emplace(entity, info.registry.template get<C>(entity));
+					}
 				}
 			}
 		});

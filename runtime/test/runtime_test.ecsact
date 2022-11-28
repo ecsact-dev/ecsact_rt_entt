@@ -11,6 +11,8 @@ component OtherEntityComponent {
 
 component EmptyComponent;
 
+component AlwaysRemoveMe;
+
 system SimpleSystem {
 	readwrite ComponentA;
 }
@@ -26,6 +28,10 @@ system OtherEntitySystem {
 	readwrite OtherEntityComponent with target {
 		readwrite ComponentA;
 	}
+}
+
+system AlwaysRemove {
+	removes AlwaysRemoveMe;
 }
 
 action MakeAnother {
