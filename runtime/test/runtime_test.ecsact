@@ -40,3 +40,10 @@ action MakeAnother {
 		required OtherEntityComponent;
 	}
 }
+
+action AssocTestAction {
+	entity assoc_entity;
+	readwrite ComponentA;
+	adds OtherEntityComponent;
+}
+

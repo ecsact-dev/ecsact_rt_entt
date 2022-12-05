@@ -5,8 +5,7 @@
 using namespace ecsact_entt_rt;
 
 ecsact_registry_id ecsact_create_registry(const char* registry_name) {
-	return static_cast<ecsact_registry_id>(runtime.create_registry(registry_name)
-	);
+	return runtime.create_registry(registry_name);
 }
 
 void ecsact_destroy_registry(ecsact_registry_id reg_id) {

@@ -586,12 +586,13 @@ private:
 		const auto system_id = ecsact_id_cast<ecsact_system_like_id>(SystemT::id);
 
 		const void* action_data = nullptr;
-		auto        each_cb = [&](auto& view, auto& assoc_views, auto entity) {
-      if constexpr(!mp_empty<ChildSystemsListT>::value) {
-        system_execution_context<SystemT>
-          ctx(info, system_id, view, assoc_views, entity, parent, action_data);
-        _execute_systems_list<ChildSystemsListT>(info, ctx.cptr(), actions);
-      }
+
+		auto each_cb = [&](auto& view, auto& assoc_views, auto entity) {
+			if constexpr(!mp_empty<ChildSystemsListT>::value) {
+				system_execution_context<SystemT>
+					ctx(info, system_id, view, assoc_views, entity, parent, action_data);
+				_execute_systems_list<ChildSystemsListT>(info, ctx.cptr(), actions);
+			}
 		};
 
 		if constexpr(is_action<SystemT>()) {
@@ -660,53 +661,55 @@ private:
 		auto assoc_views = system_association_views<SystemT>(info.registry);
 		auto assoc_views_itrs = system_association_views_iterators(assoc_views);
 		const void* action_data = nullptr;
-		auto        itr_view = [&] {
-      for(auto entity : view) {
-        bool missing_assoc_entities = false;
-        mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
-          using boost::mp11::mp_at;
-          using boost::mp11::mp_size_t;
 
-          using Assoc = mp_at<associations, mp_size_t<I>>;
-          using ComponentT = typename Assoc::component_type;
+		auto itr_view = [&] {
+			for(auto entity : view) {
+				bool missing_assoc_entities = false;
+				mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+					using boost::mp11::mp_at;
+					using boost::mp11::mp_size_t;
 
-          auto&                 assoc_view = std::get<I>(assoc_views);
-          auto&                 assoc_view_itr = std::get<I>(assoc_views_itrs);
-          constexpr std::size_t offset = Assoc::field_offset;
-          assert(view.contains(entity));
-          auto& comp = view.template get<ComponentT>(entity);
-          auto  field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
-            reinterpret_cast<const char*>(&comp) + offset
-          );
-          auto entt_field_entity_value =
-            info.get_entt_entity_id(field_entity_value);
+					using Assoc = mp_at<associations, mp_size_t<I>>;
+					using ComponentT = typename Assoc::component_type;
 
-          bool found_associated_entity = false;
-          for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
-            found_associated_entity = *assoc_view_itr ==
-              entt_field_entity_value;
-            if(found_associated_entity) {
-              break;
-            }
-          }
+					auto&          assoc_view = std::get<I>(assoc_views);
+					auto&          assoc_view_itr = std::get<I>(assoc_views_itrs);
+					constexpr auto offset = Assoc::field_offset;
+					assert(view.contains(entity));
+					auto& comp = view.template get<ComponentT>(entity);
 
-          if(!found_associated_entity) {
-            missing_assoc_entities = true;
-          }
-        });
+					auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
+						reinterpret_cast<const char*>(&comp) + offset
+					);
+					auto entt_field_entity_value =
+						info.get_entt_entity_id(field_entity_value);
 
-        if(!missing_assoc_entities) {
-          _execute_system_user_itr<SystemT, ChildSystemsListT>(
-            info,
-            view,
-            assoc_views,
-            entity,
-            parent,
-            action_data,
-            actions
-          );
-        }
-      }
+					bool found_associated_entity = false;
+					for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
+						found_associated_entity = *assoc_view_itr ==
+							entt_field_entity_value;
+						if(found_associated_entity) {
+							break;
+						}
+					}
+
+					if(!found_associated_entity) {
+						missing_assoc_entities = true;
+					}
+				});
+
+				if(!missing_assoc_entities) {
+					_execute_system_user_itr<SystemT, ChildSystemsListT>(
+						info,
+						view,
+						assoc_views,
+						entity,
+						parent,
+						action_data,
+						actions
+					);
+				}
+			}
 		};
 
 		if constexpr(is_action<SystemT>()) {
@@ -1094,6 +1097,32 @@ private:
 		});
 	}
 
+	auto _validate_action(ecsact_registry_id registry_id, ecsact_action& action)
+		-> ecsact_execute_systems_error {
+		using boost::mp11::mp_for_each;
+
+		auto& info = _registries.at(registry_id);
+		auto  result = ECSACT_EXEC_SYS_OK;
+
+		mp_for_each<typename package::actions>([&]<typename A>(A) {
+			if(A::id != action.action_id) {
+				return;
+			}
+			constexpr auto fields_info = ecsact::fields_info<A>();
+			for(auto& field : fields_info) {
+				if(field.storage_type == ECSACT_ENTITY_TYPE) {
+					auto entity_field =
+						field.template get<ecsact_entity_id>(action.action_data);
+					if(!info.entities_map.contains(entity_field)) {
+						result = ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID;
+					}
+				}
+			}
+		});
+
+		return result;
+	}
+
 public:
 #ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
 	bool set_system_execution_impl(
@@ -1115,9 +1144,23 @@ public:
 		const ecsact_execution_options*           execution_options_list,
 		std::optional<execution_events_collector> events_collector
 	) {
-		std::mutex mutex;
-		auto&      info = _registries.at(reg_id);
+		auto  mutex = std::mutex{};
+		auto& info = _registries.at(reg_id);
+		auto  exec_err = ECSACT_EXEC_SYS_OK;
 		info.mutex = std::ref(mutex);
+
+		if(execution_options_list != nullptr) {
+			for(int n = 0; execution_count > n; ++n) {
+				auto opts = execution_options_list[n];
+				for(auto act_idx = 0; opts.actions_length > act_idx; ++act_idx) {
+					auto& act = opts.actions[act_idx];
+					exec_err = _validate_action(reg_id, act);
+					if(exec_err != ECSACT_EXEC_SYS_OK) {
+						return exec_err;
+					}
+				}
+			}
+		}
 
 		for(int n = 0; execution_count > n; ++n) {
 			actions_span_t actions;
@@ -1142,7 +1185,7 @@ public:
 		_clear_event_markers(info);
 
 		info.mutex = std::nullopt;
-		return ECSACT_EXEC_SYS_OK;
+		return exec_err;
 	}
 };
 
