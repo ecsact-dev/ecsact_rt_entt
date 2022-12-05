@@ -29,6 +29,14 @@ void runtime_test::OtherEntitySystem::impl(context& ctx) {
 void runtime_test::MakeAnother::impl(context& ctx) {
 }
 
+void runtime_test::AlwaysRemove::impl(context& ctx) {
+	// This trivial remove should not even be required:
+	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
+	std::cerr << "AlwaysRemove impl called (SHOULD NOT HAPPEN)\n";
+	std::cerr.flush();
+	std::abort();
+}
+
 void runtime_test::TrivialRemove::impl(context& ctx) {
 	// This trivial remove should not even be required:
 	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
@@ -37,12 +45,11 @@ void runtime_test::TrivialRemove::impl(context& ctx) {
 	std::abort();
 }
 
-void runtime_test::AlwaysRemove::impl(context& ctx) {
-	// This trivial remove should not even be required:
-	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
-	std::cerr << "AlwaysRemove impl called (SHOULD NOT HAPPEN)\n";
-	std::cerr.flush();
-	std::abort();
+void runtime_test::AssocTestAction::impl(context& ctx) {
+	ctx.add(OtherEntityComponent{
+		.num = 42,
+		.target = ctx.action().assoc_entity,
+	});
 }
 
 TEST(Core, CreateRegistry) {
@@ -275,9 +282,9 @@ TEST(Core, TrivialRemoveEvent) {
 }
 
 TEST(Core, DynamicSystemImpl) {
-	ecsact::core::registry reg("DynamicSystemImpl");
-	auto                   entity = reg.create_entity();
-	auto                   other_entity = reg.create_entity();
+	auto reg = ecsact::core::registry("DynamicSystemImpl");
+	auto entity = reg.create_entity();
+	auto other_entity = reg.create_entity();
 
 	ComponentA comp{.a = 42};
 	reg.add_component(entity, comp);
@@ -316,6 +323,26 @@ TEST(Core, DynamicSystemImpl) {
 	// Simulate what the system should be doing.
 	comp.a += 2;
 	EXPECT_EQ(comp_get.a, comp.a);
+}
+
+TEST(Core, ExecuteSystemsErrors) {
+	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
+	auto comp = OtherEntityComponent{
+		.num = 42,
+		.target = static_cast<ecsact_entity_id>(4000),
+	};
+	auto options = ecsact_execution_options{};
+	auto test_action = runtime_test::AssocTestAction{};
+	auto test_action_c = ecsact_action{
+		.action_id = runtime_test::AssocTestAction::id,
+		.action_data = &test_action,
+	};
+
+	options.actions_length = 1;
+	options.actions = &test_action_c;
+	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID);
 }
 
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
