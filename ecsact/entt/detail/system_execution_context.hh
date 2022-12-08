@@ -39,6 +39,8 @@ struct system_execution_context_base {
 	const void*    action;
 };
 
+namespace detail {}
+
 template<typename Package, typename SystemCapabilitiesInfo>
 struct system_execution_context : system_execution_context_base {
 	using system_execution_context_base::const_cptr_t;
@@ -50,7 +52,7 @@ struct system_execution_context : system_execution_context_base {
 
 	using caps_info = SystemCapabilitiesInfo;
 	using package = Package;
-	using view_type = ecsact::entt::view_from_system_capabilities_type<caps_info>;
+	using view_type = ecsact::entt::system_or_association_view_t<caps_info>;
 	using association_views_type =
 		ecsact::entt::association_views_type<caps_info>;
 

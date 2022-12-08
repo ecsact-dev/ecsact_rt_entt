@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 
+#include <unordered_set>
+#include <version>
+#include <ranges>
 #include "ecsact/runtime/core.hh"
 #include "ecsact/runtime/dynamic.h"
 
@@ -50,6 +53,23 @@ void runtime_test::AssocTestAction::impl(context& ctx) {
 		.num = 42,
 		.target = ctx.action().assoc_entity,
 	});
+}
+
+void runtime_test::AttackDamage::impl(context& ctx) {
+	auto attacking = ctx.get<Attacking>();
+	auto target_ctx = ctx._ctx.other(attacking.target);
+	auto target_health = target_ctx.get<Health>();
+	target_health.value -= 1.f;
+	target_ctx.update(target_health);
+}
+
+void runtime_test::AttackDamageWeakened::impl(context& ctx) {
+	auto attacking = ctx.get<Attacking>();
+	auto target_ctx = ctx._ctx.other(attacking.target);
+	auto target_health = target_ctx.get<Health>();
+	auto target_weakened = target_ctx.get<Weakened>();
+	target_health.value -= 1.f * target_weakened.value;
+	target_ctx.update(target_health);
 }
 
 TEST(Core, CreateRegistry) {
@@ -343,6 +363,91 @@ TEST(Core, ExecuteSystemsErrors) {
 	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
 
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID);
+}
+
+TEST(Core, AssociationEntityCorrectness) {
+	using runtime_test::AttackDamage;
+	using runtime_test::AttackDamageWeakened;
+
+	static auto reg = ecsact::core::registry("AssociationEntityCorrectness");
+	static auto attack_entities = std::unordered_set{
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+	};
+	static auto weakened_target_entities = std::unordered_set{
+		reg.create_entity(),
+		reg.create_entity(),
+	};
+	static auto target_entities = []() {
+		std::unordered_set target_entities(
+			weakened_target_entities.begin(),
+			weakened_target_entities.end()
+		);
+		target_entities.insert(reg.create_entity());
+		return target_entities;
+	}();
+
+	for(auto target : target_entities) {
+		reg.add_component(target, runtime_test::Health{100.f});
+	}
+
+	for(auto target : weakened_target_entities) {
+		reg.add_component(target, runtime_test::Weakened{0.5f});
+	}
+
+	{
+		assert(attack_entities.size() == target_entities.size());
+		auto attacker_itr = attack_entities.begin();
+		auto target_itr = target_entities.begin();
+		for(; attacker_itr != attack_entities.end(); ++attacker_itr, ++target_itr) {
+			reg.add_component(*attacker_itr, runtime_test::Attacking{*target_itr});
+		}
+	}
+
+	static std::atomic_int attack_damage_exec_count = 0;
+	static std::atomic_int attack_damage_weakened_exec_count = 0;
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(AttackDamage::id),
+		[](ecsact_system_execution_context* cctx) {
+			++attack_damage_exec_count;
+			ecsact::execution_context ctx{cctx};
+			ASSERT_TRUE(attack_entities.contains(ctx.entity()));
+			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
+		}
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(AttackDamageWeakened::id),
+		[](ecsact_system_execution_context* cctx) {
+			++attack_damage_weakened_exec_count;
+			ecsact::execution_context ctx{cctx};
+			ASSERT_TRUE(attack_entities.contains(ctx.entity()));
+			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
+			ASSERT_TRUE(weakened_target_entities.contains(target_ctx.entity()));
+		}
+	);
+
+	attack_damage_exec_count = 0;
+	attack_damage_weakened_exec_count = 0;
+	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	EXPECT_EQ(attack_damage_exec_count, target_entities.size());
+	EXPECT_EQ(attack_damage_weakened_exec_count, weakened_target_entities.size());
+
+	for(auto target_entity : target_entities) {
+		for(auto attack_entity : attack_entities) {
+			reg.update_component(
+				attack_entity,
+				runtime_test::Attacking{target_entity}
+			);
+		}
+
+		attack_damage_exec_count = 0;
+		attack_damage_weakened_exec_count = 0;
+		ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+		EXPECT_EQ(attack_damage_exec_count, attack_entities.size());
+	}
 }
 
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL

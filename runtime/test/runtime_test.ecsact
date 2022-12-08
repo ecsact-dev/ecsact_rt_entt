@@ -9,6 +9,20 @@ component OtherEntityComponent {
 	entity target;
 }
 
+component Health {
+	f32 value;
+}
+
+component Weakened {
+	f32 value;
+}
+
+component Attacking {
+	entity target {
+		required Health;
+	}
+}
+
 component EmptyComponent;
 
 component AlwaysRemoveMe;
@@ -20,8 +34,8 @@ system SimpleSystem {
 component WillRemoveTrivial;
 component TrivialRemoveComponent { i32 example; }
 system TrivialRemove {
-  include WillRemoveTrivial;
-  removes TrivialRemoveComponent;
+	include WillRemoveTrivial;
+	removes TrivialRemoveComponent;
 }
 
 system OtherEntitySystem {
@@ -45,5 +59,18 @@ action AssocTestAction {
 	entity assoc_entity;
 	readwrite ComponentA;
 	adds OtherEntityComponent;
+}
+
+system AttackDamage {
+	readwrite Attacking with target {
+		readwrite Health;
+	}
+}
+
+system AttackDamageWeakened {
+	readwrite Attacking with target {
+		readwrite Health;
+		readonly Weakened;
+	}
 }
 
