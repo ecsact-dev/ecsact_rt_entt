@@ -382,7 +382,6 @@ struct system_execution_context : system_execution_context_base {
 			mp_for_each<associations>([&]<typename Assoc>(Assoc) {
 				using ComponentT = typename Assoc::component_type;
 				constexpr std::size_t offset = Assoc::field_offset;
-				auto                  compnent_name = typeid(ComponentT).name();
 				const ComponentT& comp = info.registry.template get<ComponentT>(entity);
 
 				auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(

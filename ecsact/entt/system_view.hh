@@ -152,7 +152,7 @@ auto system_association_views_iterators(AssocViews& assoc_views) {
 
 template<typename T>
 struct system_or_association_view {
-	using type = system_view_type<T>;
+	using type = view_from_system_capabilities_type<T>;
 };
 
 template<ecsact::entt::detail::association_concept T>
