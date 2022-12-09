@@ -56,20 +56,20 @@ void runtime_test::AssocTestAction::impl(context& ctx) {
 }
 
 void runtime_test::AttackDamage::impl(context& ctx) {
-	auto attacking = ctx.get<Attacking>();
-	auto target_ctx = ctx._ctx.other(attacking.target);
-	auto target_health = target_ctx.get<Health>();
-	target_health.value -= 1.f;
-	target_ctx.update(target_health);
+	// auto attacking = ctx.get<Attacking>();
+	// auto target_ctx = ctx._ctx.other(attacking.target);
+	// auto target_health = target_ctx.get<Health>();
+	// target_health.value -= 1.f;
+	// target_ctx.update(target_health);
 }
 
 void runtime_test::AttackDamageWeakened::impl(context& ctx) {
-	auto attacking = ctx.get<Attacking>();
-	auto target_ctx = ctx._ctx.other(attacking.target);
-	auto target_health = target_ctx.get<Health>();
-	auto target_weakened = target_ctx.get<Weakened>();
-	target_health.value -= 1.f * target_weakened.value;
-	target_ctx.update(target_health);
+	// auto attacking = ctx.get<Attacking>();
+	// auto target_ctx = ctx._ctx.other(attacking.target);
+	// auto target_health = target_ctx.get<Health>();
+	// auto target_weakened = target_ctx.get<Weakened>();
+	// target_health.value -= 1.f * target_weakened.value;
+	// target_ctx.update(target_health);
 }
 
 TEST(Core, CreateRegistry) {
@@ -379,19 +379,23 @@ TEST(Core, AssociationEntityCorrectness) {
 		reg.create_entity(),
 		reg.create_entity(),
 	};
-	static auto target_entities = []() {
-		std::unordered_set target_entities(
+	static auto target_entities = std::unordered_set{
+		reg.create_entity(),
+	};
+
+	static auto all_target_entities = []() {
+		std::unordered_set all_target_entities(
 			weakened_target_entities.begin(),
 			weakened_target_entities.end()
 		);
-		target_entities.insert(reg.create_entity());
-		return target_entities;
+		all_target_entities.insert(target_entities.begin(), target_entities.end());
+		return all_target_entities;
 	}();
 
-	for(auto target : target_entities) {
+	for(auto target : all_target_entities) {
 		ASSERT_EQ(
 			ECSACT_ADD_OK,
-			reg.add_component(target, runtime_test::Health{100.f})
+			reg.add_component(target, runtime_test::Health{0.5f})
 		);
 	}
 
@@ -403,9 +407,9 @@ TEST(Core, AssociationEntityCorrectness) {
 	}
 
 	{
-		assert(attack_entities.size() == target_entities.size());
+		assert(attack_entities.size() == all_target_entities.size());
 		auto attacker_itr = attack_entities.begin();
-		auto target_itr = target_entities.begin();
+		auto target_itr = all_target_entities.begin();
 		for(; attacker_itr != attack_entities.end(); ++attacker_itr, ++target_itr) {
 			ASSERT_EQ(
 				ECSACT_ADD_OK,
@@ -418,16 +422,6 @@ TEST(Core, AssociationEntityCorrectness) {
 	static std::atomic_int attack_damage_weakened_exec_count = 0;
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(AttackDamage::id),
-		[](ecsact_system_execution_context* cctx) {
-			++attack_damage_exec_count;
-			ecsact::execution_context ctx{cctx};
-			ASSERT_TRUE(attack_entities.contains(ctx.entity()));
-			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
-		}
-	);
-
-	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(AttackDamageWeakened::id),
 		[](ecsact_system_execution_context* cctx) {
 			++attack_damage_weakened_exec_count;
@@ -438,10 +432,20 @@ TEST(Core, AssociationEntityCorrectness) {
 		}
 	);
 
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(AttackDamage::id),
+		[](ecsact_system_execution_context* cctx) {
+			++attack_damage_exec_count;
+			ecsact::execution_context ctx{cctx};
+			ASSERT_TRUE(attack_entities.contains(ctx.entity()));
+			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
+		}
+	);
+
 	attack_damage_exec_count = 0;
 	attack_damage_weakened_exec_count = 0;
 	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
-	EXPECT_EQ(attack_damage_exec_count, target_entities.size());
+	EXPECT_EQ(attack_damage_exec_count, all_target_entities.size());
 	EXPECT_EQ(attack_damage_weakened_exec_count, weakened_target_entities.size());
 
 	for(auto target_entity : target_entities) {
