@@ -389,11 +389,17 @@ TEST(Core, AssociationEntityCorrectness) {
 	}();
 
 	for(auto target : target_entities) {
-		reg.add_component(target, runtime_test::Health{100.f});
+		ASSERT_EQ(
+			ECSACT_ADD_OK,
+			reg.add_component(target, runtime_test::Health{100.f})
+		);
 	}
 
 	for(auto target : weakened_target_entities) {
-		reg.add_component(target, runtime_test::Weakened{0.5f});
+		ASSERT_EQ(
+			ECSACT_ADD_OK,
+			reg.add_component(target, runtime_test::Weakened{0.5f})
+		);
 	}
 
 	{
@@ -401,7 +407,10 @@ TEST(Core, AssociationEntityCorrectness) {
 		auto attacker_itr = attack_entities.begin();
 		auto target_itr = target_entities.begin();
 		for(; attacker_itr != attack_entities.end(); ++attacker_itr, ++target_itr) {
-			reg.add_component(*attacker_itr, runtime_test::Attacking{*target_itr});
+			ASSERT_EQ(
+				ECSACT_ADD_OK,
+				reg.add_component(*attacker_itr, runtime_test::Attacking{*target_itr})
+			);
 		}
 	}
 
