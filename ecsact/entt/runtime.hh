@@ -657,14 +657,14 @@ private:
 		using caps_info = ecsact::system_capabilities_info<SystemT>;
 		using associations = typename caps_info::associations;
 
+		auto assoc_views = system_association_views<SystemT>(info.registry);
+		auto assoc_views_itrs = system_association_views_iterators(assoc_views);
+
 		auto        view = system_view<SystemT>(info.registry);
 		const void* action_data = nullptr;
 
 		auto itr_view = [&] {
 			for(auto entity : view) {
-				auto assoc_views = system_association_views<SystemT>(info.registry);
-				auto assoc_views_itrs = system_association_views_iterators(assoc_views);
-
 				bool missing_assoc_entities = false;
 				mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
 					using boost::mp11::mp_at;
@@ -686,12 +686,16 @@ private:
 					auto entt_field_entity_value =
 						info.get_entt_entity_id(field_entity_value);
 
-					bool found_associated_entity = false;
-					for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
-						found_associated_entity = *assoc_view_itr ==
-							entt_field_entity_value;
-						if(found_associated_entity) {
-							break;
+					bool found_associated_entity = *assoc_view_itr ==
+						entt_field_entity_value;
+					if(!found_associated_entity) {
+						assoc_view_itr = assoc_view.begin();
+						for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
+							found_associated_entity = *assoc_view_itr ==
+								entt_field_entity_value;
+							if(found_associated_entity) {
+								break;
+							}
 						}
 					}
 
@@ -710,6 +714,10 @@ private:
 						action_data,
 						actions
 					);
+
+					mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+						++std::get<I>(assoc_views_itrs);
+					});
 				}
 			}
 		};
