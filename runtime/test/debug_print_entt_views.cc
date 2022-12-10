@@ -12,7 +12,7 @@ auto replace_all(
 	auto idx = str.find(find);
 	while(idx != std::string::npos) {
 		str.replace(idx, find.size(), replace);
-		idx = str.find(find, idx + find.size());
+		idx = str.find(find, idx + replace.size());
 	}
 }
 
