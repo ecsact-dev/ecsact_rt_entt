@@ -35,3 +35,15 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_binary(
+    name = "debug_print_entt_views",
+    srcs = ["debug_print_entt_views.cc"],
+    copts = copts,
+    deps = [
+        ":runtime__public_cc",
+        "//:lib",
+        "@boost//libs/mp11",
+        "@com_github_skypjack_entt//:entt",
+    ],
+)

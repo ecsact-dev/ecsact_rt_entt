@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <concepts>
 
 namespace ecsact::entt::detail {
 
@@ -10,6 +11,13 @@ struct association {
 	using component = C;
 	static constexpr auto field_offset = FieldOffset;
 };
+
+template<typename Assoc>
+concept association_concept = //
+	requires {
+		{ typename Assoc::component_type{} };
+		{ Assoc::field_offset } -> std::convertible_to<std::size_t>;
+	};
 
 template<typename C>
 struct temp_storage;

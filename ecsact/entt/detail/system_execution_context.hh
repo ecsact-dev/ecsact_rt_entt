@@ -39,6 +39,8 @@ struct system_execution_context_base {
 	const void*    action;
 };
 
+namespace detail {}
+
 template<typename Package, typename SystemCapabilitiesInfo>
 struct system_execution_context : system_execution_context_base {
 	using system_execution_context_base::const_cptr_t;
@@ -50,7 +52,7 @@ struct system_execution_context : system_execution_context_base {
 
 	using caps_info = SystemCapabilitiesInfo;
 	using package = Package;
-	using view_type = ecsact::entt::view_from_system_capabilities_type<caps_info>;
+	using view_type = ecsact::entt::system_or_association_view_t<caps_info>;
 	using association_views_type =
 		ecsact::entt::association_views_type<caps_info>;
 
@@ -380,7 +382,6 @@ struct system_execution_context : system_execution_context_base {
 			mp_for_each<associations>([&]<typename Assoc>(Assoc) {
 				using ComponentT = typename Assoc::component_type;
 				constexpr std::size_t offset = Assoc::field_offset;
-				auto                  compnent_name = typeid(ComponentT).name();
 				const ComponentT& comp = info.registry.template get<ComponentT>(entity);
 
 				auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
