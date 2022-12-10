@@ -661,10 +661,10 @@ private:
 		const void* action_data = nullptr;
 
 		auto itr_view = [&] {
-			auto assoc_views = system_association_views<SystemT>(info.registry);
-			auto assoc_views_itrs = system_association_views_iterators(assoc_views);
-
 			for(auto entity : view) {
+				auto assoc_views = system_association_views<SystemT>(info.registry);
+				auto assoc_views_itrs = system_association_views_iterators(assoc_views);
+
 				bool missing_assoc_entities = false;
 				mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
 					using boost::mp11::mp_at;
