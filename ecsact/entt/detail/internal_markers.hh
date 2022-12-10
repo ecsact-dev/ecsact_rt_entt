@@ -13,10 +13,11 @@ struct association {
 };
 
 template<typename Assoc>
-concept association_concept = requires() {
-	{ typename Assoc::component_type{} };
-	{ Assoc::field_offset } -> std::convertible_to<std::size_t>;
-};
+concept association_concept = //
+	requires {
+		{ typename Assoc::component_type{} };
+		{ Assoc::field_offset } -> std::convertible_to<std::size_t>;
+	};
 
 template<typename C>
 struct temp_storage;
