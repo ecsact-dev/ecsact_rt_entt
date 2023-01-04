@@ -1061,7 +1061,7 @@ private:
 		}
 
 		for(int i = 0; options.remove_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.update_components_entities[i];
+			const ecsact_entity_id& entity = options.remove_components_entities[i];
 			ecsact_component_id     component_id = options.remove_components[i];
 
 			mp_for_each<typename package::components>([&]<typename C>(C) {
