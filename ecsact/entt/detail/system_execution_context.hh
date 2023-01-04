@@ -219,6 +219,50 @@ struct system_execution_context : system_execution_context_base {
 		return view.template get<C>(entity);
 	}
 
+	const void* get(ecsact_component_like_id component_id) {
+		using boost::mp11::mp_assign;
+		using boost::mp11::mp_flatten;
+		using boost::mp11::mp_for_each;
+		using boost::mp11::mp_push_back;
+		using boost::mp11::mp_unique;
+		using ecsact::entt_mp11_util::mp_map_find_value_or;
+
+		using readonly_components = typename caps_info::readonly_components;
+		using readwrite_components = typename caps_info::readwrite_components;
+		using gettable_components = mp_assign<
+			::ecsact::mp_list<>,
+			mp_unique<mp_flatten<
+				mp_push_back<readonly_components, readwrite_components>,
+				::ecsact::mp_list<>>>>;
+
+#ifndef NDEBUG
+		[[maybe_unused]] bool        found_gettable_component = false;
+		[[maybe_unused]] const char* get_component_name = "";
+		[[maybe_unused]] auto        gettable_components_type_name =
+			typeid(gettable_components).name();
+#endif // NDEBUG
+
+		const void* component_data = nullptr;
+
+		mp_for_each<gettable_components>([&]<typename C>(C) {
+			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
+				if constexpr(!std::is_empty_v<C>) {
+					component_data = &get<C>();
+#ifndef NDEBUG
+					get_component_name = typeid(C).name();
+					found_gettable_component = true;
+#endif // NDEBUG
+				}
+			}
+		});
+
+#ifndef NDEBUG
+		assert(found_gettable_component);
+#endif // NDEBUG
+
+		return component_data;
+	}
+
 	void get(ecsact_component_like_id component_id, void* out_component_data) {
 		using boost::mp11::mp_assign;
 		using boost::mp11::mp_flatten;
