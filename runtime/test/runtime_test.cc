@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include <array>
 #include <unordered_set>
 #include <version>
 #include <ranges>
@@ -299,6 +300,97 @@ TEST(Core, TrivialRemoveEvent) {
 	ecsact_execute_systems(reg_id, 1, nullptr, &ev_collector);
 
 	EXPECT_TRUE(event_happened);
+}
+
+TEST(Core, EventCollector) {
+	auto reg = ecsact::core::registry{"EventCollector"};
+	auto entity = reg.create_entity();
+
+	// Test if we receive an init, update, and remove event
+
+	static auto event_happened = false;
+
+	auto callback = //
+		[](
+			ecsact_event        event,
+			ecsact_entity_id    entity_id,
+			ecsact_component_id component_id,
+			const void*         component_data,
+			void*               callback_user_data
+		) { event_happened = true; };
+
+	// Checking if we get the init event for a new component added
+	{
+		auto evc = ecsact_execution_events_collector{};
+		evc.init_callback = callback;
+
+		auto test_comp = ComponentA{};
+		test_comp.a = 10;
+
+		auto add_component_entities = std::array{entity};
+		auto add_components = std::array{
+			ecsact_component{
+				.component_id = ComponentA::id,
+				.component_data = &test_comp,
+			},
+		};
+
+		auto exec_options = ecsact_execution_options{};
+		exec_options.add_components_length = add_components.size();
+		exec_options.add_components_entities = add_component_entities.data();
+		exec_options.add_components = add_components.data();
+
+		ecsact_execute_systems(reg.id(), 1, &exec_options, &evc);
+
+		EXPECT_TRUE(event_happened) << "Init event did not happen";
+		event_happened = false;
+	}
+
+	// Checking if we get the update event
+	{
+		auto evc = ecsact_execution_events_collector{};
+		evc.update_callback = callback;
+
+		auto test_comp = ComponentA{};
+		test_comp.a = 42;
+
+		auto update_component_entities = std::array{entity};
+		auto update_components = std::array{
+			ecsact_component{
+				.component_id = ComponentA::id,
+				.component_data = &test_comp,
+			},
+		};
+
+		auto exec_options = ecsact_execution_options{};
+		exec_options.update_components_length = update_components.size();
+		exec_options.update_components_entities = update_component_entities.data();
+		exec_options.update_components = update_components.data();
+
+		ecsact_execute_systems(reg.id(), 1, &exec_options, &evc);
+
+		EXPECT_TRUE(event_happened) << "Update event did not happen";
+		event_happened = false;
+	}
+
+	// Checking if we get the remove_event
+	{
+		auto evc = ecsact_execution_events_collector{};
+		evc.remove_callback = callback;
+
+		auto remove_component_entities = std::array{entity};
+		auto remove_components = std::array{ComponentA::id};
+
+		auto exec_options = ecsact_execution_options{};
+		exec_options.remove_components_length = remove_components.size();
+		exec_options.remove_components_entities = remove_component_entities.data();
+		exec_options.remove_components = remove_components.data();
+
+		ecsact_execute_systems(reg.id(), 1, &exec_options, &evc);
+
+		EXPECT_TRUE(event_happened) << "Remove event did not happen";
+		event_happened = false;
+	}
 }
 
 TEST(Core, DynamicSystemImpl) {
