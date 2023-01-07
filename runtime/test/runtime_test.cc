@@ -401,51 +401,6 @@ TEST(Core, EventCollector) {
 	}
 }
 
-TEST(Core, DynamicSystemImpl) {
-	auto reg = ecsact::core::registry("DynamicSystemImpl");
-	auto entity = reg.create_entity();
-	auto other_entity = reg.create_entity();
-
-	ComponentA comp{.a = 42};
-	reg.add_component(entity, comp);
-	reg.add_component(other_entity, comp);
-
-	OtherEntityComponent other_comp{.num = 3, .target = other_entity};
-	ASSERT_EQ(reg.add_component(entity, other_comp), ECSACT_ADD_OK);
-
-	// Sanity check
-	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
-	ASSERT_EQ(reg.get_component<ComponentA>(entity), comp);
-	ASSERT_TRUE(reg.has_component<ComponentA>(other_entity));
-	ASSERT_EQ(reg.get_component<ComponentA>(other_entity), comp);
-	ASSERT_TRUE(reg.has_component<OtherEntityComponent>(entity));
-	ASSERT_EQ(reg.get_component<OtherEntityComponent>(entity), other_comp);
-
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
-		&runtime_test__SimpleSystem
-	);
-
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::OtherEntitySystem::id),
-		&runtime_test__OtherEntitySystem
-	);
-
-	auto exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
-	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
-
-	// Sanity check
-	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
-
-	auto comp_get = reg.get_component<ComponentA>(entity);
-
-	EXPECT_NE(comp_get.a, comp.a);
-
-	// Simulate what the system should be doing.
-	comp.a += 2;
-	EXPECT_EQ(comp_get.a, comp.a);
-}
-
 TEST(Core, ExecuteSystemsErrors) {
 	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
 	auto options = ecsact_execution_options{};
@@ -625,6 +580,51 @@ TEST(Core, AssociationEntityCorrectness) {
 		ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
 		EXPECT_EQ(attack_damage_exec_count, attacker_entities.size());
 	}
+}
+
+TEST(Core, DynamicSystemImpl) {
+	auto reg = ecsact::core::registry("DynamicSystemImpl");
+	auto entity = reg.create_entity();
+	auto other_entity = reg.create_entity();
+
+	ComponentA comp{.a = 42};
+	reg.add_component(entity, comp);
+	reg.add_component(other_entity, comp);
+
+	OtherEntityComponent other_comp{.num = 3, .target = other_entity};
+	ASSERT_EQ(reg.add_component(entity, other_comp), ECSACT_ADD_OK);
+
+	// Sanity check
+	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
+	ASSERT_EQ(reg.get_component<ComponentA>(entity), comp);
+	ASSERT_TRUE(reg.has_component<ComponentA>(other_entity));
+	ASSERT_EQ(reg.get_component<ComponentA>(other_entity), comp);
+	ASSERT_TRUE(reg.has_component<OtherEntityComponent>(entity));
+	ASSERT_EQ(reg.get_component<OtherEntityComponent>(entity), other_comp);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
+		&runtime_test__SimpleSystem
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::OtherEntitySystem::id),
+		&runtime_test__OtherEntitySystem
+	);
+
+	auto exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+
+	// Sanity check
+	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
+
+	auto comp_get = reg.get_component<ComponentA>(entity);
+
+	EXPECT_NE(comp_get.a, comp.a);
+
+	// Simulate what the system should be doing.
+	comp.a += 2;
+	EXPECT_EQ(comp_get.a, comp.a);
 }
 
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
