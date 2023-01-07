@@ -423,7 +423,8 @@ TEST(Core, DynamicSystemImpl) {
 		&runtime_test__OtherEntitySystem
 	);
 
-	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	auto exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
 	// Sanity check
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
@@ -439,12 +440,10 @@ TEST(Core, DynamicSystemImpl) {
 
 TEST(Core, ExecuteSystemsErrors) {
 	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
-	auto comp = OtherEntityComponent{
-		.num = 42,
-		.target = static_cast<ecsact_entity_id>(4000),
-	};
 	auto options = ecsact_execution_options{};
-	auto test_action = runtime_test::AssocTestAction{};
+	auto test_action = runtime_test::AssocTestAction{
+		.assoc_entity = static_cast<ecsact_entity_id>(4000),
+	};
 	auto test_action_c = ecsact_action{
 		.action_id = runtime_test::AssocTestAction::id,
 		.action_data = &test_action,
@@ -455,6 +454,26 @@ TEST(Core, ExecuteSystemsErrors) {
 	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
 
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID);
+}
+
+TEST(Core, ExecuteSystemsAssocActionOk) {
+	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
+	auto test_entity = reg.create_entity();
+
+	auto options = ecsact_execution_options{};
+	auto test_action = runtime_test::AssocTestAction{
+		.assoc_entity = test_entity,
+	};
+	auto test_action_c = ecsact_action{
+		.action_id = runtime_test::AssocTestAction::id,
+		.action_data = &test_action,
+	};
+
+	options.actions_length = 1;
+	options.actions = &test_action_c;
+	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 }
 
 TEST(Core, AssociationEntityCorrectness) {

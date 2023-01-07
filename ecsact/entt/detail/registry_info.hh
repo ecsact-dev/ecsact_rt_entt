@@ -60,7 +60,7 @@ struct registry_info {
 		using boost::mp11::mp_with_index;
 		using ecsact::entt::detail::association;
 
-		auto entity_field = field.template get<ecsact_entity_id>(component);
+		auto entity_field = field.template get<ecsact_entity_id>(&component);
 		auto entity_field_entt = entities_map.at(entity_field);
 		mp_with_index<64>(field.offset, [&](auto I) {
 			registry.emplace<association<C, I>>(entity_field_entt);
@@ -75,7 +75,7 @@ struct registry_info {
 		using boost::mp11::mp_with_index;
 		using ecsact::entt::detail::association;
 
-		auto entity_field = field.template get<ecsact_entity_id>(component);
+		auto entity_field = field.template get<ecsact_entity_id>(&component);
 		auto entity_field_entt = entities_map.at(entity_field);
 		mp_with_index<64>(field.offset, [&](auto I) {
 			registry.erase<association<C, I>>(entity_field_entt);
