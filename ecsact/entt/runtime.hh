@@ -199,7 +199,7 @@ public:
 			for(auto& field : fields_info) {
 				if(field.storage_type == ECSACT_ENTITY_TYPE) {
 					auto entity_field =
-						field.template get<ecsact_entity_id>(component_data);
+						field.template get<ecsact_entity_id>(&component_data);
 					if(!info.entities_map.contains(entity_field)) {
 						return ECSACT_ADD_ERR_ENTITY_INVALID;
 					}
@@ -397,7 +397,7 @@ public:
 			for(auto& field : fields_info) {
 				if(field.storage_type == ECSACT_ENTITY_TYPE) {
 					auto entity_field =
-						field.template get<ecsact_entity_id>(component_data);
+						field.template get<ecsact_entity_id>(&component_data);
 					if(!info.entities_map.contains(entity_field)) {
 						return ECSACT_UPDATE_ERR_ENTITY_INVALID;
 					}
