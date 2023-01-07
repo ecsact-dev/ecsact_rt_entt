@@ -73,6 +73,14 @@ void runtime_test::AttackDamageWeakened::impl(context& ctx) {
 	// target_ctx.update(target_health);
 }
 
+void runtime_test::AddAssocTest::impl(context& ctx) {
+	auto other_entity = ctx.get<OtherEntityComponent>();
+
+	// Get Target other context from OtherEntityComponent
+	auto target_ctx = ctx._ctx.other(other_entity.target);
+	target_ctx.add(AddAssocTestComponent{.num = 10});
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -463,6 +471,40 @@ TEST(Core, ExecuteSystemsAssocActionOk) {
 	auto options = ecsact_execution_options{};
 	auto test_action = runtime_test::AssocTestAction{
 		.assoc_entity = test_entity,
+	};
+	auto test_action_c = ecsact_action{
+		.action_id = runtime_test::AssocTestAction::id,
+		.action_data = &test_action,
+	};
+
+	options.actions_length = 1;
+	options.actions = &test_action_c;
+	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+}
+
+TEST(Core, AddAssocOk) {
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AddAssocTest::id),
+		&runtime_test__AddAssocTest
+	);
+
+	auto reg = ecsact::core::registry("AddAssocOk");
+	auto test_entity1 = reg.create_entity();
+	reg.add_component(
+		test_entity1,
+		runtime_test::ComponentA{
+			.a = 42,
+		}
+	);
+
+	auto test_entity2 = reg.create_entity();
+	reg.add_component<runtime_test::AddAssocTestTag>(test_entity2);
+
+	auto options = ecsact_execution_options{};
+	auto test_action = runtime_test::AssocTestAction{
+		.assoc_entity = test_entity2,
 	};
 	auto test_action_c = ecsact_action{
 		.action_id = runtime_test::AssocTestAction::id,

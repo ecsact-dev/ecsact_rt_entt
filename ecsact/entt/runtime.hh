@@ -677,6 +677,11 @@ private:
 
 					auto& assoc_view = std::get<I>(assoc_views);
 					auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
+					if(assoc_view.begin() == assoc_view.end()) {
+						missing_assoc_entities = true;
+						return;
+					}
+
 					assert(view.contains(entity));
 					auto& comp = view.template get<ComponentT>(entity);
 
