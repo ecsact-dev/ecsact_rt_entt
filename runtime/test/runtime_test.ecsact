@@ -61,6 +61,20 @@ action AssocTestAction {
 	adds OtherEntityComponent;
 }
 
+component AddAssocTestComponent {
+	i32 num;
+}
+
+component AddAssocTestTag;
+
+system AddAssocTest {
+	readwrite ComponentA;
+	readwrite OtherEntityComponent with target {
+		include AddAssocTestTag;
+		adds AddAssocTestComponent;
+	}
+}
+
 system AttackDamage {
 	readwrite Attacking with target {
 		readwrite Health;
