@@ -191,7 +191,9 @@ struct system_execution_context : system_execution_context_base {
 		info.registry.template emplace<pending_remove<C>>(entity);
 
 		if constexpr(!C::transient) {
-			info.registry.template emplace<component_removed<C>>(entity);
+			// TODO(zaucy): Look into if emplace_or_replace is necessary instead of
+			//              just replace.
+			info.registry.template emplace_or_replace<component_removed<C>>(entity);
 		}
 	}
 
