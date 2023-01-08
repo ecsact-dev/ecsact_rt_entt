@@ -486,14 +486,17 @@ private:
 		using boost::mp11::mp_first;
 		using boost::mp11::mp_flatten;
 		using boost::mp11::mp_for_each;
+		using boost::mp11::mp_iota_c;
 		using boost::mp11::mp_map_find;
 		using boost::mp11::mp_push_back;
+		using boost::mp11::mp_size;
 		using boost::mp11::mp_transform;
 		using boost::mp11::mp_unique;
 		using ecsact::entt::detail::pending_add;
 		using ecsact::entt_mp11_util::mp_map_find_value_or;
 
 		using caps_info = ecsact::system_capabilities_info<SystemT>;
+		using associations = typename caps_info::associations;
 
 		using system_generates = mp_transform<
 			mp_first,
@@ -507,7 +510,7 @@ private:
 				::ecsact::mp_list<>>,
 			::ecsact::mp_list<>>>;
 
-		mp_for_each<addables>([&]<typename C>(C) {
+		auto for_each_addable = [&]<typename C>(C) {
 			using boost::mp11::mp_apply;
 			using boost::mp11::mp_bind_front;
 			using boost::mp11::mp_transform_q;
@@ -532,25 +535,52 @@ private:
 			}
 
 			info.registry.template clear<pending_add<C>>();
+		};
+
+		mp_for_each<addables>(for_each_addable);
+
+		mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+			using boost::mp11::mp_at;
+			using boost::mp11::mp_size_t;
+
+			using Assoc = mp_at<associations, mp_size_t<I>>;
+			using addables = typename Assoc::adds_components;
+
+			mp_for_each<addables>(for_each_addable);
 		});
 	}
 
 	template<typename SystemT>
 	void _apply_pending_removes(registry_info& info) {
 		using boost::mp11::mp_for_each;
+		using boost::mp11::mp_iota_c;
+		using boost::mp11::mp_size;
 		using ecsact::entt::detail::pending_remove;
 		using ecsact::entt_mp11_util::mp_map_find_value_or;
 
 		using caps_info = ecsact::system_capabilities_info<SystemT>;
+		using associations = typename caps_info::associations;
 
 		using removes_components = typename caps_info::removes_components;
 
-		mp_for_each<removes_components>([&]<typename C>(C) {
+		auto for_each_removable = [&]<typename C>(C) {
 			auto view = info.registry.template view<pending_remove<C>>();
 			view.each([&](auto entity) { info.template remove_component<C>(entity); }
 			);
 
 			info.registry.template clear<pending_remove<C>>();
+		};
+
+		mp_for_each<removes_components>(for_each_removable);
+
+		mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+			using boost::mp11::mp_at;
+			using boost::mp11::mp_size_t;
+
+			using Assoc = mp_at<associations, mp_size_t<I>>;
+			using removes_components = typename Assoc::removes_components;
+
+			mp_for_each<removes_components>(for_each_removable);
 		});
 	}
 

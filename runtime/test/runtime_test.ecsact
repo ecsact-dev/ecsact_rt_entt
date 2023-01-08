@@ -68,6 +68,7 @@ component AddAssocTestComponent {
 component AddAssocTestTag;
 
 system AddAssocTest {
+	readwrite ComponentA;
 	readwrite OtherEntityComponent with target {
 		include AddAssocTestTag;
 		adds AddAssocTestComponent;

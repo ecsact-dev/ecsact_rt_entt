@@ -49,7 +49,10 @@ void runtime_test::TrivialRemove::impl(context& ctx) {
 	std::abort();
 }
 
+static std::atomic_bool AssocTestAction_ran = false;
+
 void runtime_test::AssocTestAction::impl(context& ctx) {
+	AssocTestAction_ran = true;
 	ctx.add(OtherEntityComponent{
 		.num = 42,
 		.target = ctx.action().assoc_entity,
@@ -73,7 +76,10 @@ void runtime_test::AttackDamageWeakened::impl(context& ctx) {
 	// target_ctx.update(target_health);
 }
 
+static std::atomic_bool AddAssocTest_ran = false;
+
 void runtime_test::AddAssocTest::impl(context& ctx) {
+	AddAssocTest_ran = true;
 	auto other_entity = ctx.get<OtherEntityComponent>();
 
 	// Get Target other context from OtherEntityComponent
@@ -441,6 +447,10 @@ TEST(Core, ExecuteSystemsAssocActionOk) {
 
 TEST(Core, AddAssocOk) {
 	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AssocTestAction::id),
+		&runtime_test__AssocTestAction
+	);
+	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AddAssocTest::id),
 		&runtime_test__AddAssocTest
 	);
@@ -468,8 +478,14 @@ TEST(Core, AddAssocOk) {
 
 	options.actions_length = 1;
 	options.actions = &test_action_c;
+	AddAssocTest_ran = false;
+	AssocTestAction_ran = false;
 	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+	EXPECT_TRUE(AddAssocTest_ran) << "AddAssocTest Impl Didn't Executed";
+	EXPECT_TRUE(AssocTestAction_ran) << "AssocTestAction Impl Didn't Executed";
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
+	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 }
 
