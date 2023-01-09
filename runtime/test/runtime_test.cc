@@ -87,6 +87,17 @@ void runtime_test::AddAssocTest::impl(context& ctx) {
 	target_ctx.add(AddAssocTestComponent{.num = 10});
 }
 
+static std::atomic_bool RemoveAssocTest_ran = false;
+
+void runtime_test::RemoveAssocTest::impl(context& ctx) {
+	RemoveAssocTest_ran = true;
+	auto other_entity = ctx.get<OtherEntityComponent>();
+
+	// Get Target other context from OtherEntityComponent
+	auto target_ctx = ctx._ctx.other(other_entity.target);
+	target_ctx.remove<RemoveAssocTestComponent>();
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -487,6 +498,69 @@ TEST(Core, AddAssocOk) {
 
 	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+}
+
+TEST(Core, RemoveAssocOk) {
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AssocTestAction::id),
+		&runtime_test__AssocTestAction
+	);
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::RemoveAssocTest::id),
+		&runtime_test__RemoveAssocTest
+	);
+
+	auto reg = ecsact::core::registry("RemoveAssocOk");
+	auto test_entity2 = reg.create_entity();
+	reg.add_component<runtime_test::RemoveAssocTestTag>(test_entity2);
+	reg.add_component(
+		test_entity2,
+		runtime_test::RemoveAssocTestComponent{
+			.num = 42,
+		}
+	);
+
+	auto test_entity1 = reg.create_entity();
+	reg.add_component(
+		test_entity1,
+		runtime_test::OtherEntityComponent{
+			.target = test_entity2,
+		}
+	);
+
+	auto test_entity3 = reg.create_entity();
+	reg.add_component(
+		test_entity3,
+		runtime_test::OtherEntityComponent{
+			.target = test_entity2,
+		}
+	);
+
+	RemoveAssocTest_ran = false;
+	auto exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	EXPECT_TRUE(RemoveAssocTest_ran) << "RemoveAssocTest Impl Didn't Executed";
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+
+	ASSERT_FALSE(
+		reg.has_component<runtime_test::RemoveAssocTestComponent>(test_entity2)
+	);
+
+	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+
+	reg.add_component(
+		test_entity2,
+		runtime_test::RemoveAssocTestComponent{
+			.num = 42,
+		}
+	);
+
+	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+
+	ASSERT_FALSE(
+		reg.has_component<runtime_test::RemoveAssocTestComponent>(test_entity2)
+	);
 }
 
 TEST(Core, AssociationEntityCorrectness) {
