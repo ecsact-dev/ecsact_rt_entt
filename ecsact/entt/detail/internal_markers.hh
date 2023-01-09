@@ -10,6 +10,7 @@ template<typename C, std::size_t FieldOffset>
 struct association {
 	using component = C;
 	static constexpr auto field_offset = FieldOffset;
+	std::int_fast16_t     ref_count = 0;
 };
 
 template<typename Assoc>

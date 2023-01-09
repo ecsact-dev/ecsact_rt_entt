@@ -75,6 +75,19 @@ system AddAssocTest {
 	}
 }
 
+component RemoveAssocTestComponent {
+	i32 num;
+}
+
+component RemoveAssocTestTag;
+
+system RemoveAssocTest {
+	readwrite OtherEntityComponent with target {
+		include RemoveAssocTestTag;
+		removes RemoveAssocTestComponent;
+	}
+}
+
 system AttackDamage {
 	readwrite Attacking with target {
 		readwrite Health;

@@ -62,8 +62,17 @@ struct registry_info {
 
 		auto entity_field = field.template get<ecsact_entity_id>(&component);
 		auto entity_field_entt = entities_map.at(entity_field);
-		mp_with_index<64>(field.offset, [&](auto I) {
-			registry.emplace<association<C, I>>(entity_field_entt);
+		// TODO(zaucy): Increasing the mp_with_index number causes really long
+		//              compile times. Iterating over the available associations
+		//              would perform better here.
+		assert(field.offset < 32);
+		mp_with_index<32>(field.offset, [&](auto I) {
+			if(registry.all_of<association<C, I>>(entity_field_entt)) {
+				auto& assoc_comp = registry.get<association<C, I>>(entity_field_entt);
+				assoc_comp.ref_count += 1;
+			} else {
+				registry.emplace<association<C, I>>(entity_field_entt, 1);
+			}
 		});
 	}
 
@@ -77,8 +86,16 @@ struct registry_info {
 
 		auto entity_field = field.template get<ecsact_entity_id>(&component);
 		auto entity_field_entt = entities_map.at(entity_field);
-		mp_with_index<64>(field.offset, [&](auto I) {
-			registry.erase<association<C, I>>(entity_field_entt);
+		assert(field.offset < 32);
+		// TODO(zaucy): Increasing the mp_with_index number causes really long
+		//              compile times. Iterating over the available associations
+		//              would perform better here.
+		mp_with_index<32>(field.offset, [&](auto I) {
+			auto& assoc_comp = registry.get<association<C, I>>(entity_field_entt);
+			assoc_comp.ref_count -= 1;
+			if(assoc_comp.ref_count == 0) {
+				registry.erase<association<C, I>>(entity_field_entt);
+			}
 		});
 	}
 
