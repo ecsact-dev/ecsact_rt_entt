@@ -23,6 +23,13 @@ http_archive(
     url = "https://github.com/ecsact-dev/ecsact_lang_cpp/archive/b1fa28b445b98d5ba62ede19cd6a5bdfa51141be.zip",
 )
 
+http_archive(
+    name = "ecsact_runtime",
+    sha256 = "",
+    strip_prefix = "ecsact_runtime-d4069af2f2ba6c5614ad95bf2777d156d836ce19",
+    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/d4069af2f2ba6c5614ad95bf2777d156d836ce19.zip",
+)
+
 load("@rules_ecsact//ecsact:repositories.bzl", "ecsact_register_toolchains", "rules_ecsact_dependencies")
 
 rules_ecsact_dependencies()
@@ -48,13 +55,6 @@ load("@boost//:index.bzl", "boost_http_archives")
 boost_http_archives()
 
 http_archive(
-    name = "ecsact_runtime",
-    sha256 = "80b722a8790447627b621877c171a96d5e7d09005bfbed7d8b388cb37cefa7b6",
-    strip_prefix = "ecsact_runtime-f7ee18fe96c4400672caccf5475835d54281582c",
-    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/f7ee18fe96c4400672caccf5475835d54281582c.zip",
-)
-
-http_archive(
     name = "hedron_compile_commands",
     sha256 = "4b251a482a85de6c5cb0dc34c5671e73190b9ff348e9979fa2c033d81de0f928",
     strip_prefix = "bazel-compile-commands-extractor-5bb5ff2f32d542a986033102af771aa4206387b9",
@@ -67,9 +67,9 @@ hedron_compile_commands_setup()
 
 http_archive(
     name = "com_grail_bazel_toolchain",
-    sha256 = "7fa5a8624b1148c36e09c7fa29ef6ee8b83f865219c9c219c9125aac78924758",
-    strip_prefix = "bazel-toolchain-c3131a6894804ee586d059c57ffe8e88d44172e1",
-    url = "https://github.com/grailbio/bazel-toolchain/archive/c3131a6894804ee586d059c57ffe8e88d44172e1.zip",
+    sha256 = "3cf5ac4bb7dae3776da586fe85685274f5d89cbb59436f50f572928354e72198",
+    strip_prefix = "bazel-toolchain-70a0fb556662fe3cadb07da32c91e232eb0d883d",
+    url = "https://github.com/grailbio/bazel-toolchain/archive/70a0fb556662fe3cadb07da32c91e232eb0d883d.zip",
 )
 
 load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
@@ -81,7 +81,8 @@ load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
 llvm_toolchain(
     name = "llvm_toolchain",
     cxx_standard = {"linux": "c++20"},
-    llvm_version = "14.0.0",
+    distribution = "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz",
+    llvm_version = "15.0.6",
 )
 
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
