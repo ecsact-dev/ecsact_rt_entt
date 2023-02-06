@@ -14,7 +14,7 @@
 #include <boost/mp11.hpp>
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/definitions.h"
-#include "ecsact/runtime/core.h"
+#include "ecsact/runtime/core.hh"
 #include "ecsact/lib.hh"
 #include <entt/entt.hpp>
 #include "ecsact/entt/detail/mp11_util.hh"
@@ -1041,15 +1041,12 @@ private:
 	}
 
 	void _apply_execution_options(
-		const ecsact_execution_options& options,
-		registry_info&                  info
+		ecsact::core::execution_options_view options,
+		registry_info&                       info
 	) {
 		using boost::mp11::mp_for_each;
 
-		for(int i = 0; options.add_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.add_components_entities[i];
-			const ecsact_component& comp = options.add_components[i];
-
+		for(auto&& [entity, comp] : options.add_components_pairs()) {
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
@@ -1072,10 +1069,7 @@ private:
 			});
 		}
 
-		for(int i = 0; options.update_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.update_components_entities[i];
-			const ecsact_component& comp = options.update_components[i];
-
+		for(auto&& [entity, comp] : options.update_components_pairs()) {
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
@@ -1095,10 +1089,7 @@ private:
 			});
 		}
 
-		for(int i = 0; options.remove_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.remove_components_entities[i];
-			ecsact_component_id     component_id = options.remove_components[i];
-
+		for(auto&& [entity, component_id] : options.remove_components_pairs()) {
 			mp_for_each<typename package::components>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
@@ -1196,9 +1187,9 @@ public:
 
 		if(execution_options_list != nullptr) {
 			for(int n = 0; execution_count > n; ++n) {
-				auto opts = execution_options_list[n];
-				for(auto act_idx = 0; opts.actions_length > act_idx; ++act_idx) {
-					auto& act = opts.actions[act_idx];
+				auto opts =
+					ecsact::core::execution_options_view(execution_options_list[n]);
+				for(auto& act : opts.actions()) {
 					exec_err = _validate_action(reg_id, act);
 					if(exec_err != ECSACT_EXEC_SYS_OK) {
 						return exec_err;
