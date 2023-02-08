@@ -352,20 +352,10 @@ TEST(Core, EventCollector) {
 		auto test_comp = ComponentA{};
 		test_comp.a = 10;
 
-		auto add_component_entities = std::array{entity};
-		auto add_components = std::array{
-			ecsact_component{
-				.component_id = ComponentA::id,
-				.component_data = &test_comp,
-			},
-		};
+		auto exec_options = ecsact::core::execution_options{};
+		exec_options.add_component(entity, &test_comp);
 
-		auto exec_options = ecsact_execution_options{};
-		exec_options.add_components_length = add_components.size();
-		exec_options.add_components_entities = add_component_entities.data();
-		exec_options.add_components = add_components.data();
-
-		ecsact_execute_systems(reg.id(), 1, &exec_options, &evc);
+		reg.execute_systems(std::array{exec_options}, &evc);
 
 		EXPECT_TRUE(event_happened) << "Init event did not happen";
 		event_happened = false;
@@ -379,20 +369,10 @@ TEST(Core, EventCollector) {
 		auto test_comp = ComponentA{};
 		test_comp.a = 42;
 
-		auto update_component_entities = std::array{entity};
-		auto update_components = std::array{
-			ecsact_component{
-				.component_id = ComponentA::id,
-				.component_data = &test_comp,
-			},
-		};
+		auto exec_options = ecsact::core::execution_options{};
+		exec_options.update_component(entity, &test_comp);
 
-		auto exec_options = ecsact_execution_options{};
-		exec_options.update_components_length = update_components.size();
-		exec_options.update_components_entities = update_component_entities.data();
-		exec_options.update_components = update_components.data();
-
-		ecsact_execute_systems(reg.id(), 1, &exec_options, &evc);
+		reg.execute_systems(std::array{exec_options}, &evc);
 
 		EXPECT_TRUE(event_happened) << "Update event did not happen";
 		event_happened = false;
@@ -403,15 +383,10 @@ TEST(Core, EventCollector) {
 		auto evc = ecsact_execution_events_collector{};
 		evc.remove_callback = callback;
 
-		auto remove_component_entities = std::array{entity};
-		auto remove_components = std::array{ComponentA::id};
+		auto exec_options = ecsact::core::execution_options{};
+		exec_options.remove_component<ComponentA>(entity);
 
-		auto exec_options = ecsact_execution_options{};
-		exec_options.remove_components_length = remove_components.size();
-		exec_options.remove_components_entities = remove_component_entities.data();
-		exec_options.remove_components = remove_components.data();
-
-		ecsact_execute_systems(reg.id(), 1, &exec_options, &evc);
+		reg.execute_systems(std::array{exec_options}, &evc);
 
 		EXPECT_TRUE(event_happened) << "Remove event did not happen";
 		event_happened = false;
@@ -420,18 +395,14 @@ TEST(Core, EventCollector) {
 
 TEST(Core, ExecuteSystemsErrors) {
 	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
-	auto options = ecsact_execution_options{};
 	auto test_action = runtime_test::AssocTestAction{
 		.assoc_entity = static_cast<ecsact_entity_id>(4000),
 	};
-	auto test_action_c = ecsact_action{
-		.action_id = runtime_test::AssocTestAction::id,
-		.action_data = &test_action,
-	};
 
-	options.actions_length = 1;
-	options.actions = &test_action_c;
-	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+	auto exec_options = ecsact::core::execution_options{};
+	exec_options.push_action(&test_action);
+
+	auto exec_err = reg.execute_systems(std::array{exec_options}, nullptr);
 
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID);
 }
@@ -444,14 +415,11 @@ TEST(Core, ExecuteSystemsAssocActionOk) {
 	auto test_action = runtime_test::AssocTestAction{
 		.assoc_entity = test_entity,
 	};
-	auto test_action_c = ecsact_action{
-		.action_id = runtime_test::AssocTestAction::id,
-		.action_data = &test_action,
-	};
 
-	options.actions_length = 1;
-	options.actions = &test_action_c;
-	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+	auto exec_options = ecsact::core::execution_options{};
+	exec_options.push_action(&test_action);
+
+	auto exec_err = reg.execute_systems(std::array{exec_options}, nullptr);
 
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 }
@@ -478,25 +446,22 @@ TEST(Core, AddAssocOk) {
 	auto test_entity2 = reg.create_entity();
 	reg.add_component<runtime_test::AddAssocTestTag>(test_entity2);
 
-	auto options = ecsact_execution_options{};
 	auto test_action = runtime_test::AssocTestAction{
 		.assoc_entity = test_entity2,
 	};
-	auto test_action_c = ecsact_action{
-		.action_id = runtime_test::AssocTestAction::id,
-		.action_data = &test_action,
-	};
 
-	options.actions_length = 1;
-	options.actions = &test_action_c;
+	auto exec_options = ecsact::core::execution_options{};
+	exec_options.push_action(&test_action);
+
 	AddAssocTest_ran = false;
 	AssocTestAction_ran = false;
-	auto exec_err = ecsact_execute_systems(reg.id(), 1, &options, nullptr);
+
+	auto exec_err = reg.execute_systems(std::array{exec_options}, nullptr);
 	EXPECT_TRUE(AddAssocTest_ran) << "AddAssocTest Impl Didn't Executed";
 	EXPECT_TRUE(AssocTestAction_ran) << "AssocTestAction Impl Didn't Executed";
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
-	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	exec_err = reg.execute_systems(std::array{exec_options}, nullptr);
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 }
 
@@ -537,7 +502,7 @@ TEST(Core, RemoveAssocOk) {
 	);
 
 	RemoveAssocTest_ran = false;
-	auto exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	auto exec_err = reg.execute_systems();
 	EXPECT_TRUE(RemoveAssocTest_ran) << "RemoveAssocTest Impl Didn't Executed";
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
@@ -545,7 +510,7 @@ TEST(Core, RemoveAssocOk) {
 		reg.has_component<runtime_test::RemoveAssocTestComponent>(test_entity2)
 	);
 
-	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	exec_err = reg.execute_systems();
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
 	reg.add_component(
@@ -555,7 +520,7 @@ TEST(Core, RemoveAssocOk) {
 		}
 	);
 
-	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	exec_err = reg.execute_systems();
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
 	ASSERT_FALSE(
@@ -653,7 +618,7 @@ TEST(Core, AssociationEntityCorrectness) {
 
 	attack_damage_exec_count = 0;
 	attack_damage_weakened_exec_count = 0;
-	ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	reg.execute_systems();
 	EXPECT_EQ(attack_damage_exec_count, all_target_entities.size());
 	EXPECT_EQ(attack_damage_weakened_exec_count, weakened_target_entities.size());
 
@@ -667,7 +632,7 @@ TEST(Core, AssociationEntityCorrectness) {
 
 		attack_damage_exec_count = 0;
 		attack_damage_weakened_exec_count = 0;
-		ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+		reg.execute_systems();
 		EXPECT_EQ(attack_damage_exec_count, attacker_entities.size());
 	}
 }
@@ -702,7 +667,7 @@ TEST(Core, DynamicSystemImpl) {
 		&runtime_test__OtherEntitySystem
 	);
 
-	auto exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
+	auto exec_err = reg.execute_systems();
 	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
 	// Sanity check
@@ -739,7 +704,7 @@ TEST(Core, StaticSystemImpl) {
 		nullptr
 	);
 
-	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
+	reg.execute_systems();
 
 	comp_get = static_cast<const runtime_test::ComponentA*>(
 		ecsact_get_component(reg_id, entity, comp_id)
