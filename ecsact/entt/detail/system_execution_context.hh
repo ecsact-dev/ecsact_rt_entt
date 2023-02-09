@@ -341,9 +341,11 @@ struct system_execution_context : system_execution_context_base {
 	) {
 		using boost::mp11::mp_for_each;
 		using ecsact::entt::component_added;
+		using ecsact::entt::detail::created_entity;
 		using ecsact::entt::detail::pending_add;
 
 		auto new_entity = info.create_entity().entt_entity_id;
+		info.registry.template emplace<created_entity>(new_entity);
 		for(int i = 0; component_count > i; ++i) {
 			auto component_id = component_ids[i];
 			auto component_data = components_data[i];

@@ -56,4 +56,8 @@ struct pending_add<C> {
 template<typename C>
 struct pending_remove {};
 
+struct created_entity {};
+
+struct destroyed_entity {};
+
 } // namespace ecsact::entt::detail

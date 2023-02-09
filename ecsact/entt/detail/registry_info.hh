@@ -199,6 +199,13 @@ struct registry_info {
 		return _create_entity();
 	}
 
+	inline void destroy_entity(ecsact_entity_id entity_id) {
+		auto entt_entity_id = entities_map.at(entity_id);
+
+		registry.destroy(entt_entity_id);
+		entities_map.erase(entity_id);
+	}
+
 	entt::entity get_entt_entity_id(ecsact_entity_id ecsact_entity_id) const {
 		return entities_map.at(ecsact_entity_id);
 	}

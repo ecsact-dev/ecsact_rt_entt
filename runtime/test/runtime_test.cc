@@ -717,6 +717,74 @@ TEST(Core, DynamicSystemImpl) {
 	EXPECT_EQ(comp_get.a, comp.a);
 }
 
+TEST(Core, CreateAndDestroyEntity) {
+	auto reg = ecsact::core::registry("CreateAndDestroyEntity");
+
+	runtime_test::EntityTesting component_a{.a = 6};
+
+	ecsact_component my_component_a{
+		.component_id = runtime_test::EntityTesting::id,
+		.component_data = &component_a,
+	};
+
+	auto options = ecsact_execution_options{};
+
+	std::array<ecsact_component, 1> entity_component = {my_component_a};
+
+	std::array<int, 1> entity_component_length = {entity_component.size()};
+
+	std::vector<ecsact_component*> pointer_vector{};
+
+	pointer_vector.push_back(entity_component.data());
+
+	options.create_entities_components = pointer_vector.data();
+	options.create_entities_components_length = entity_component_length.data();
+	options.create_entities_length = entity_component_length.size();
+
+	auto evc = ecsact_execution_events_collector{};
+
+	struct callback_info {
+		ecsact_entity_id entity_id;
+		bool             entity_created = false;
+	};
+
+	auto info = callback_info{};
+
+	evc.entity_created_callback_user_data = &info;
+
+	auto entity_created_callback = //
+		[](
+			ecsact_event     event,
+			ecsact_entity_id entity_id,
+			void*            callback_user_data
+		) {
+			auto& info = *static_cast<callback_info*>(callback_user_data);
+			info.entity_created = true;
+			info.entity_id = entity_id;
+		};
+
+	evc.entity_created_callback = entity_created_callback;
+
+	ecsact_execute_systems(reg.id(), 1, &options, &evc);
+
+	ASSERT_EQ(ecsact_count_entities(reg.id()), 1);
+
+	auto comp = reg.get_component<runtime_test::EntityTesting>(info.entity_id);
+
+	ASSERT_EQ(comp.a, 6);
+
+	ecsact_execution_options delete_options{};
+
+	auto entity_vector = std::vector<ecsact_entity_id>{info.entity_id};
+
+	delete_options.destroy_entities = entity_vector.data();
+	delete_options.destroy_entities_length = entity_vector.size();
+
+	ecsact_execute_systems(reg.id(), 1, &delete_options, nullptr);
+
+	ASSERT_EQ(ecsact_count_entities(reg.id()), 0);
+}
+
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
 TEST(Core, StaticSystemImpl) {
 	auto reg_id = ecsact_create_registry("StaticSystemImpl");

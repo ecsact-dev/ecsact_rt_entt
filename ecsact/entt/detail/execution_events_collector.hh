@@ -20,6 +20,14 @@ struct execution_events_collector {
 		return target->remove_callback != nullptr;
 	}
 
+	inline bool has_entity_created_callback() const {
+		return target->entity_created_callback != nullptr;
+	}
+
+	inline bool has_entity_destroyed_callback() const {
+		return target->entity_destroyed_callback != nullptr;
+	}
+
 	template<typename C>
 		requires(!std::is_empty_v<C>)
 	void invoke_init_callback(ecsact_entity_id entity, const C& component) {
@@ -89,6 +97,22 @@ struct execution_events_collector {
 			static_cast<ecsact_component_id>(C::id),
 			nullptr,
 			target->remove_callback_user_data
+		);
+	}
+
+	void invoke_entity_created_callback(ecsact_entity_id entity) {
+		target->entity_created_callback(
+			ECSACT_EVENT_CREATE_ENTITY,
+			static_cast<ecsact_entity_id>(entity),
+			target->entity_created_callback_user_data
+		);
+	}
+
+	void invoke_entity_destroyed_callback(ecsact_entity_id entity) {
+		target->entity_destroyed_callback(
+			ECSACT_EVENT_DESTROY_ENTITY,
+			static_cast<ecsact_entity_id>(entity),
+			target->entity_destroyed_callback_user_data
 		);
 	}
 };
