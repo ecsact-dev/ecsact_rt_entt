@@ -23,6 +23,13 @@ http_archive(
     url = "https://github.com/ecsact-dev/ecsact_lang_cpp/archive/b1fa28b445b98d5ba62ede19cd6a5bdfa51141be.zip",
 )
 
+http_archive(
+    name = "ecsact_runtime",
+    sha256 = "ab8270dfbe7fb6360e3b395fb3ad141a99d18b43bb0f3a897cf04e8a736036b8",
+    strip_prefix = "ecsact_runtime-94b3c740e69b1bc1d35ec3dd8218e80d6bf8fa00",
+    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/94b3c740e69b1bc1d35ec3dd8218e80d6bf8fa00.zip",
+)
+
 load("@rules_ecsact//ecsact:repositories.bzl", "ecsact_register_toolchains", "rules_ecsact_dependencies")
 
 rules_ecsact_dependencies()
@@ -46,13 +53,6 @@ http_archive(
 load("@boost//:index.bzl", "boost_http_archives")
 
 boost_http_archives()
-
-http_archive(
-    name = "ecsact_runtime",
-    sha256 = "80b722a8790447627b621877c171a96d5e7d09005bfbed7d8b388cb37cefa7b6",
-    strip_prefix = "ecsact_runtime-f7ee18fe96c4400672caccf5475835d54281582c",
-    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/f7ee18fe96c4400672caccf5475835d54281582c.zip",
-)
 
 http_archive(
     name = "hedron_compile_commands",

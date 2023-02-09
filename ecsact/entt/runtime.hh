@@ -138,15 +138,13 @@ public:
 		using boost::mp11::mp_for_each;
 
 		auto& info = _registries.at(reg_id);
-		auto  entt_entity_id = info.entities_map.at(entity_id);
 
-		info.registry.destroy(entt_entity_id);
-		info.entities_map.erase(entity_id);
+		info.destroy_entity(entity_id);
 	}
 
 	int count_entities(ecsact_registry_id reg_id) {
 		auto& info = _registries.at(reg_id);
-		return static_cast<int>(info.registry.size());
+		return static_cast<int>(info.registry.alive());
 	}
 
 	std::vector<ecsact_entity_id> get_entities(ecsact_registry_id reg_id) {
@@ -855,6 +853,10 @@ private:
 		using boost::mp11::mp_for_each;
 		using detail::beforechange_storage;
 
+		if(!events_collector.has_update_callback()) {
+			return;
+		}
+
 		mp_for_each<typename package::components>([&]<typename C>(C) {
 			if constexpr(!C::transient && !std::is_empty_v<C>) {
 				::entt::basic_view changed_view{
@@ -886,6 +888,10 @@ private:
 	) {
 		using boost::mp11::mp_for_each;
 
+		if(!events_collector.has_remove_callback()) {
+			return;
+		}
+
 		mp_for_each<typename package::components>([&]<typename C>(C) {
 			if constexpr(C::transient) {
 				return;
@@ -916,6 +922,50 @@ private:
 				}
 			}
 		});
+	}
+
+	void _trigger_create_entity_event(
+		registry_info&              info,
+		execution_events_collector& events_collector
+	) {
+		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::created_entity;
+
+		if(!events_collector.has_entity_created_callback()) {
+			return;
+		}
+
+		::entt::basic_view created_view{
+			info.registry.template storage<created_entity>(),
+		};
+
+		for(entt_entity_type entity : created_view) {
+			events_collector.invoke_entity_created_callback(
+				info.get_ecsact_entity_id(entity)
+			);
+		}
+	}
+
+	void _trigger_destroy_entity_event(
+		registry_info&              info,
+		execution_events_collector& events_collector
+	) {
+		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::destroyed_entity;
+
+		if(!events_collector.has_entity_destroyed_callback()) {
+			return;
+		}
+
+		::entt::basic_view destroy_view{
+			info.registry.template storage<destroyed_entity>(),
+		};
+
+		for(entt_entity_type entity : destroy_view) {
+			events_collector.invoke_entity_destroyed_callback(
+				info.get_ecsact_entity_id(entity)
+			);
+		}
 	}
 
 	void _execute_systems(registry_info& info, actions_span_t& actions) {
@@ -1045,6 +1095,35 @@ private:
 		registry_info&                  info
 	) {
 		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::created_entity;
+		using ecsact::entt::detail::destroyed_entity;
+
+		for(int i = 0; options.create_entities_length > i; i++) {
+			auto entity = info.create_entity().entt_entity_id;
+			info.registry.template emplace<created_entity>(entity);
+
+			for(int j = 0; options.create_entities_components_length[i] > j; j++) {
+				const ecsact_component& comp = options.create_entities_components[i][j];
+
+				mp_for_each<typename package::components>([&]<typename C>(C) {
+					if constexpr(C::transient) {
+						return;
+					}
+
+					if(comp.component_id == static_cast<ecsact_component_id>(C::id)) {
+						if constexpr(std::is_empty_v<C>) {
+							_pre_exec_add_component<C>(info, entity);
+						} else {
+							_pre_exec_add_component<C>(
+								info,
+								entity,
+								*static_cast<const C*>(comp.component_data)
+							);
+						}
+					}
+				});
+			}
+		}
 
 		for(int i = 0; options.add_components_length > i; ++i) {
 			const ecsact_entity_id& entity = options.add_components_entities[i];
@@ -1112,10 +1191,30 @@ private:
 				}
 			});
 		}
+
+		for(int i = 0; options.destroy_entities_length > i; ++i) {
+			const ecsact_entity_id& entity = options.destroy_entities[i];
+			mp_for_each<typename package::components>([&]<typename C>(C) {
+				if constexpr(C::transient) {
+					return;
+				}
+				if(info.registry.template all_of<C>(info.get_entt_entity_id(entity))) {
+					_pre_exec_remove_component<C>(
+						info,
+						info.entities_map.at(static_cast<ecsact_entity_id>(entity))
+					);
+				}
+			});
+			auto entt_id = info.get_entt_entity_id(entity);
+			info.registry.template emplace<destroyed_entity>(entt_id);
+			info.destroy_entity(entity);
+		}
 	}
 
 	void _clear_event_markers(registry_info& info) {
 		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::created_entity;
+		using ecsact::entt::detail::destroyed_entity;
 
 		mp_for_each<typename package::components>([&]<typename C>(C) {
 			if constexpr(C::transient) {
@@ -1140,6 +1239,9 @@ private:
 
 			info.registry.template clear<component_removed<C>>();
 		});
+
+		info.registry.template clear<created_entity>();
+		info.registry.template clear<destroyed_entity>();
 	}
 
 	auto _validate_action(ecsact_registry_id registry_id, ecsact_action& action)
@@ -1223,9 +1325,11 @@ public:
 			_clear_transients(info);
 		}
 		if(events_collector) {
+			_trigger_create_entity_event(info, *events_collector);
 			_trigger_init_component_events(info, *events_collector);
 			_trigger_update_component_events(info, *events_collector);
 			_trigger_remove_component_events(info, *events_collector);
+			_trigger_destroy_entity_event(info, *events_collector);
 		}
 		_clear_event_markers(info);
 

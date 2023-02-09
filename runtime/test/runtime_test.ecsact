@@ -100,3 +100,7 @@ system AttackDamageWeakened {
 		readonly Weakened;
 	}
 }
+
+component EntityTesting {
+	i32 a;
+}
