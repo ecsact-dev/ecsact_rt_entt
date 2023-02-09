@@ -1092,8 +1092,7 @@ private:
 
 	void _apply_execution_options(
 		const ecsact_execution_options& options,
-		registry_info&                  info,
-		ecsact_registry_id              reg_id
+		registry_info&                  info
 	) {
 		using boost::mp11::mp_for_each;
 		using ecsact::entt::detail::created_entity;
@@ -1199,7 +1198,7 @@ private:
 				if constexpr(C::transient) {
 					return;
 				}
-				if(has_component<C>(reg_id, entity)) {
+				if(info.registry.template all_of<C>(info.get_entt_entity_id(entity))) {
 					_pre_exec_remove_component<C>(
 						info,
 						info.entities_map.at(static_cast<ecsact_entity_id>(entity))
@@ -1313,7 +1312,7 @@ public:
 		for(int n = 0; execution_count > n; ++n) {
 			actions_span_t actions;
 			if(execution_options_list != nullptr) {
-				_apply_execution_options(execution_options_list[n], info, reg_id);
+				_apply_execution_options(execution_options_list[n], info);
 				if(execution_options_list->actions_length > 0) {
 					actions = std::span(
 						execution_options_list->actions,
