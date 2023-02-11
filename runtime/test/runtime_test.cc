@@ -278,16 +278,6 @@ TEST(Core, RemoveComponent) {
 	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id));
 }
 
-static void dynamic_impl(ecsact_system_execution_context* ctx) {
-	using runtime_test::ComponentA;
-
-	auto       comp_id = static_cast<ecsact_component_like_id>(ComponentA::id);
-	ComponentA comp;
-	ecsact_system_execution_context_get(ctx, comp_id, &comp);
-	comp.a += 2;
-	ecsact_system_execution_context_update(ctx, comp_id, &comp);
-}
-
 TEST(Core, TrivialRemoveEvent) {
 	auto reg_id = ecsact_create_registry("TrivialRemoveEvent");
 	auto entity = ecsact_create_entity(reg_id);
@@ -647,7 +637,9 @@ TEST(Core, AssociationEntityCorrectness) {
 			++attack_damage_exec_count;
 			ecsact::execution_context ctx{cctx};
 			ASSERT_TRUE(attacker_entities.contains(ctx.entity()));
-			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
+
+			// Santity check - no exception
+			ctx.other(ctx.get<runtime_test::Attacking>().target);
 		}
 	);
 

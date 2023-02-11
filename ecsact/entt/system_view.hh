@@ -80,7 +80,6 @@ auto association_view(::entt::registry& registry) {
 	using assoc_marker_component =
 		association<typename Assoc::component_type, Assoc::field_offset>;
 	using extra_get_types = ::ecsact::mp_list<assoc_marker_component>;
-	using view_type = view_from_system_capabilities_type<Assoc, extra_get_types>;
 
 	return view_from_system_capabilities<Assoc, extra_get_types>(registry);
 }

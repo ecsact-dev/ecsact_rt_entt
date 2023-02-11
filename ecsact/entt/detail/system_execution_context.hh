@@ -375,8 +375,6 @@ struct system_execution_context : system_execution_context_base {
 
 		using associations = typename caps_info::associations;
 
-		auto other_entt_entity_id = info.get_entt_entity_id(other_entity);
-
 		ecsact_system_execution_context* return_context = nullptr;
 
 		constexpr auto assoc_count = mp_size<associations>::value;
