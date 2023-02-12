@@ -12,3 +12,5 @@ test --test_output=errors
 # Allows tests to run bazelisk-in-bazel, since this is the cache folder used
 test --test_env=XDG_CACHE_HOME
 
+build:linux --config=no-warnings
+

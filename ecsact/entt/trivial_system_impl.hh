@@ -25,17 +25,12 @@ constexpr bool is_trivial_system() {
 	using readonly_components = typename caps_info::readonly_components;
 	using readwrite_components = typename caps_info::readwrite_components;
 	using writeonly_components = typename caps_info::writeonly_components;
-	using include_components = typename caps_info::include_components;
-	using exclude_components = typename caps_info::exclude_components;
 	using adds_components = typename caps_info::adds_components;
 	using removes_components = typename caps_info::removes_components;
 	using adds_tag_components = mp_filter<std::is_empty, adds_components>;
-	using remove_tag_components = mp_filter<std::is_empty, removes_components>;
-	using adds_non_tag_components = mp_filter<is_not_empty, adds_components>;
 
 	const bool can_add = !mp_empty<adds_components>::value;
 	const bool can_remove = !mp_empty<removes_components>::value;
-	const bool can_add_non_tag = !mp_empty<adds_non_tag_components>::value;
 
 	const bool can_only_add_tag = mp_size<adds_tag_components>::value ==
 		mp_size<adds_components>::value;
