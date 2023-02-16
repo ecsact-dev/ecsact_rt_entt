@@ -100,18 +100,23 @@ struct execution_events_collector {
 		);
 	}
 
-	void invoke_entity_created_callback(ecsact_entity_id entity) {
+	void invoke_entity_created_callback(ecsact_entity_id entity, int32_t index) {
 		target->entity_created_callback(
 			ECSACT_EVENT_CREATE_ENTITY,
 			static_cast<ecsact_entity_id>(entity),
+			index,
 			target->entity_created_callback_user_data
 		);
 	}
 
-	void invoke_entity_destroyed_callback(ecsact_entity_id entity) {
+	void invoke_entity_destroyed_callback(
+		ecsact_entity_id entity,
+		int32_t          index
+	) {
 		target->entity_destroyed_callback(
 			ECSACT_EVENT_DESTROY_ENTITY,
 			static_cast<ecsact_entity_id>(entity),
+			index,
 			target->entity_destroyed_callback_user_data
 		);
 	}
