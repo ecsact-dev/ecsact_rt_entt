@@ -738,6 +738,7 @@ TEST(Core, CreateAndDestroyEntity) {
 	struct callback_info {
 		ecsact_entity_id entity_id;
 		bool             entity_created = false;
+		int32_t          index = -1;
 	};
 
 	auto info = callback_info{};
@@ -754,6 +755,7 @@ TEST(Core, CreateAndDestroyEntity) {
 			auto& info = *static_cast<callback_info*>(callback_user_data);
 			info.entity_created = true;
 			info.entity_id = entity_id;
+			info.index = index;
 		};
 
 	evc.entity_created_callback = entity_created_callback;
@@ -762,6 +764,7 @@ TEST(Core, CreateAndDestroyEntity) {
 
 	ASSERT_EQ(ecsact_count_entities(reg.id()), 1);
 
+	EXPECT_EQ(info.index, 0);
 	auto comp = reg.get_component<runtime_test::EntityTesting>(info.entity_id);
 
 	ASSERT_EQ(comp.a, 6);
