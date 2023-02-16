@@ -748,6 +748,7 @@ TEST(Core, CreateAndDestroyEntity) {
 		[](
 			ecsact_event     event,
 			ecsact_entity_id entity_id,
+			int32_t          index,
 			void*            callback_user_data
 		) {
 			auto& info = *static_cast<callback_info*>(callback_user_data);

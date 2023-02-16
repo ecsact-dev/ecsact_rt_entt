@@ -942,7 +942,7 @@ private:
 		for(entt_entity_type entity : created_view) {
 			events_collector.invoke_entity_created_callback(
 				info.get_ecsact_entity_id(entity),
-				created_view.get<created_entity>().index
+				created_view.get<created_entity>(entity).index
 			);
 		}
 	}
@@ -965,7 +965,7 @@ private:
 		for(entt_entity_type entity : destroy_view) {
 			events_collector.invoke_entity_destroyed_callback(
 				info.get_ecsact_entity_id(entity),
-				destroyed_view.get<destroyed_entity>().index
+				destroy_view.get<destroyed_entity>(entity).index
 			);
 		}
 	}
