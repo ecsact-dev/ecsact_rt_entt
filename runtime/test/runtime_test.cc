@@ -729,6 +729,10 @@ TEST(Core, CreateAndDestroyEntity) {
 
 	pointer_vector.push_back(entity_component.data());
 
+	auto create_entities =
+		std::array{static_cast<ecsact_placeholder_entity_id>(42)};
+
+	options.create_entities = create_entities.data();
 	options.create_entities_components = pointer_vector.data();
 	options.create_entities_components_length = entity_component_length.data();
 	options.create_entities_length = entity_component_length.size();
@@ -736,8 +740,9 @@ TEST(Core, CreateAndDestroyEntity) {
 	auto evc = ecsact_execution_events_collector{};
 
 	struct callback_info {
-		ecsact_entity_id entity_id;
-		bool             entity_created = false;
+		ecsact_entity_id             entity_id;
+		bool                         entity_created = false;
+		ecsact_placeholder_entity_id placeholder_entity_id;
 	};
 
 	auto info = callback_info{};
@@ -746,13 +751,15 @@ TEST(Core, CreateAndDestroyEntity) {
 
 	auto entity_created_callback = //
 		[](
-			ecsact_event     event,
-			ecsact_entity_id entity_id,
-			void*            callback_user_data
+			ecsact_event                 event,
+			ecsact_entity_id             entity_id,
+			ecsact_placeholder_entity_id placeholder_entity_id,
+			void*                        callback_user_data
 		) {
 			auto& info = *static_cast<callback_info*>(callback_user_data);
 			info.entity_created = true;
 			info.entity_id = entity_id;
+			info.placeholder_entity_id = placeholder_entity_id;
 		};
 
 	evc.entity_created_callback = entity_created_callback;
@@ -760,6 +767,11 @@ TEST(Core, CreateAndDestroyEntity) {
 	ecsact_execute_systems(reg.id(), 1, &options, &evc);
 
 	ASSERT_EQ(ecsact_count_entities(reg.id()), 1);
+
+	EXPECT_EQ(
+		info.placeholder_entity_id,
+		static_cast<ecsact_placeholder_entity_id>(42)
+	);
 
 	auto comp = reg.get_component<runtime_test::EntityTesting>(info.entity_id);
 

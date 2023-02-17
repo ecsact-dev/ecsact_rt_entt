@@ -100,10 +100,14 @@ struct execution_events_collector {
 		);
 	}
 
-	void invoke_entity_created_callback(ecsact_entity_id entity) {
+	void invoke_entity_created_callback(
+		ecsact_entity_id             entity,
+		ecsact_placeholder_entity_id placeholder_entity_id
+	) {
 		target->entity_created_callback(
 			ECSACT_EVENT_CREATE_ENTITY,
-			static_cast<ecsact_entity_id>(entity),
+			entity,
+			placeholder_entity_id,
 			target->entity_created_callback_user_data
 		);
 	}
@@ -111,7 +115,9 @@ struct execution_events_collector {
 	void invoke_entity_destroyed_callback(ecsact_entity_id entity) {
 		target->entity_destroyed_callback(
 			ECSACT_EVENT_DESTROY_ENTITY,
-			static_cast<ecsact_entity_id>(entity),
+			entity,
+			// This value doesn't matter for the destroy callback
+			static_cast<ecsact_placeholder_entity_id>(entity),
 			target->entity_destroyed_callback_user_data
 		);
 	}

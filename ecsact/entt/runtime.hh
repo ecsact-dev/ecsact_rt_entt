@@ -941,7 +941,8 @@ private:
 
 		for(entt_entity_type entity : created_view) {
 			events_collector.invoke_entity_created_callback(
-				info.get_ecsact_entity_id(entity)
+				info.get_ecsact_entity_id(entity),
+				created_view.template get<created_entity>(entity).placeholder_entity_id
 			);
 		}
 	}
@@ -1100,7 +1101,10 @@ private:
 
 		for(int i = 0; options.create_entities_length > i; i++) {
 			auto entity = info.create_entity().entt_entity_id;
-			info.registry.template emplace<created_entity>(entity);
+			info.registry.template emplace<created_entity>(
+				entity,
+				options.create_entities[i]
+			);
 
 			for(int j = 0; options.create_entities_components_length[i] > j; j++) {
 				const ecsact_component& comp = options.create_entities_components[i][j];
