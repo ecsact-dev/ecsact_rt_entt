@@ -26,8 +26,8 @@ http_archive(
 http_archive(
     name = "ecsact_runtime",
     sha256 = "",  # https://github.com/ecsact-dev/ecsact_runtime/pull/139
-    strip_prefix = "ecsact_runtime-0c3bcc5c365c2f1ead24eeec261dbf2e30338606",
-    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/0c3bcc5c365c2f1ead24eeec261dbf2e30338606.zip",
+    strip_prefix = "ecsact_runtime-9d243cca4550fe3fa92aa3526466e7933d5d77ae",
+    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/9d243cca4550fe3fa92aa3526466e7933d5d77ae.zip",
 )
 
 load("@rules_ecsact//ecsact:repositories.bzl", "ecsact_register_toolchains", "rules_ecsact_dependencies")
