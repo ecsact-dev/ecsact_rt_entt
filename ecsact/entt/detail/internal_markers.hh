@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <type_traits>
 #include <concepts>
+#include "ecsact/runtime/common.h"
 
 namespace ecsact::entt::detail {
 
@@ -57,11 +58,9 @@ template<typename C>
 struct pending_remove {};
 
 struct created_entity {
-	int32_t index;
+	ecsact_placeholder_entity_id placeholder_entity_id;
 };
 
-struct destroyed_entity {
-	int32_t index;
-};
+struct destroyed_entity {};
 
 } // namespace ecsact::entt::detail
