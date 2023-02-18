@@ -1211,7 +1211,6 @@ private:
 			});
 			auto entt_id = info.get_entt_entity_id(entity);
 			info.registry.template emplace<destroyed_entity>(entt_id);
-			info.destroy_entity(entity);
 		}
 	}
 
@@ -1272,6 +1271,18 @@ private:
 		});
 
 		return result;
+	}
+
+	auto _destroy_entities(registry_info& info) {
+		using ecsact::entt::detail::destroyed_entity;
+
+		::entt::basic_view destroy_view{
+			info.registry.template storage<destroyed_entity>(),
+		};
+
+		for(entt_entity_type entity : destroy_view) {
+			info.destroy_entity(info.get_ecsact_entity_id(entity));
+		}
 	}
 
 public:
@@ -1335,6 +1346,7 @@ public:
 			_trigger_remove_component_events(info, *events_collector);
 			_trigger_destroy_entity_event(info, *events_collector);
 		}
+		_destroy_entities(info);
 		_clear_event_markers(info);
 
 		info.mutex = std::nullopt;
