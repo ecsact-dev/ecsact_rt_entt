@@ -649,11 +649,6 @@ TEST(Core, CreateAndDestroyEntity) {
 
 	runtime_test::EntityTesting component_a{.a = 6};
 
-	ecsact_component my_component_a{
-		.component_id = runtime_test::EntityTesting::id,
-		.component_data = &component_a,
-	};
-
 	struct callback_info {
 		ecsact_entity_id             entity_id;
 		bool                         entity_created = false;
