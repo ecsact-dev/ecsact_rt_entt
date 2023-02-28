@@ -31,6 +31,7 @@ void runtime_test::OtherEntitySystem::impl(context& ctx) {
 }
 
 void runtime_test::MakeAnother::impl(context& ctx) {
+	ctx._ctx.generate(ctx.get<ComponentA>());
 }
 
 void runtime_test::AlwaysRemove::impl(context& ctx) {
@@ -642,6 +643,36 @@ TEST(Core, DynamicSystemImpl) {
 	// Simulate what the system should be doing.
 	comp.a += 2;
 	EXPECT_EQ(comp_get.a, comp.a);
+}
+
+TEST(Core, GeneratesCreateEvent) {
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::MakeAnother::id),
+		&runtime_test__MakeAnother
+	);
+
+	auto reg = ecsact::core::registry("GeneratesCreateEvent");
+
+	auto test_entity = reg.create_entity();
+	auto test_action = runtime_test::MakeAnother{};
+	reg.add_component(test_entity, runtime_test::ComponentA{});
+
+	auto options = ecsact::core::execution_options{};
+	options.push_action(&test_action);
+
+	auto evc = ecsact::core::execution_events_collector<>{};
+	auto event_happened = false;
+	evc.set_entity_created_callback(
+		[&](ecsact_entity_id, ecsact_placeholder_entity_id placeholder) {
+			event_happened = true;
+			ASSERT_EQ(placeholder, ecsact_generated_entity);
+		}
+	);
+
+	auto exec_err = reg.execute_systems(std::array{options}, evc);
+	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+	EXPECT_TRUE(event_happened);
+	EXPECT_EQ(2, reg.count_entities());
 }
 
 TEST(Core, CreateAndDestroyEntity) {

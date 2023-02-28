@@ -51,7 +51,7 @@ system AlwaysRemove {
 action MakeAnother {
 	readwrite ComponentA;
 	generates {
-		required OtherEntityComponent;
+		required ComponentA;
 	}
 }
 
