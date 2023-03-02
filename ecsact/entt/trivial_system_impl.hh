@@ -85,7 +85,13 @@ void trivial_system_impl(
 			info.registry.template emplace<pending_remove<C>>(entity);
 
 			if constexpr(!C::transient) {
-				info.registry.template emplace<component_removed<C>>(entity);
+				if(info.registry.template all_of<component_added<C>>(entity)) {
+					info.registry.template remove<component_added<C>>(entity);
+					info.registry.template remove<component_removed<C>>(entity);
+				} else {
+					info.registry.template emplace_or_replace<component_removed<C>>(entity
+					);
+				}
 
 				if constexpr(!std::is_empty_v<C>) {
 					auto& temp = info.registry.template storage<temp_storage<C>>();

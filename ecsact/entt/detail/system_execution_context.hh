@@ -175,6 +175,9 @@ struct system_execution_context : system_execution_context_base {
 		if constexpr(!C::transient) {
 			if(info.registry.template all_of<component_added<C>>(entity)) {
 				info.registry.template remove<component_added<C>>(entity);
+				info.registry.template remove<component_removed<C>>(entity);
+			} else {
+				info.registry.template emplace_or_replace<component_removed<C>>(entity);
 			}
 			if constexpr(!std::is_empty_v<C>) {
 				auto& temp = info.registry.template storage<temp_storage<C>>();
@@ -191,10 +194,6 @@ struct system_execution_context : system_execution_context_base {
 		// TODO(zaucy): Look into if emplace_or_replace is necessary instead of
 		//              just replace.
 		info.registry.template emplace_or_replace<pending_remove<C>>(entity);
-
-		if constexpr(!C::transient) {
-			info.registry.template emplace_or_replace<component_removed<C>>(entity);
-		}
 	}
 
 	void remove(ecsact_component_like_id component_id) {
