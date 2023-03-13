@@ -8,6 +8,7 @@
 #include <entt/entt.hpp>
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/core.h"
+#include "ecsact/entt/detail/meta_util.hh"
 
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/detail/internal_markers.hh"
@@ -36,14 +37,14 @@ struct registry_info {
 	};
 
 	void init_registry() {
-		using boost::mp11::mp_for_each;
 		using ecsact::entt::component_added;
 		using ecsact::entt::component_changed;
 		using ecsact::entt::component_removed;
 		using ecsact::entt::detail::beforechange_storage;
+		using ecsact::entt::detail::mp_for_each_available_component;
 		using ecsact::entt::detail::temp_storage;
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			registry.storage<C>();
 			registry.storage<temp_storage<C>>();
 			registry.storage<component_added<C>>();
@@ -108,12 +109,12 @@ struct registry_info {
 	template<typename C, typename... Args>
 		requires(!std::is_empty_v<C>)
 	void add_component(::entt::entity entity, Args&&... args) {
-		using boost::mp11::mp_for_each;
 		using boost::mp11::mp_with_index;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		auto& comp = registry.emplace<C>(entity, std::forward<Args>(args)...);
 
-		mp_for_each<typename package::components>([&]<typename O>(O) {
+		mp_for_each_available_component<package>([&]<typename O>(O) {
 			if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
 				using ecsact::entt::detail::beforechange_storage;
 				beforechange_storage<O> beforechange = {
@@ -139,7 +140,7 @@ struct registry_info {
 
 	template<typename C>
 	void remove_component(::entt::entity entity) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		constexpr auto fields_info = ecsact::fields_info<C>();
 		if constexpr(!fields_info.empty()) {
@@ -154,7 +155,7 @@ struct registry_info {
 		registry.erase<C>(entity);
 
 		if constexpr(!std::is_empty_v<C>) {
-			mp_for_each<typename package::components>([&]<typename O>(O) {
+			mp_for_each_available_component<package>([&]<typename O>(O) {
 				if constexpr(std::is_same_v<std::remove_cvref_t<C>, O>) {
 					using ecsact::entt::detail::beforechange_storage;
 					registry.erase<beforechange_storage<O>>(entity);
