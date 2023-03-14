@@ -961,10 +961,16 @@ private:
 		}
 	}
 
-	void _execute_systems(registry_info& info, actions_span_t& actions) {
+	template<typename TargetPackage>
+	void _execute_package_systems(registry_info& info, actions_span_t& actions) {
 		using boost::mp11::mp_for_each;
+		using dependencies = typename TargetPackage::dependencies;
 
-		mp_for_each<typename package::execution_order>(
+		mp_for_each<dependencies>([&]<typename D>(const D&) {
+			_execute_package_systems<D>(info, actions);
+		});
+
+		mp_for_each<typename TargetPackage::execution_order>(
 			[&]<typename SystemPair>(SystemPair) {
 				using boost::mp11::mp_first;
 				using boost::mp11::mp_second;
@@ -974,6 +980,10 @@ private:
 				_execute_system<SystemT, ChildSystemsListT>(info, nullptr, actions);
 			}
 		);
+	}
+
+	void _execute_systems(registry_info& info, actions_span_t& actions) {
+		_execute_package_systems<package>(info, actions);
 	}
 
 	template<typename C>
