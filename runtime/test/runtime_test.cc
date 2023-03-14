@@ -740,6 +740,21 @@ TEST(Core, CreateAndDestroyEntity) {
 	ASSERT_TRUE(info.entity_destroyed);
 }
 
+TEST(Core, ExecutionOptionsAdd) {
+	auto reg = ecsact::core::registry("ExecutionOptionsAdd");
+	auto test_entity = reg.create_entity();
+	auto options = ecsact::core::execution_options{};
+
+	auto test_comp = runtime_test::EntityTesting{.a = 42};
+	options.add_component(test_entity, &test_comp);
+
+	auto exec_err = reg.execute_systems(std::array{options});
+	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+
+	auto comp = reg.get_component<runtime_test::EntityTesting>(test_entity);
+	ASSERT_EQ(comp.a, 42);
+}
+
 TEST(Core, MultiPkgUpdate) {
 	using imported::test_pkg::ImportedComponent;
 
