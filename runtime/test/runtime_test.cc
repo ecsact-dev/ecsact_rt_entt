@@ -50,11 +50,11 @@ void runtime_test::TrivialRemove::impl(context& ctx) {
 	std::abort();
 }
 
-// void runtime_test::SimpleIncrementImportedComp::impl(context& ctx) {
-// 	auto comp = ctx.get<imported::test_pkg::ImportedComponent>();
-// 	comp.num += 1;
-// 	ctx.update(comp);
-// }
+void runtime_test::SimpleIncrementImportedComp::impl(context& ctx) {
+	auto comp = ctx.get<imported::test_pkg::ImportedComponent>();
+	comp.num += 1;
+	ctx.update(comp);
+}
 
 static std::atomic_bool AssocTestAction_ran = false;
 
@@ -743,12 +743,12 @@ TEST(Core, CreateAndDestroyEntity) {
 TEST(Core, MultiPkgUpdate) {
 	using imported::test_pkg::ImportedComponent;
 
-	// ecsact_set_system_execution_impl(
-	// 	ecsact_id_cast<ecsact_system_like_id>(
-	// 		runtime_test::SimpleIncrementImportedComp::id
-	// 	),
-	// 	&runtime_test__SimpleIncrementImportedComp
-	// );
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::SimpleIncrementImportedComp::id
+		),
+		&runtime_test__SimpleIncrementImportedComp
+	);
 
 	auto reg = ecsact::core::registry("MultiPkgUpdate");
 	auto test_entity = reg.create_entity();

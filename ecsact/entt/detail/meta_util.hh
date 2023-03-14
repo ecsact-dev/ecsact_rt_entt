@@ -6,9 +6,6 @@
 
 namespace ecsact::entt::detail {
 
-/**
- *
- */
 template<typename Package, typename Callback>
 void mp_for_each_available_component(Callback&& cb) {
 	using boost::mp11::mp_for_each;
