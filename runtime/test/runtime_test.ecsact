@@ -1,5 +1,7 @@
 main package runtime_test;
 
+import imported.test_pkg;
+
 component ComponentA {
 	i32 a;
 }
@@ -18,9 +20,7 @@ component Weakened {
 }
 
 component Attacking {
-	entity target {
-		required Health;
-	}
+	entity target;
 }
 
 component EmptyComponent;
@@ -104,3 +104,8 @@ system AttackDamageWeakened {
 component EntityTesting {
 	i32 a;
 }
+
+system SimpleIncrementImportedComp {
+	readwrite imported.test_pkg.ImportedComponent;
+}
+

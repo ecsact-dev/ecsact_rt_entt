@@ -11,6 +11,7 @@
 #include "ecsact/runtime/common.h"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/system_view.hh"
+#include "ecsact/entt/detail/meta_util.hh"
 
 #include "registry_info.hh"
 
@@ -141,9 +142,9 @@ struct system_execution_context : system_execution_context_base {
 	}
 
 	void add(ecsact_component_like_id component_id, const void* component_data) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
-		mp_for_each<typename package::components>([&]<typename C>(const C&) {
+		mp_for_each_available_component<package>([&]<typename C>(const C&) {
 			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 				add<C>(*static_cast<const C*>(component_data));
 			}
@@ -197,9 +198,9 @@ struct system_execution_context : system_execution_context_base {
 	}
 
 	void remove(ecsact_component_like_id component_id) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
-		mp_for_each<typename package::components>([&]<typename C>(const C&) {
+		mp_for_each_available_component<package>([&]<typename C>(const C&) {
 			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
 				remove<C>();
 			}
@@ -338,9 +339,9 @@ struct system_execution_context : system_execution_context_base {
 		ecsact_component_id* component_ids,
 		const void**         components_data
 	) {
-		using boost::mp11::mp_for_each;
 		using ecsact::entt::component_added;
 		using ecsact::entt::detail::created_entity;
+		using ecsact::entt::detail::mp_for_each_available_component;
 		using ecsact::entt::detail::pending_add;
 
 		auto new_entity = info.create_entity().entt_entity_id;
@@ -351,7 +352,7 @@ struct system_execution_context : system_execution_context_base {
 		for(int i = 0; component_count > i; ++i) {
 			auto component_id = component_ids[i];
 			auto component_data = components_data[i];
-			mp_for_each<typename package::components>([&]<typename C>(const C&) {
+			mp_for_each_available_component<package>([&]<typename C>(const C&) {
 				if(C::id == component_id) {
 					if constexpr(std::is_empty_v<C>) {
 						info.registry.template emplace<pending_add<C>>(new_entity);

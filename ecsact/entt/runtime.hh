@@ -12,11 +12,12 @@
 #include <span>
 #include <algorithm>
 #include <boost/mp11.hpp>
+#include <entt/entt.hpp>
+#include "ecsact/entt/detail/meta_util.hh"
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/definitions.h"
 #include "ecsact/runtime/core.h"
 #include "ecsact/lib.hh"
-#include <entt/entt.hpp>
 #include "ecsact/entt/detail/mp11_util.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
@@ -228,11 +229,11 @@ public:
 		ecsact_component_id component_id,
 		const void*         component_data
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		ecsact_add_error err = ECSACT_ADD_OK;
 
-		mp_for_each<typename package::components>([&]<typename C>(const C&) {
+		mp_for_each_available_component<package>([&]<typename C>(const C&) {
 			if(C::id == component_id) {
 				if constexpr(std::is_empty_v<C>) {
 					err = add_component<C>(reg_id, entity_id);
@@ -262,10 +263,10 @@ public:
 		ecsact_entity_id    entity_id,
 		ecsact_component_id component_id
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		bool result = false;
-		mp_for_each<typename package::components>([&]<typename C>(const C&) {
+		mp_for_each_available_component<package>([&]<typename C>(const C&) {
 			if(C::id == component_id) {
 				result = has_component<C>(reg_id, entity_id);
 			}
@@ -289,10 +290,10 @@ public:
 		ecsact_entity_id    entity_id,
 		ecsact_component_id component_id
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		const void* component_data = nullptr;
-		mp_for_each<typename package::components>([&]<typename C>(const C&) {
+		mp_for_each_available_component<package>([&]<typename C>(const C&) {
 			if(C::id == component_id) {
 				if constexpr(std::is_empty_v<C>) {
 					static C c{};
@@ -310,10 +311,10 @@ public:
 		ecsact_registry_id registry_id,
 		ecsact_entity_id   entity_id
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		int count = 0;
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if(has_component<C>(registry_id, entity_id)) {
 				count += 1;
 			}
@@ -327,9 +328,9 @@ public:
 		ecsact_each_component_callback callback,
 		void*                          callback_user_data
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if(has_component<C>(registry_id, entity_id)) {
 				if constexpr(std::is_empty_v<C>) {
 					callback(
@@ -356,10 +357,10 @@ public:
 		const void**         out_components_data,
 		int*                 out_components_count
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		int index = 0;
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if(index >= max_components_count) {
 				return;
 			}
@@ -415,10 +416,10 @@ public:
 		ecsact_component_id component_id,
 		const void*         component_data
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		std::optional<ecsact_update_error> result;
-		mp_for_each<typename package::components>([&]<typename C>(const C&) {
+		mp_for_each_available_component<package>([&]<typename C>(const C&) {
 			if(C::id == component_id) {
 				if constexpr(!std::is_empty_v<C>) {
 					result = update_component<C>(
@@ -445,9 +446,9 @@ public:
 		ecsact_entity_id    entity_id,
 		ecsact_component_id component_id
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if(C::id == component_id) {
 				remove_component<C>(reg_id, entity_id);
 			}
@@ -455,10 +456,10 @@ public:
 	}
 
 	size_t component_size(ecsact_component_id comp_id) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		size_t comp_size = 0;
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if(C::id == comp_id) {
 				comp_size = sizeof(C);
 			}
@@ -513,15 +514,6 @@ private:
 			using boost::mp11::mp_bind_front;
 			using boost::mp11::mp_transform_q;
 			using boost::mp11::mp_any;
-
-			// Making sure all the components in `addables` list are indeed package
-			// components. If this assertion fails there was an error in creating
-			// the `addables` alias.
-			static_assert(mp_apply<
-										mp_any,
-										mp_transform_q<
-											mp_bind_front<std::is_same, std::remove_cvref_t<C>>,
-											typename Package::components>>::value);
 
 			auto view = info.registry.template view<pending_add<C>>();
 			if constexpr(std::is_empty_v<C>) {
@@ -796,9 +788,9 @@ private:
 	}
 
 	void _sort_components(registry_info& info) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(!std::is_empty_v<C> && !C::transient) {
 				// Sorting for deterministic order of components when executing
 				// systems.
@@ -815,13 +807,13 @@ private:
 		registry_info&              info,
 		execution_events_collector& events_collector
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		if(!events_collector.has_init_callback()) {
 			return;
 		}
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(C::transient) {
 				return;
 			}
@@ -850,14 +842,14 @@ private:
 		registry_info&              info,
 		execution_events_collector& events_collector
 	) {
-		using boost::mp11::mp_for_each;
 		using detail::beforechange_storage;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		if(!events_collector.has_update_callback()) {
 			return;
 		}
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(!C::transient && !std::is_empty_v<C>) {
 				::entt::basic_view changed_view{
 					info.registry.template storage<C>(),
@@ -886,13 +878,13 @@ private:
 		registry_info&              info,
 		execution_events_collector& events_collector
 	) {
-		using boost::mp11::mp_for_each;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		if(!events_collector.has_remove_callback()) {
 			return;
 		}
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(C::transient) {
 				return;
 			}
@@ -1095,9 +1087,9 @@ private:
 		const ecsact_execution_options& options,
 		registry_info&                  info
 	) {
-		using boost::mp11::mp_for_each;
 		using ecsact::entt::detail::created_entity;
 		using ecsact::entt::detail::destroyed_entity;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
 		for(int i = 0; options.create_entities_length > i; i++) {
 			auto entity = info.create_entity().entt_entity_id;
@@ -1109,7 +1101,7 @@ private:
 			for(int j = 0; options.create_entities_components_length[i] > j; j++) {
 				const ecsact_component& comp = options.create_entities_components[i][j];
 
-				mp_for_each<typename package::components>([&]<typename C>(C) {
+				mp_for_each_available_component<package>([&]<typename C>(C) {
 					if constexpr(C::transient) {
 						return;
 					}
@@ -1133,7 +1125,7 @@ private:
 			const ecsact_entity_id& entity = options.add_components_entities[i];
 			const ecsact_component& comp = options.add_components[i];
 
-			mp_for_each<typename package::components>([&]<typename C>(C) {
+			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
 				}
@@ -1159,7 +1151,7 @@ private:
 			const ecsact_entity_id& entity = options.update_components_entities[i];
 			const ecsact_component& comp = options.update_components[i];
 
-			mp_for_each<typename package::components>([&]<typename C>(C) {
+			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
 				}
@@ -1182,7 +1174,7 @@ private:
 			const ecsact_entity_id& entity = options.remove_components_entities[i];
 			ecsact_component_id     component_id = options.remove_components[i];
 
-			mp_for_each<typename package::components>([&]<typename C>(C) {
+			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
 				}
@@ -1198,7 +1190,7 @@ private:
 
 		for(int i = 0; options.destroy_entities_length > i; ++i) {
 			const ecsact_entity_id& entity = options.destroy_entities[i];
-			mp_for_each<typename package::components>([&]<typename C>(C) {
+			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
 				}
@@ -1215,11 +1207,11 @@ private:
 	}
 
 	void _clear_event_markers(registry_info& info) {
-		using boost::mp11::mp_for_each;
 		using ecsact::entt::detail::created_entity;
 		using ecsact::entt::detail::destroyed_entity;
+		using ecsact::entt::detail::mp_for_each_available_component;
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(C::transient) {
 				return;
 			}
@@ -1227,7 +1219,7 @@ private:
 			info.registry.template clear<component_added<C>>();
 		});
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(C::transient) {
 				return;
 			}
@@ -1235,7 +1227,7 @@ private:
 			info.registry.template storage<component_changed<C>>().clear();
 		});
 
-		mp_for_each<typename package::components>([&]<typename C>(C) {
+		mp_for_each_available_component<package>([&]<typename C>(C) {
 			if constexpr(C::transient) {
 				return;
 			}
