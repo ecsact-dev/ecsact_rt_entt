@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <set>
+#include <typeindex>
 #include <unordered_set>
 #include <version>
 #include <ranges>
@@ -53,6 +55,12 @@ void runtime_test::TrivialRemove::impl(context& ctx) {
 void runtime_test::SimpleIncrementImportedComp::impl(context& ctx) {
 	auto comp = ctx.get<imported::test_pkg::ImportedComponent>();
 	comp.num += 1;
+	ctx.update(comp);
+}
+
+void imported::test_pkg::ImportedSystem::impl(context& ctx) {
+	auto comp = ctx.get<SomeLocalComponent>();
+	comp.local_num += 1;
 	ctx.update(comp);
 }
 
@@ -742,22 +750,50 @@ TEST(Core, CreateAndDestroyEntity) {
 
 TEST(Core, MultiPkgUpdate) {
 	using imported::test_pkg::ImportedComponent;
+	using imported::test_pkg::SomeLocalComponent;
 
-	ecsact_set_system_execution_impl(
+	ASSERT_TRUE(ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(
 			runtime_test::SimpleIncrementImportedComp::id
 		),
 		&runtime_test__SimpleIncrementImportedComp
-	);
+	));
+
+	ASSERT_TRUE(ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(imported::test_pkg::ImportedSystem::id
+		),
+		&imported__test_pkg__ImportedSystem
+	));
 
 	auto reg = ecsact::core::registry("MultiPkgUpdate");
 	auto test_entity = reg.create_entity();
 	reg.add_component(test_entity, ImportedComponent{});
+	reg.add_component(test_entity, SomeLocalComponent{});
 
 	for(int i = 0; 10 > i; ++i) {
-		reg.execute_systems();
-		auto c = reg.get_component<ImportedComponent>(test_entity);
-		EXPECT_EQ(c.num, i + 1);
+		auto event_happened = std::set<std::type_index>{};
+		auto evc = ecsact::core::execution_events_collector<>{};
+		evc.set_update_callback<ImportedComponent>([&](auto entity, auto comp) {
+			event_happened.insert(typeid(ImportedComponent));
+			EXPECT_EQ(comp.num, i + 1);
+		});
+		evc.set_update_callback<SomeLocalComponent>([&](auto entity, auto comp) {
+			event_happened.insert(typeid(SomeLocalComponent));
+			EXPECT_EQ(comp.local_num, i + 1);
+		});
+
+		reg.execute_systems(1, evc);
+		{
+			auto c = reg.get_component<ImportedComponent>(test_entity);
+			EXPECT_EQ(c.num, i + 1);
+			EXPECT_TRUE(event_happened.contains(typeid(ImportedComponent)));
+		}
+
+		{
+			auto c = reg.get_component<SomeLocalComponent>(test_entity);
+			EXPECT_EQ(c.local_num, i + 1);
+			EXPECT_TRUE(event_happened.contains(typeid(SomeLocalComponent)));
+		}
 	}
 }
 

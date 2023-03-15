@@ -1,6 +1,7 @@
 #include <boost/mp11.hpp>
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/entt/detail/system_execution_context.hh"
+#include "ecsact/entt/detail/meta_util.hh"
 
 #include "common.template.hh"
 
@@ -12,15 +13,9 @@ using package = typename decltype(ecsact_entt_rt::runtime)::package;
 
 template<typename Fn>
 static void cast_and_use_ctx(ecsact_system_execution_context* ctx, Fn&& fn) {
-	using boost::mp11::mp_flatten;
-	using boost::mp11::mp_for_each;
-	using boost::mp11::mp_push_back;
-	using boost::mp11::mp_transform;
+	using ecsact::entt::detail::mp_for_each_available_system_like;
 
-	using all_systems = mp_flatten<
-		mp_push_back<typename package::actions, typename package::systems>>;
-
-	mp_for_each<all_systems>([&]<typename S>(S) {
+	mp_for_each_available_system_like<package>([&]<typename S>(S) {
 		if(ecsact_id_cast<ecsact_system_like_id>(S::id) == ctx->system_id) {
 			using boost::mp11::mp_size;
 			using caps_info = ecsact::system_capabilities_info<S>;
