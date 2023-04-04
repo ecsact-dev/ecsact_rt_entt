@@ -82,14 +82,63 @@ void ecsact_system_execution_context_remove(
 	});
 }
 
+static const auto _get_fns = []() {
+	using ecsact::entt::detail::mp_for_each_available_system_like;
+
+	// TODO(zaucy): Figure out how to get the actual max amount of systems in a
+	// package
+	constexpr auto result_size = 100;
+	auto           result =
+		std::array<decltype(&ecsact_system_execution_context_get), result_size>{};
+
+	mp_for_each_available_system_like<package>([&]<typename S>(S) {
+		using boost::mp11::mp_size;
+		using caps_info = ecsact::system_capabilities_info<S>;
+		using associations = typename caps_info::associations;
+
+		result[static_cast<size_t>(S::id)] = //
+			[](
+				ecsact_system_execution_context* context,
+				ecsact_component_like_id         component_id,
+				void*                            out_component_data
+			) {
+				if(context->association_index == -1) {
+					using context_type = system_execution_context<package, caps_info>;
+					static_cast<context_type*>(context->impl)
+						->get(component_id, out_component_data);
+				} else {
+					using boost::mp11::mp_with_index;
+
+					if constexpr(mp_size<associations>::value > 0) {
+						mp_with_index<mp_size<associations>::value>(
+							context->association_index,
+							[&](auto I) {
+								using boost::mp11::mp_at;
+								using boost::mp11::mp_size_t;
+								using assoc = mp_at<associations, mp_size_t<I>>;
+								using context_type = system_execution_context<package, assoc>;
+								static_cast<context_type*>(context->impl)
+									->get(component_id, out_component_data);
+							}
+						);
+					}
+				}
+			};
+	});
+
+	return result;
+}();
+
 void ecsact_system_execution_context_get(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         component_id,
 	void*                            out_component_data
 ) {
-	cast_and_use_ctx(context, [&](auto& context) {
-		context.get(component_id, out_component_data);
-	});
+	_get_fns[static_cast<size_t>(context->system_id)](
+		context,
+		component_id,
+		out_component_data
+	);
 }
 
 void ecsact_system_execution_context_update(
