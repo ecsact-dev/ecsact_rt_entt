@@ -28,6 +28,48 @@ struct mp_components_t<HeadPackage, Package...> {
 			typename mp_components_t<Package...>::type>>>;
 };
 
+template<typename... Package>
+struct mp_actions_t;
+
+template<>
+struct mp_actions_t<> {
+	using type = ::ecsact::mp_list<>;
+};
+
+template<typename Package>
+struct mp_actions_t<Package> {
+	using type = typename Package::actions;
+};
+
+template<typename HeadPackage, typename... Package>
+struct mp_actions_t<HeadPackage, Package...> {
+	using type =
+		boost::mp11::mp_unique<boost::mp11::mp_flatten<boost::mp11::mp_push_back<
+			typename mp_actions_t<HeadPackage>::type,
+			typename mp_actions_t<Package...>::type>>>;
+};
+
+template<typename... Package>
+struct mp_systems_t;
+
+template<>
+struct mp_systems_t<> {
+	using type = ::ecsact::mp_list<>;
+};
+
+template<typename Package>
+struct mp_systems_t<Package> {
+	using type = typename Package::systems;
+};
+
+template<typename HeadPackage, typename... Package>
+struct mp_systems_t<HeadPackage, Package...> {
+	using type =
+		boost::mp11::mp_unique<boost::mp11::mp_flatten<boost::mp11::mp_push_back<
+			typename mp_systems_t<HeadPackage>::type,
+			typename mp_systems_t<Package...>::type>>>;
+};
+
 template<typename Package>
 using mp_package_dependencies = typename Package::dependencies;
 
@@ -37,6 +79,9 @@ using mp_package_dependencies_from_list = std::enable_if_t<
 	boost::mp11::mp_flatten<
 		boost::mp11::mp_transform<mp_package_dependencies, PackageList>>>;
 
+/**
+ * Given a list of packages return a list of all unique dependencies recursively
+ */
 template<typename PackageList>
 using mp_package_dependencies_recursive =
 	boost::mp11::mp_unique<boost::mp11::mp_apply<
@@ -60,26 +105,26 @@ void mp_for_each_available_component(Callback&& cb) {
 
 template<typename Package, typename Callback>
 void mp_for_each_available_action(Callback&& cb) {
+	using boost::mp11::mp_append;
 	using boost::mp11::mp_for_each;
-	using actions = typename Package::actions;
-	using dependencies = typename Package::dependencies;
 
-	mp_for_each<actions>([&]<typename A>(const A& a) { cb(a); });
-	mp_for_each<dependencies>([&]<typename D>(const D& d) {
-		mp_for_each_available_action<D>(cb);
-	});
+	using actions = typename mp_append<
+		mp_actions_t<Package>,
+		mp_package_dependencies_recursive<typename Package::dependencies>>::type;
+
+	mp_for_each<actions>([&]<typename C>(const C& c) { cb(c); });
 }
 
 template<typename Package, typename Callback>
 void mp_for_each_available_system(Callback&& cb) {
+	using boost::mp11::mp_append;
 	using boost::mp11::mp_for_each;
-	using systems = typename Package::systems;
-	using dependencies = typename Package::dependencies;
 
-	mp_for_each<systems>([&]<typename S>(const S& s) { cb(s); });
-	mp_for_each<dependencies>([&]<typename D>(const D& d) {
-		mp_for_each_available_system<D>(cb);
-	});
+	using systems = typename mp_append<
+		mp_systems_t<Package>,
+		mp_package_dependencies_recursive<typename Package::dependencies>>::type;
+
+	mp_for_each<systems>([&]<typename C>(const C& c) { cb(c); });
 }
 
 template<typename Package, typename Callback>
