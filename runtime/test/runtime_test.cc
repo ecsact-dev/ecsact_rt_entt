@@ -36,6 +36,9 @@ void runtime_test::MakeAnother::impl(context& ctx) {
 	ctx._ctx.generate(ctx.get<ComponentA>());
 }
 
+void runtime_test::TestAction::impl(context& ctx) {
+}
+
 void runtime_test::AlwaysRemove::impl(context& ctx) {
 	// This trivial remove should not even be required:
 	// SEE: https://github.com/ecsact-dev/ecsact_lang_cpp/issues/80
@@ -795,6 +798,36 @@ TEST(Core, MultiPkgUpdate) {
 			EXPECT_TRUE(event_happened.contains(typeid(SomeLocalComponent)));
 		}
 	}
+}
+
+TEST(Core, NoAction) {
+	static bool action_executed = false;
+
+	ASSERT_TRUE(ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::TestAction::id),
+		[](ecsact_system_execution_context*) { action_executed = true; }
+	));
+
+	auto reg = ecsact::core::registry("Core_NoAction");
+
+	auto test_entity = reg.create_entity();
+	reg.add_component(test_entity, runtime_test::ComponentA{});
+
+	reg.execute_systems();
+
+	ASSERT_FALSE(action_executed);
+
+	auto exec_opts = ecsact::core::execution_options{};
+
+	auto exec_err = reg.execute_systems(std::array{exec_opts});
+	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+	ASSERT_FALSE(action_executed);
+
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	exec_err = reg.execute_systems(std::array{exec_opts}, evc);
+	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+	ASSERT_FALSE(action_executed);
 }
 
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
