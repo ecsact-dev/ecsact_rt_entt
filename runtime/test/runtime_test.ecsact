@@ -61,6 +61,10 @@ action AssocTestAction {
 	adds OtherEntityComponent;
 }
 
+action TestAction {
+	readwrite ComponentA;
+}
+
 component AddAssocTestComponent {
 	i32 num;
 }
