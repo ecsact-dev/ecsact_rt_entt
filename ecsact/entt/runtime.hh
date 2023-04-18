@@ -30,22 +30,30 @@ namespace ecsact::entt {
 template<typename Package>
 class runtime {
 	/**
-	 * Checks if type T is listd as one of the actions in the ecact package.
+	 * Checks if type T is listd as one of the actions in the ecsact package or
+	 * one of it's dependencies.
 	 * @returns `true` if T is a component belonging to `package`, `false`
 	 *          otherwise.
 	 */
 	template<typename T>
 	static constexpr bool is_action() {
 		using boost::mp11::mp_any;
+		using boost::mp11::mp_append;
 		using boost::mp11::mp_apply;
 		using boost::mp11::mp_bind_front;
 		using boost::mp11::mp_transform_q;
+		using ecsact::entt::detail::mp_actions_t;
+		using ecsact::entt::detail::mp_package_dependencies_recursive;
+
+		using actions = typename mp_append<
+			mp_actions_t<Package>,
+			mp_package_dependencies_recursive<typename Package::dependencies>>::type;
 
 		return mp_apply<
 			mp_any,
 			mp_transform_q<
 				mp_bind_front<std::is_same, std::remove_cvref_t<T>>,
-				typename Package::actions>>::value;
+				actions>>::value;
 	}
 
 	using registry_info = ecsact_entt_rt::registry_info<Package>;
