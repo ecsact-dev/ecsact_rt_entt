@@ -49,12 +49,12 @@ void ecsact_system_execution_context_action(
 	ecsact_system_execution_context* context,
 	void*                            out_action_data
 ) {
-	using boost::mp11::mp_for_each;
+	using ecsact::entt::detail::mp_for_each_available_action;
 
 	auto action_id = static_cast<ecsact_action_id>(context->system_id);
 
 	cast_and_use_ctx(context, [&](auto& context) {
-		mp_for_each<typename package::actions>([&]<typename A>(A) {
+		mp_for_each_available_action<package>([&]<typename A>(A) {
 			if(A::id == action_id) {
 				A& out_action = *reinterpret_cast<A*>(out_action_data);
 				out_action = *reinterpret_cast<const A*>(context.action);
