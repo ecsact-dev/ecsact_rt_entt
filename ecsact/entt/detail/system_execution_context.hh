@@ -25,8 +25,9 @@ struct ecsact_system_execution_context {
 	// templated type. See `system_execution_context<Package, System>`
 	ecsact_entt_rt::system_execution_context_base* impl;
 
-	// This is set by the system_execution_context::other method
-	signed association_index = -1;
+	// This is set by the system_execution_context::other method. `0` means
+	// no association.
+	unsigned association_index = 0;
 };
 
 namespace ecsact_entt_rt {
@@ -38,6 +39,28 @@ struct system_execution_context_base {
 	::entt::entity entity;
 	const cptr_t   parent;
 	const void*    action;
+
+	system_execution_context_base(
+		::entt::entity entity,
+		cptr_t         parent,
+		const void*    action
+	)
+		: entity(entity), parent(parent), action(action) {
+	}
+
+	virtual ~system_execution_context_base() {
+	}
+
+	virtual auto other(ecsact_entity_id other_entity)
+		-> ecsact_system_execution_context* = 0;
+
+	virtual auto get_ecsact_entity_id() -> ecsact_entity_id const = 0;
+
+	virtual auto generate(
+		int                  component_count,
+		ecsact_component_id* component_ids,
+		const void**         components_data
+	) -> void = 0;
 };
 
 namespace detail {}
@@ -56,6 +79,17 @@ struct system_execution_context : system_execution_context_base {
 	using view_type = ecsact::entt::system_or_association_view_t<caps_info>;
 	using association_views_type =
 		ecsact::entt::association_views_type<caps_info>;
+
+	using readonly_components = typename caps_info::readonly_components;
+	using readwrite_components = typename caps_info::readwrite_components;
+	using adds_components = typename caps_info::adds_components;
+	using removes_components = typename caps_info::removes_components;
+
+	using gettable_components = boost::mp11::mp_assign<
+		::ecsact::mp_list<>,
+		boost::mp11::mp_unique<boost::mp11::mp_flatten<
+			boost::mp11::mp_push_back<readonly_components, readwrite_components>,
+			::ecsact::mp_list<>>>>;
 
 	static_assert(
 		boost::mp11::mp_size<typename caps_info::associations>::value ==
@@ -85,7 +119,7 @@ struct system_execution_context : system_execution_context_base {
 		const cptr_t                            parent,
 		const void*                             action
 	)
-		: system_execution_context_base{entity, parent, action}
+		: system_execution_context_base(entity, parent, action)
 		, info(info)
 		, view(view)
 		, assoc_views(assoc_views) {
@@ -141,15 +175,15 @@ struct system_execution_context : system_execution_context_base {
 		}
 	}
 
-	void add(ecsact_component_like_id component_id, const void* component_data) {
-		using ecsact::entt::detail::mp_for_each_available_component;
-
-		mp_for_each_available_component<package>([&]<typename C>(const C&) {
-			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
-				add<C>(*static_cast<const C*>(component_data));
-			}
-		});
-	}
+	// void add(ecsact_component_like_id component_id, const void* component_data)
+	// { 	using ecsact::entt::detail::mp_for_each_available_component;
+	//
+	// 	mp_for_each_available_component<package>([&]<typename C>(const C&) {
+	// 		if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
+	// 			add<C>(*static_cast<const C*>(component_data));
+	// 		}
+	// 	});
+	// }
 
 	template<typename C>
 	void remove() {
@@ -197,15 +231,15 @@ struct system_execution_context : system_execution_context_base {
 		info.registry.template emplace_or_replace<pending_remove<C>>(entity);
 	}
 
-	void remove(ecsact_component_like_id component_id) {
-		using ecsact::entt::detail::mp_for_each_available_component;
-
-		mp_for_each_available_component<package>([&]<typename C>(const C&) {
-			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
-				remove<C>();
-			}
-		});
-	}
+	// void remove(ecsact_component_like_id component_id) {
+	// 	using ecsact::entt::detail::mp_for_each_available_component;
+	//
+	// 	mp_for_each_available_component<package>([&]<typename C>(const C&) {
+	// 		if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
+	// 			remove<C>();
+	// 		}
+	// 	});
+	// }
 
 	template<typename C>
 		requires(!std::is_empty_v<C>)
@@ -221,46 +255,44 @@ struct system_execution_context : system_execution_context_base {
 		return view.template get<C>(entity);
 	}
 
-	void get(ecsact_component_like_id component_id, void* out_component_data) {
-		using boost::mp11::mp_assign;
-		using boost::mp11::mp_flatten;
-		using boost::mp11::mp_for_each;
-		using boost::mp11::mp_push_back;
-		using boost::mp11::mp_unique;
-		using ecsact::entt_mp11_util::mp_map_find_value_or;
-
-		using readonly_components = typename caps_info::readonly_components;
-		using readwrite_components = typename caps_info::readwrite_components;
-		using gettable_components = mp_assign<
-			::ecsact::mp_list<>,
-			mp_unique<mp_flatten<
-				mp_push_back<readonly_components, readwrite_components>,
-				::ecsact::mp_list<>>>>;
-
-#ifndef NDEBUG
-		[[maybe_unused]] bool        found_gettable_component = false;
-		[[maybe_unused]] const char* get_component_name = "";
-		[[maybe_unused]] auto        gettable_components_type_name =
-			typeid(gettable_components).name();
-#endif // NDEBUG
-
-		mp_for_each<gettable_components>([&]<typename C>(C) {
-			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
-				if constexpr(!std::is_empty_v<C>) {
-					C& out_component = *reinterpret_cast<C*>(out_component_data);
-					out_component = get<C>();
-#ifndef NDEBUG
-					get_component_name = typeid(C).name();
-					found_gettable_component = true;
-#endif // NDEBUG
-				}
-			}
-		});
-
-#ifndef NDEBUG
-		assert(found_gettable_component);
-#endif // NDEBUG
-	}
+	// 	void get(ecsact_component_like_id component_id, void* out_component_data)
+	// { 		using boost::mp11::mp_assign; 		using boost::mp11::mp_flatten;
+	// using boost::mp11::mp_for_each; 		using boost::mp11::mp_push_back; using
+	// boost::mp11::mp_unique; 		using
+	// ecsact::entt_mp11_util::mp_map_find_value_or;
+	//
+	// 		using readonly_components = typename caps_info::readonly_components;
+	// 		using readwrite_components = typename caps_info::readwrite_components;
+	// 		using gettable_components = mp_assign<
+	// 			::ecsact::mp_list<>,
+	// 			mp_unique<mp_flatten<
+	// 				mp_push_back<readonly_components, readwrite_components>,
+	// 				::ecsact::mp_list<>>>>;
+	//
+	// #ifndef NDEBUG
+	// 		[[maybe_unused]] bool        found_gettable_component = false;
+	// 		[[maybe_unused]] const char* get_component_name = "";
+	// 		[[maybe_unused]] auto        gettable_components_type_name =
+	// 			typeid(gettable_components).name();
+	// #endif // NDEBUG
+	//
+	// 		mp_for_each<gettable_components>([&]<typename C>(C) {
+	// 			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
+	// 				if constexpr(!std::is_empty_v<C>) {
+	// 					C& out_component = *reinterpret_cast<C*>(out_component_data);
+	// 					out_component = get<C>();
+	// #ifndef NDEBUG
+	// 					get_component_name = typeid(C).name();
+	// 					found_gettable_component = true;
+	// #endif // NDEBUG
+	// 				}
+	// 			}
+	// 		});
+	//
+	// #ifndef NDEBUG
+	// 		assert(found_gettable_component);
+	// #endif // NDEBUG
+	// 	}
 
 	template<typename C>
 		requires(!std::is_empty_v<C>)
@@ -294,23 +326,23 @@ struct system_execution_context : system_execution_context_base {
 		comp = c;
 	}
 
-	void update(
-		ecsact_component_like_id component_id,
-		const void*              component_data
-	) {
-		using boost::mp11::mp_for_each;
-		using boost::mp11::mp_list;
-		using boost::mp11::mp_map_find;
-		using ecsact::entt_mp11_util::mp_map_find_value_or;
-
-		using readwrite_components = typename caps_info::readwrite_components;
-
-		mp_for_each<readwrite_components>([&]<typename C>(C) {
-			if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
-				update<C>(*reinterpret_cast<const C*>(component_data));
-			}
-		});
-	}
+	// void update(
+	// 	ecsact_component_like_id component_id,
+	// 	const void*              component_data
+	// ) {
+	// 	using boost::mp11::mp_for_each;
+	// 	using boost::mp11::mp_list;
+	// 	using boost::mp11::mp_map_find;
+	// 	using ecsact::entt_mp11_util::mp_map_find_value_or;
+	//
+	// 	using readwrite_components = typename caps_info::readwrite_components;
+	//
+	// 	mp_for_each<readwrite_components>([&]<typename C>(C) {
+	// 		if(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id) {
+	// 			update<C>(*reinterpret_cast<const C*>(component_data));
+	// 		}
+	// 	});
+	// }
 
 	template<typename ComponentT>
 	bool has() {
@@ -334,11 +366,11 @@ struct system_execution_context : system_execution_context_base {
 		return result;
 	}
 
-	void generate(
+	auto generate(
 		int                  component_count,
 		ecsact_component_id* component_ids,
 		const void**         components_data
-	) {
+	) -> void override {
 		using ecsact::entt::component_added;
 		using ecsact::entt::detail::created_entity;
 		using ecsact::entt::detail::mp_for_each_available_component;
@@ -369,7 +401,8 @@ struct system_execution_context : system_execution_context_base {
 		}
 	}
 
-	ecsact_system_execution_context* other(ecsact_entity_id other_entity) {
+	auto other(ecsact_entity_id other_entity)
+		-> ecsact_system_execution_context* override {
 		using boost::mp11::mp_first;
 		using boost::mp11::mp_for_each;
 		using boost::mp11::mp_second;
@@ -422,7 +455,7 @@ struct system_execution_context : system_execution_context_base {
 							);
 
 							other_context->_c_ctx.association_index =
-								static_cast<signed>(assoc_index);
+								static_cast<unsigned>(assoc_index + 1);
 						}
 
 						return_context = &other_context->_c_ctx;
@@ -436,7 +469,7 @@ struct system_execution_context : system_execution_context_base {
 		return return_context;
 	}
 
-	ecsact_entity_id get_ecsact_entity_id() const {
+	auto get_ecsact_entity_id() -> ecsact_entity_id const override {
 		return info.get_ecsact_entity_id(entity);
 	}
 };
