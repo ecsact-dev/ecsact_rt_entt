@@ -46,8 +46,6 @@ static auto _action_fns = [] {
 	using boost::mp11::mp_size;
 	using actions = ecsact::entt::detail::mp_all_actions_t<package>;
 
-	constexpr auto actions_size = mp_size<actions>::value;
-
 	auto result = context_fns_t<
 		ecsact_action_id,
 		decltype(&ecsact_system_execution_context_action),
