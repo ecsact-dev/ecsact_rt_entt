@@ -29,6 +29,27 @@ struct mp_components_t<HeadPackage, Package...> {
 };
 
 template<typename... Package>
+struct mp_transients_t;
+
+template<>
+struct mp_transients_t<> {
+	using type = ::ecsact::mp_list<>;
+};
+
+template<typename Package>
+struct mp_transients_t<Package> {
+	using type = typename Package::transients;
+};
+
+template<typename HeadPackage, typename... Package>
+struct mp_transients_t<HeadPackage, Package...> {
+	using type =
+		boost::mp11::mp_unique<boost::mp11::mp_flatten<boost::mp11::mp_push_back<
+			typename mp_transients_t<HeadPackage>::type,
+			typename mp_transients_t<Package...>::type>>>;
+};
+
+template<typename... Package>
 struct mp_actions_t;
 
 template<>
@@ -90,6 +111,26 @@ using mp_package_dependencies_recursive =
 			PackageList,
 			boost::mp11::mp_identity_t,
 			mp_package_dependencies_from_list>>>;
+
+template<typename Package>
+using mp_all_components_t = typename boost::mp11::mp_append<
+	mp_components_t<Package>,
+	mp_package_dependencies_recursive<typename Package::dependencies>>::type;
+
+template<typename Package>
+using mp_all_transients_t = typename boost::mp11::mp_append<
+	mp_transients_t<Package>,
+	mp_package_dependencies_recursive<typename Package::dependencies>>::type;
+
+template<typename Package>
+using mp_all_systems_t = typename boost::mp11::mp_append<
+	mp_systems_t<Package>,
+	mp_package_dependencies_recursive<typename Package::dependencies>>::type;
+
+template<typename Package>
+using mp_all_actions_t = typename boost::mp11::mp_append<
+	mp_actions_t<Package>,
+	mp_package_dependencies_recursive<typename Package::dependencies>>::type;
 
 template<typename Package, typename Callback>
 void mp_for_each_available_component(Callback&& cb) {

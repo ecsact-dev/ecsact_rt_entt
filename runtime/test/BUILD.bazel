@@ -35,6 +35,7 @@ cc_test(
         ":ecsact_cc_system_impl_srcs",
     ],
     copts = copts,
+    args = ["--gtest_catch_exceptions=0"],
     deps = [
         ":runtime",
         "@com_google_googletest//:gtest",
