@@ -24,44 +24,39 @@ namespace ecsact::entt {
 
 template<
 	typename SystemCapabilitiesInfo,
+	typename ExtraGetTypes = ::ecsact::mp_list<>>
+using view_get_types = boost::mp11::mp_unique<boost::mp11::mp_flatten<
+	boost::mp11::mp_push_back<
+		typename SystemCapabilitiesInfo::readonly_components,
+		typename SystemCapabilitiesInfo::readwrite_components,
+		typename SystemCapabilitiesInfo::include_components,
+		typename SystemCapabilitiesInfo::removes_components,
+		ExtraGetTypes,
+		boost::mp11::mp_transform<
+			detail::beforechange_storage,
+			typename SystemCapabilitiesInfo::readwrite_components>>,
+	::ecsact::mp_list<>>>;
+
+template<
+	typename SystemCapabilitiesInfo,
+	typename ExtraExcludeTypes = ::ecsact::mp_list<>>
+using view_exclude_types = boost::mp11::mp_unique<boost::mp11::mp_flatten<
+	boost::mp11::mp_push_back<
+		typename SystemCapabilitiesInfo::exclude_components,
+		typename SystemCapabilitiesInfo::adds_components,
+		ExtraExcludeTypes>,
+	::ecsact::mp_list<>>>;
+
+template<
+	typename SystemCapabilitiesInfo,
 	typename ExtraGetTypes = ::ecsact::mp_list<>,
 	typename ExtraExcludeTypes = ::ecsact::mp_list<>>
 auto view_from_system_capabilities(::entt::registry& registry) {
-	using caps_info = SystemCapabilitiesInfo;
-
-	using boost::mp11::mp_assign;
-	using boost::mp11::mp_flatten;
-	using boost::mp11::mp_map_find;
-	using boost::mp11::mp_push_back;
-	using boost::mp11::mp_transform;
-	using boost::mp11::mp_unique;
-	using ecsact::entt_mp11_util::mp_map_find_value_or;
-
-	using ecsact::entt::detail::beforechange_storage;
-	using ecsact::entt::detail::temp_storage;
-
-	using readonly_components = typename caps_info::readonly_components;
-	using readwrite_components = typename caps_info::readwrite_components;
-	using removes_components = typename caps_info::removes_components;
-	using adds_components = typename caps_info::adds_components;
-	using include_components = typename caps_info::include_components;
-	using exclude_components = typename caps_info::exclude_components;
-
-	using get_types = mp_unique<mp_flatten<
-		mp_push_back<
-			readonly_components,
-			readwrite_components,
-			include_components,
-			removes_components,
-			ExtraGetTypes,
-			mp_transform<beforechange_storage, readwrite_components>>,
-		::ecsact::mp_list<>>>;
-
-	using exclude_types = mp_unique<mp_flatten<
-		mp_push_back<exclude_components, adds_components, ExtraExcludeTypes>,
-		::ecsact::mp_list<>>>;
-
-	return detail::system_view_helper(get_types{}, exclude_types{}, registry);
+	return detail::system_view_helper(
+		view_get_types<SystemCapabilitiesInfo, ExtraGetTypes>{},
+		view_exclude_types<SystemCapabilitiesInfo, ExtraExcludeTypes>{},
+		registry
+	);
 }
 
 template<

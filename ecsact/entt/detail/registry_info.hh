@@ -9,9 +9,12 @@
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/core.h"
 #include "ecsact/entt/detail/meta_util.hh"
-
+#include "ecsact/cpp/type_info.hh"
+#include "ecsact/entt/system_view.hh"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/detail/internal_markers.hh"
+
+#include "meta_util.hh"
 
 namespace ecsact_entt_rt {
 using entity_id_map_t = std::unordered_map<ecsact_entity_id, entt::entity>;
