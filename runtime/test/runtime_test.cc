@@ -173,6 +173,8 @@ TEST(Core, GetEntities) {
 		ecsact_create_entity(reg_id);
 	}
 
+	EXPECT_EQ(ecsact_count_entities(reg_id), test_count);
+
 	int                           entities_count = 0;
 	std::vector<ecsact_entity_id> entities;
 	entities.resize(test_count);

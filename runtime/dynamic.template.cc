@@ -541,7 +541,7 @@ bool ecsact_system_execution_context_same(
 ecsact_entity_id ecsact_system_execution_context_entity(
 	const ecsact_system_execution_context* context
 ) {
-	return context->impl->get_ecsact_entity_id();
+	return context->impl->entity;
 }
 
 void ecsact_system_execution_context_generate(
