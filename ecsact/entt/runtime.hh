@@ -114,55 +114,56 @@ public:
 
 		info.registry = {};
 		info.init_registry();
-		info.entities_map.clear();
-		info._ecsact_entity_ids.clear();
-		info.last_entity_id = {};
 	}
 
-	ecsact_entity_id create_entity(ecsact_registry_id reg_id) {
+	auto create_entity(ecsact_registry_id reg_id) -> ecsact::entt::entity_id {
 		std::mutex mutex;
 		auto&      info = _registries.at(reg_id);
 		info.mutex = mutex;
-		auto new_entity_id = info.create_entity().ecsact_entity_id;
+		auto new_entity_id = info.create_entity();
 		info.mutex = std::nullopt;
 		return new_entity_id;
 	}
 
-	void ensure_entity(ecsact_registry_id reg_id, ecsact_entity_id entity_id) {
-		auto& info = _registries.at(reg_id);
-		if(!info.entities_map.contains(entity_id)) {
-			std::mutex mutex;
-			info.mutex = mutex;
-			info.create_entity(entity_id);
-			info.mutex = std::nullopt;
-		}
+	auto ensure_entity(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> void {
+		auto&      info = _registries.at(reg_id);
+		std::mutex mutex;
+		info.mutex = mutex;
+		info.create_entity(entity_id);
+		info.mutex = std::nullopt;
 	}
 
-	bool entity_exists(ecsact_registry_id reg_id, ecsact_entity_id entity_id) {
+	auto entity_exists(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> bool {
 		auto& info = _registries.at(reg_id);
-		return info.entities_map.contains(entity_id);
+		return info.registry.valid(entity_id);
 	}
 
-	void destroy_entity(ecsact_registry_id reg_id, ecsact_entity_id entity_id) {
-		using boost::mp11::mp_for_each;
-
+	auto destroy_entity(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> void {
 		auto& info = _registries.at(reg_id);
-
 		info.destroy_entity(entity_id);
 	}
 
-	int count_entities(ecsact_registry_id reg_id) {
+	auto count_entities(ecsact_registry_id reg_id) -> int {
 		auto& info = _registries.at(reg_id);
 		return static_cast<int>(info.registry.alive());
 	}
 
-	std::vector<ecsact_entity_id> get_entities(ecsact_registry_id reg_id) {
-		auto&                         info = _registries.at(reg_id);
-		std::vector<ecsact_entity_id> result;
-		for(auto& entry : info.entities_map) {
-			result.push_back(entry.first);
-		}
-
+	auto get_entities( //
+		ecsact_registry_id reg_id
+	) -> std::vector<ecsact::entt::entity_id> {
+		auto& info = _registries.at(reg_id);
+		auto  result = std::vector<ecsact::entt::entity_id>{};
+		result.reserve(info.registry.alive());
+		info.registry.each([&](auto entity) { result.emplace_back(entity); });
 		return result;
 	}
 
@@ -174,17 +175,22 @@ public:
 	) {
 		auto& info = _registries.at(reg_id);
 
-		int entities_count = static_cast<int>(info.entities_map.size());
+		int entities_count = static_cast<int>(info.registry.alive());
 		max_entities_count = std::min(entities_count, max_entities_count);
 
-		auto itr = info.entities_map.begin();
-		for(int i = 0; max_entities_count > i; ++i) {
-			if(itr == info.entities_map.end()) {
-				break;
-			}
+		{
+			// TODO(zaucy): Using `info.registry.each` is poor when max entities
+			// count is less than the amount of entities in the registry.
+			// Replace with a different fn such `as info.registry.data`
+			int i = 0;
+			info.registry.each([&](auto entity) {
+				if(i >= max_entities_count) {
+					return;
+				}
 
-			out_entities[i] = itr->first;
-			++itr;
+				out_entities[i] = ecsact::entt::entity_id{entity};
+				++i;
+			});
 		}
 
 		if(out_entities_count != nullptr) {
@@ -193,21 +199,20 @@ public:
 	}
 
 	template<typename C>
-	ecsact_add_error add_component(
-		ecsact_registry_id reg_id,
-		ecsact_entity_id   entity_id,
-		const C&           component_data
-	) {
+	auto add_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		const C&                component_data
+	) -> ecsact_add_error {
 		auto& info = _registries.at(reg_id);
-		auto  entt_entity_id = info.entities_map.at(entity_id);
 
 		constexpr auto fields_info = ecsact::fields_info<C>();
 		if constexpr(!fields_info.empty()) {
 			for(auto& field : fields_info) {
 				if(field.storage_type == ECSACT_ENTITY_TYPE) {
-					auto entity_field =
+					ecsact::entt::entity_id entity_field =
 						field.template get<ecsact_entity_id>(&component_data);
-					if(!info.entities_map.contains(entity_field)) {
+					if(!info.registry.valid(entity_field)) {
 						return ECSACT_ADD_ERR_ENTITY_INVALID;
 					}
 				}
@@ -215,28 +220,28 @@ public:
 		}
 
 		if constexpr(std::is_empty_v<C>) {
-			info.template add_component<C>(entt_entity_id);
+			info.template add_component<C>(entity_id);
 		} else {
-			info.template add_component<C>(entt_entity_id, component_data);
+			info.template add_component<C>(entity_id, component_data);
 		}
 
 		return ECSACT_ADD_OK;
 	}
 
 	template<typename ComponentT>
-	ecsact_add_error add_component(
-		ecsact_registry_id reg_id,
-		ecsact_entity_id   entity_id
-	) {
+	auto add_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> ecsact_add_error {
 		return add_component<ComponentT>(reg_id, entity_id, ComponentT{});
 	}
 
-	ecsact_add_error add_component(
-		ecsact_registry_id  reg_id,
-		ecsact_entity_id    entity_id,
-		ecsact_component_id component_id,
-		const void*         component_data
-	) {
+	auto add_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		ecsact_component_id     component_id,
+		const void*             component_data
+	) -> ecsact_add_error {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		ecsact_add_error err = ECSACT_ADD_OK;
@@ -259,18 +264,20 @@ public:
 	}
 
 	template<typename ComponentT>
-	bool has_component(ecsact_registry_id reg_id, ecsact_entity_id entity_id) {
+	auto has_component( //
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> bool {
 		auto& info = _registries.at(reg_id);
-		auto  entt_entity_id = info.entities_map.at(entity_id);
 
-		return info.registry.template all_of<ComponentT>(entt_entity_id);
+		return info.registry.template all_of<ComponentT>(entity_id);
 	}
 
-	bool has_component(
-		ecsact_registry_id  reg_id,
-		ecsact_entity_id    entity_id,
-		ecsact_component_id component_id
-	) {
+	auto has_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		ecsact_component_id     component_id
+	) -> bool {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		bool result = false;
@@ -283,21 +290,20 @@ public:
 	}
 
 	template<typename ComponentT>
-	const ComponentT& get_component(
-		ecsact_registry_id reg_id,
-		ecsact_entity_id   entity_id
-	) {
+	auto get_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> const ComponentT& {
 		auto& info = _registries.at(reg_id);
-		auto  entt_entity_id = info.entities_map.at(entity_id);
 
-		return info.registry.template get<ComponentT>(entt_entity_id);
+		return info.registry.template get<ComponentT>(entity_id);
 	}
 
-	const void* get_component(
-		ecsact_registry_id  reg_id,
-		ecsact_entity_id    entity_id,
-		ecsact_component_id component_id
-	) {
+	auto get_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		ecsact_component_id     component_id
+	) -> const void* {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		const void* component_data = nullptr;
@@ -315,10 +321,10 @@ public:
 		return component_data;
 	}
 
-	int count_components(
-		ecsact_registry_id registry_id,
-		ecsact_entity_id   entity_id
-	) {
+	auto count_components(
+		ecsact_registry_id      registry_id,
+		ecsact::entt::entity_id entity_id
+	) -> int {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		int count = 0;
@@ -332,7 +338,7 @@ public:
 
 	void each_component(
 		ecsact_registry_id             registry_id,
-		ecsact_entity_id               entity_id,
+		ecsact::entt::entity_id        entity_id,
 		ecsact_each_component_callback callback,
 		void*                          callback_user_data
 	) {
@@ -358,12 +364,12 @@ public:
 	}
 
 	void get_components(
-		ecsact_registry_id   registry_id,
-		ecsact_entity_id     entity_id,
-		int                  max_components_count,
-		ecsact_component_id* out_component_ids,
-		const void**         out_components_data,
-		int*                 out_components_count
+		ecsact_registry_id      registry_id,
+		ecsact::entt::entity_id entity_id,
+		int                     max_components_count,
+		ecsact_component_id*    out_component_ids,
+		const void**            out_components_data,
+		int*                    out_components_count
 	) {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
@@ -391,39 +397,38 @@ public:
 	}
 
 	template<typename ComponentT>
-	ecsact_update_error update_component(
-		ecsact_registry_id reg_id,
-		ecsact_entity_id   entity_id,
-		const ComponentT&  component_data
-	) {
+	auto update_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		const ComponentT&       component_data
+	) -> ecsact_update_error {
 		auto& info = _registries.at(reg_id);
-		auto  entt_entity_id = info.entities_map.at(entity_id);
 
 		constexpr auto fields_info = ecsact::fields_info<ComponentT>();
 		if constexpr(!fields_info.empty()) {
 			for(auto& field : fields_info) {
 				if(field.storage_type == ECSACT_ENTITY_TYPE) {
-					auto entity_field =
+					ecsact::entt::entity_id entity_field =
 						field.template get<ecsact_entity_id>(&component_data);
-					if(!info.entities_map.contains(entity_field)) {
+					if(!info.registry.valid(entity_field)) {
 						return ECSACT_UPDATE_ERR_ENTITY_INVALID;
 					}
 				}
 			}
 		}
 
-		auto& component = info.registry.template get<ComponentT>(entt_entity_id);
+		auto& component = info.registry.template get<ComponentT>(entity_id);
 		component = component_data;
 
 		return ECSACT_UPDATE_OK;
 	}
 
-	ecsact_update_error update_component(
-		ecsact_registry_id  reg_id,
-		ecsact_entity_id    entity_id,
-		ecsact_component_id component_id,
-		const void*         component_data
-	) {
+	auto update_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		ecsact_component_id     component_id,
+		const void*             component_data
+	) -> ecsact_update_error {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		std::optional<ecsact_update_error> result;
@@ -442,18 +447,20 @@ public:
 	}
 
 	template<typename C>
-	void remove_component(ecsact_registry_id reg_id, ecsact_entity_id entity_id) {
+	auto remove_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id
+	) -> void {
 		auto& info = _registries.at(reg_id);
-		auto  entt_entity_id = info.entities_map.at(entity_id);
 
-		info.template remove_component<C>(entt_entity_id);
+		info.template remove_component<C>(entity_id);
 	}
 
-	void remove_component(
-		ecsact_registry_id  reg_id,
-		ecsact_entity_id    entity_id,
-		ecsact_component_id component_id
-	) {
+	auto remove_component(
+		ecsact_registry_id      reg_id,
+		ecsact::entt::entity_id entity_id,
+		ecsact_component_id     component_id
+	) -> void {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		mp_for_each_available_component<package>([&]<typename C>(C) {
@@ -463,7 +470,7 @@ public:
 		});
 	}
 
-	size_t component_size(ecsact_component_id comp_id) {
+	auto component_size(ecsact_component_id comp_id) -> size_t {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		size_t comp_size = 0;
@@ -475,7 +482,7 @@ public:
 		return comp_size;
 	}
 
-	size_t action_size(ecsact_action_id action_id) {
+	auto action_size(ecsact_action_id action_id) -> size_t {
 		using boost::mp11::mp_for_each;
 
 		size_t act_size = 0;
@@ -713,19 +720,18 @@ private:
 					assert(view.contains(entity));
 					auto& comp = view.template get<ComponentT>(entity);
 
-					auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
-						reinterpret_cast<const char*>(&comp) + offset
-					);
-					auto entt_field_entity_value =
-						info.get_entt_entity_id(field_entity_value);
+					ecsact::entt::entity_id field_entity_value =
+						*reinterpret_cast<const ecsact_entity_id*>(
+							reinterpret_cast<const char*>(&comp) + offset
+						);
 
 					bool found_associated_entity = *assoc_view_itr ==
-						entt_field_entity_value;
+						field_entity_value.as_entt();
 					if(!found_associated_entity) {
 						assoc_view_itr = assoc_view.begin();
 						for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
 							found_associated_entity = *assoc_view_itr ==
-								entt_field_entity_value;
+								field_entity_value.as_entt();
 							if(found_associated_entity) {
 								break;
 							}
@@ -831,14 +837,12 @@ private:
 				info.registry.template storage<component_added<C>>(),
 			};
 
-			for(entt_entity_type entity : added_view) {
+			for(ecsact::entt::entity_id entity : added_view) {
 				if constexpr(std::is_empty_v<C>) {
-					events_collector.invoke_init_callback<C>(
-						info.get_ecsact_entity_id(entity)
-					);
+					events_collector.invoke_init_callback<C>(entity);
 				} else {
 					events_collector.invoke_init_callback<C>(
-						info.get_ecsact_entity_id(entity),
+						entity,
 						added_view.template get<C>(entity)
 					);
 				}
@@ -865,16 +869,13 @@ private:
 					info.registry.template storage<component_changed<C>>(),
 				};
 
-				for(entt_entity_type entity : changed_view) {
+				for(ecsact::entt::entity_id entity : changed_view) {
 					auto& before =
 						changed_view.template get<beforechange_storage<C>>(entity);
 					auto& current = changed_view.template get<C>(entity);
 
 					if(before.value != current) {
-						events_collector.invoke_update_callback<C>(
-							info.get_ecsact_entity_id(entity),
-							current
-						);
+						events_collector.invoke_update_callback<C>(entity, current);
 					}
 					before.set = false;
 				}
@@ -901,19 +902,17 @@ private:
 				::entt::basic_view removed_view{
 					info.registry.template storage<component_removed<C>>(),
 				};
-				for(entt_entity_type entity : removed_view) {
-					events_collector.invoke_remove_callback<C>(
-						info.get_ecsact_entity_id(entity)
-					);
+				for(ecsact::entt::entity_id entity : removed_view) {
+					events_collector.invoke_remove_callback<C>(entity);
 				}
 			} else {
 				::entt::basic_view removed_view{
 					info.registry.template storage<detail::temp_storage<C>>(),
 					info.registry.template storage<component_removed<C>>(),
 				};
-				for(entt_entity_type entity : removed_view) {
+				for(ecsact::entt::entity_id entity : removed_view) {
 					events_collector.invoke_remove_callback<C>(
-						info.get_ecsact_entity_id(entity),
+						entity,
 						removed_view.template get<detail::temp_storage<C>>(entity).value
 					);
 					info.registry.template storage<detail::temp_storage<C>>().remove(
@@ -939,9 +938,9 @@ private:
 			info.registry.template storage<created_entity>(),
 		};
 
-		for(entt_entity_type entity : created_view) {
+		for(ecsact::entt::entity_id entity : created_view) {
 			events_collector.invoke_entity_created_callback(
-				info.get_ecsact_entity_id(entity),
+				entity,
 				created_view.template get<created_entity>(entity).placeholder_entity_id
 			);
 		}
@@ -962,10 +961,8 @@ private:
 			info.registry.template storage<destroyed_entity>(),
 		};
 
-		for(entt_entity_type entity : destroy_view) {
-			events_collector.invoke_entity_destroyed_callback(
-				info.get_ecsact_entity_id(entity)
-			);
+		for(ecsact::entt::entity_id entity : destroy_view) {
+			events_collector.invoke_entity_destroyed_callback(entity);
 		}
 	}
 
@@ -1110,7 +1107,7 @@ private:
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		for(int i = 0; options.create_entities_length > i; i++) {
-			auto entity = info.create_entity().entt_entity_id;
+			auto entity = info.create_entity();
 			info.registry.template emplace<created_entity>(
 				entity,
 				options.create_entities[i]
@@ -1140,8 +1137,8 @@ private:
 		}
 
 		for(int i = 0; options.add_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.add_components_entities[i];
-			const ecsact_component& comp = options.add_components[i];
+			const ecsact::entt::entity_id entity = options.add_components_entities[i];
+			const ecsact_component&       comp = options.add_components[i];
 
 			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
@@ -1150,14 +1147,11 @@ private:
 
 				if(comp.component_id == static_cast<ecsact_component_id>(C::id)) {
 					if constexpr(std::is_empty_v<C>) {
-						_pre_exec_add_component<C>(
-							info,
-							info.entities_map.at(static_cast<ecsact_entity_id>(entity))
-						);
+						_pre_exec_add_component<C>(info, entity);
 					} else {
 						_pre_exec_add_component<C>(
 							info,
-							info.entities_map.at(static_cast<ecsact_entity_id>(entity)),
+							entity,
 							*static_cast<const C*>(comp.component_data)
 						);
 					}
@@ -1166,7 +1160,8 @@ private:
 		}
 
 		for(int i = 0; options.update_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.update_components_entities[i];
+			const ecsact::entt::entity_id entity =
+				options.update_components_entities[i];
 			const ecsact_component& comp = options.update_components[i];
 
 			mp_for_each_available_component<package>([&]<typename C>(C) {
@@ -1178,7 +1173,7 @@ private:
 					if constexpr(!std::is_empty_v<C>) {
 						_pre_exec_update_component<C>(
 							info,
-							info.entities_map.at(entity),
+							entity,
 							*static_cast<const C*>(comp.component_data)
 						);
 					} else {
@@ -1189,8 +1184,9 @@ private:
 		}
 
 		for(int i = 0; options.remove_components_length > i; ++i) {
-			const ecsact_entity_id& entity = options.remove_components_entities[i];
-			ecsact_component_id     component_id = options.remove_components[i];
+			const ecsact::entt::entity_id entity =
+				options.remove_components_entities[i];
+			ecsact_component_id component_id = options.remove_components[i];
 
 			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
@@ -1198,29 +1194,22 @@ private:
 				}
 
 				if(component_id == static_cast<ecsact_component_id>(C::id)) {
-					_pre_exec_remove_component<C>(
-						info,
-						info.entities_map.at(static_cast<ecsact_entity_id>(entity))
-					);
+					_pre_exec_remove_component<C>(info, entity);
 				}
 			});
 		}
 
 		for(int i = 0; options.destroy_entities_length > i; ++i) {
-			const ecsact_entity_id& entity = options.destroy_entities[i];
+			const ecsact::entt::entity_id entity = options.destroy_entities[i];
 			mp_for_each_available_component<package>([&]<typename C>(C) {
 				if constexpr(C::transient) {
 					return;
 				}
-				if(info.registry.template all_of<C>(info.get_entt_entity_id(entity))) {
-					_pre_exec_remove_component<C>(
-						info,
-						info.entities_map.at(static_cast<ecsact_entity_id>(entity))
-					);
+				if(info.registry.template all_of<C>(entity)) {
+					_pre_exec_remove_component<C>(info, entity);
 				}
 			});
-			auto entt_id = info.get_entt_entity_id(entity);
-			info.registry.template emplace<destroyed_entity>(entt_id);
+			info.registry.template emplace<destroyed_entity>(entity);
 		}
 	}
 
@@ -1271,9 +1260,10 @@ private:
 			constexpr auto fields_info = ecsact::fields_info<A>();
 			for(auto& field : fields_info) {
 				if(field.storage_type == ECSACT_ENTITY_TYPE) {
-					auto entity_field =
+					ecsact::entt::entity_id entity_field =
 						field.template get<ecsact_entity_id>(action.action_data);
-					if(!info.entities_map.contains(entity_field)) {
+
+					if(!info.registry.valid(entity_field)) {
 						result = ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID;
 					}
 				}
@@ -1290,8 +1280,8 @@ private:
 			info.registry.template storage<destroyed_entity>(),
 		};
 
-		for(entt_entity_type entity : destroy_view) {
-			info.destroy_entity(info.get_ecsact_entity_id(entity));
+		for(ecsact::entt::entity_id entity : destroy_view) {
+			info.destroy_entity(entity);
 		}
 	}
 

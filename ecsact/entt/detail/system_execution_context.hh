@@ -36,9 +36,9 @@ struct system_execution_context_base {
 	using cptr_t = struct ::ecsact_system_execution_context*;
 	using const_cptr_t = const struct ::ecsact_system_execution_context*;
 
-	::entt::entity entity;
-	const cptr_t   parent;
-	const void*    action;
+	ecsact::entt::entity_id entity;
+	const cptr_t            parent;
+	const void*             action;
 
 	system_execution_context_base(
 		::entt::entity entity,
@@ -48,13 +48,11 @@ struct system_execution_context_base {
 		: entity(entity), parent(parent), action(action) {
 	}
 
-	virtual ~system_execution_context_base() {
-	}
+	virtual ~system_execution_context_base() = default;
 
-	virtual auto other(ecsact_entity_id other_entity)
-		-> ecsact_system_execution_context* = 0;
-
-	virtual auto get_ecsact_entity_id() -> ecsact_entity_id const = 0;
+	virtual auto other( //
+		ecsact::entt::entity_id other_entity
+	) -> ecsact_system_execution_context* = 0;
 
 	virtual auto generate(
 		int                  component_count,
@@ -376,7 +374,7 @@ struct system_execution_context : system_execution_context_base {
 		using ecsact::entt::detail::mp_for_each_available_component;
 		using ecsact::entt::detail::pending_add;
 
-		auto new_entity = info.create_entity().entt_entity_id;
+		auto new_entity = info.create_entity();
 		info.registry.template emplace<created_entity>(
 			new_entity,
 			ecsact_generated_entity
@@ -401,8 +399,9 @@ struct system_execution_context : system_execution_context_base {
 		}
 	}
 
-	auto other(ecsact_entity_id other_entity)
-		-> ecsact_system_execution_context* override {
+	auto other( //
+		ecsact::entt::entity_id other_entity
+	) -> ecsact_system_execution_context* override {
 		using boost::mp11::mp_first;
 		using boost::mp11::mp_for_each;
 		using boost::mp11::mp_second;
@@ -422,13 +421,12 @@ struct system_execution_context : system_execution_context_base {
 				constexpr std::size_t offset = Assoc::field_offset;
 				const ComponentT& comp = info.registry.template get<ComponentT>(entity);
 
-				auto field_entity_value = *reinterpret_cast<const ecsact_entity_id*>(
-					reinterpret_cast<const char*>(&comp) + offset
-				);
+				ecsact::entt::entity_id field_entity_value =
+					*reinterpret_cast<const ecsact_entity_id*>(
+						reinterpret_cast<const char*>(&comp) + offset
+					);
 
 				if(field_entity_value == other_entity) {
-					auto entt_field_entity_value =
-						info.get_entt_entity_id(field_entity_value);
 					using boost::mp11::mp_size;
 					mp_with_index<mp_size<associations>::value>(assoc_index, [&](auto I) {
 						using other_context_t = std::tuple_element_t<I, others_t>;
@@ -449,7 +447,7 @@ struct system_execution_context : system_execution_context_base {
 								_c_ctx.system_id,
 								assoc_view,
 								empty_views, // see static assertion above
-								entt_field_entity_value,
+								field_entity_value,
 								parent,
 								action
 							);
@@ -467,10 +465,6 @@ struct system_execution_context : system_execution_context_base {
 		}
 
 		return return_context;
-	}
-
-	auto get_ecsact_entity_id() -> ecsact_entity_id const override {
-		return info.get_ecsact_entity_id(entity);
 	}
 };
 

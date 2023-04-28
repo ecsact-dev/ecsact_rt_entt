@@ -12,12 +12,12 @@
 #include "ecsact/cpp/type_info.hh"
 #include "ecsact/entt/system_view.hh"
 #include "ecsact/entt/event_markers.hh"
+#include "ecsact/entt/entity.hh"
 #include "ecsact/entt/detail/internal_markers.hh"
 
 #include "meta_util.hh"
 
 namespace ecsact_entt_rt {
-using entity_id_map_t = std::unordered_map<ecsact_entity_id, entt::entity>;
 
 template<typename Package>
 struct registry_info {
@@ -25,19 +25,6 @@ struct registry_info {
 
 	std::optional<std::reference_wrapper<std::mutex>> mutex;
 	::entt::registry                                  registry;
-	entity_id_map_t                                   entities_map;
-
-	/**
-	 * Index of this vector is a statically casted EnTT ID
-	 */
-	std::vector<ecsact_entity_id> _ecsact_entity_ids;
-
-	ecsact_entity_id last_entity_id{};
-
-	struct create_new_entity_result {
-		entt::entity     entt_entity_id;
-		ecsact_entity_id ecsact_entity_id;
-	};
 
 	void init_registry() {
 		using ecsact::entt::component_added;
@@ -64,18 +51,19 @@ struct registry_info {
 		using boost::mp11::mp_with_index;
 		using ecsact::entt::detail::association;
 
-		auto entity_field = field.template get<ecsact_entity_id>(&component);
-		auto entity_field_entt = entities_map.at(entity_field);
+		ecsact::entt::entity_id entity_field =
+			field.template get<ecsact_entity_id>(&component);
+
 		// TODO(zaucy): Increasing the mp_with_index number causes really long
 		//              compile times. Iterating over the available associations
 		//              would perform better here.
 		assert(field.offset < 32);
 		mp_with_index<32>(field.offset, [&](auto I) {
-			if(registry.all_of<association<C, I>>(entity_field_entt)) {
-				auto& assoc_comp = registry.get<association<C, I>>(entity_field_entt);
+			if(registry.all_of<association<C, I>>(entity_field)) {
+				auto& assoc_comp = registry.get<association<C, I>>(entity_field);
 				assoc_comp.ref_count += 1;
 			} else {
-				registry.emplace<association<C, I>>(entity_field_entt, 1);
+				registry.emplace<association<C, I>>(entity_field, 1);
 			}
 		});
 	}
@@ -88,30 +76,31 @@ struct registry_info {
 		using boost::mp11::mp_with_index;
 		using ecsact::entt::detail::association;
 
-		auto entity_field = field.template get<ecsact_entity_id>(&component);
-		auto entity_field_entt = entities_map.at(entity_field);
+		ecsact::entt::entity_id entity_field =
+			field.template get<ecsact_entity_id>(&component);
+
 		assert(field.offset < 32);
 		// TODO(zaucy): Increasing the mp_with_index number causes really long
 		//              compile times. Iterating over the available associations
 		//              would perform better here.
 		mp_with_index<32>(field.offset, [&](auto I) {
-			auto& assoc_comp = registry.get<association<C, I>>(entity_field_entt);
+			auto& assoc_comp = registry.get<association<C, I>>(entity_field);
 			assoc_comp.ref_count -= 1;
 			if(assoc_comp.ref_count == 0) {
-				registry.erase<association<C, I>>(entity_field_entt);
+				registry.erase<association<C, I>>(entity_field);
 			}
 		});
 	}
 
 	template<typename C>
 		requires(std::is_empty_v<C>)
-	void add_component(::entt::entity entity) {
+	void add_component(ecsact::entt::entity_id entity) {
 		registry.emplace<C>(entity);
 	}
 
 	template<typename C, typename... Args>
 		requires(!std::is_empty_v<C>)
-	void add_component(::entt::entity entity, Args&&... args) {
+	void add_component(ecsact::entt::entity_id entity, Args&&... args) {
 		using boost::mp11::mp_with_index;
 		using ecsact::entt::detail::mp_for_each_available_component;
 
@@ -142,7 +131,7 @@ struct registry_info {
 	}
 
 	template<typename C>
-	void remove_component(::entt::entity entity) {
+	void remove_component(ecsact::entt::entity_id entity) {
 		using ecsact::entt::detail::mp_for_each_available_component;
 
 		constexpr auto fields_info = ecsact::fields_info<C>();
@@ -168,32 +157,27 @@ struct registry_info {
 	}
 
 	/** @internal */
-	inline auto _create_entity(ecsact_entity_id ecsact_entity_id) {
-		auto new_entt_entity_id = registry.create();
-		entities_map[ecsact_entity_id] = new_entt_entity_id;
-		_ecsact_entity_ids.resize(static_cast<size_t>(new_entt_entity_id) + 1);
-		_ecsact_entity_ids[_ecsact_entity_ids.size() - 1] = ecsact_entity_id;
-		return new_entt_entity_id;
+	inline auto _create_entity( //
+		ecsact::entt::entity_id entity
+	) -> ecsact::entt::entity_id {
+		if(registry.valid(entity)) {
+			return entity;
+		}
+
+		auto new_entity = registry.create(entity.as_entt());
+		// Our valid check above should have allowed this to happen
+		assert(new_entity == entity.as_entt());
+		return new_entity;
 	}
 
 	/** @internal */
-	inline create_new_entity_result _create_entity() {
-		auto new_entity_id =
-			static_cast<ecsact_entity_id>(static_cast<int>(last_entity_id) + 1);
-		while(entities_map.contains(new_entity_id)) {
-			new_entity_id =
-				static_cast<ecsact_entity_id>(static_cast<int>(new_entity_id) + 1);
-		}
-		last_entity_id = new_entity_id;
-		return {
-			.entt_entity_id = _create_entity(new_entity_id),
-			.ecsact_entity_id = new_entity_id,
-		};
+	inline auto _create_entity() -> ecsact::entt::entity_id {
+		return registry.create();
 	}
 
-	// Creates an entity and also makes sure there is a matching one in the
-	// pending registry
-	inline auto create_entity(ecsact_entity_id ecsact_entity_id) {
+	inline auto create_entity( //
+		ecsact::entt::entity_id ecsact_entity_id
+	) -> ecsact::entt::entity_id {
 		std::scoped_lock lk(mutex->get());
 		return _create_entity(ecsact_entity_id);
 	}
@@ -203,19 +187,8 @@ struct registry_info {
 		return _create_entity();
 	}
 
-	inline void destroy_entity(ecsact_entity_id entity_id) {
-		auto entt_entity_id = entities_map.at(entity_id);
-
-		registry.destroy(entt_entity_id);
-		entities_map.erase(entity_id);
-	}
-
-	entt::entity get_entt_entity_id(ecsact_entity_id ecsact_entity_id) const {
-		return entities_map.at(ecsact_entity_id);
-	}
-
-	ecsact_entity_id get_ecsact_entity_id(entt::entity entt_entity_id) const {
-		return _ecsact_entity_ids.at(static_cast<size_t>(entt_entity_id));
+	inline void destroy_entity(ecsact::entt::entity_id entity_id) {
+		registry.destroy(entity_id);
 	}
 };
 } // namespace ecsact_entt_rt
