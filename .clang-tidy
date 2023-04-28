@@ -1,7 +1,7 @@
 ---
 Checks: 'clang-diagnostic-*,clang-analyzer-*,modernize-*,bugprone-*'
 WarningsAsErrors: false
-HeaderFilterRegex: '^((?!/external/|bazel-.*).)*$'
+HeaderFilterRegex: '^((?!/external/|/bazel-.*/).)*$'
 AnalyzeTemporaryDtors: false
 FormatStyle: file
 CheckOptions: {}

@@ -39,7 +39,7 @@ jobs:
       - run: bazel  --bazelrc=.bazelrc --bazelrc=.github/workflows/ci-windows.bazelrc test //...
   test-linux:
     runs-on: ubuntu-latest
-    depends-on: linter
+    needs: linter
     steps:
       - uses: actions/checkout@v3
       - name: Mount bazel caches
