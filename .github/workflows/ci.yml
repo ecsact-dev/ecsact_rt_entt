@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: 'bazel --bazelrc=.bazelrc --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc build //... -k'
       - run: 'bazel --bazelrc=.bazelrc --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc run @hedron_compile_commands//:refresh_all'
-      - uses: cpp-linter/cpp-linter-action@v2.4.2
+      - uses: cpp-linter/cpp-linter-action@77982d55693d154611fbb8b1304a447c44ae6f2d
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
