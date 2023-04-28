@@ -1,0 +1,43 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//rt_entt_codegen:__subpackages__"])
+
+cc_library(
+    name = "ecsact_entt_details",
+    srcs = ["ecsact_entt_details.cc"],
+    hdrs = ["ecsact_entt_details.hh"],
+    copts = copts,
+    defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    deps = [
+        "@ecsact_codegen//:plugin",
+        "@ecsact_lang_cpp//:support",
+        "@ecsact_runtime//:common",
+        "@ecsact_runtime//:meta",
+    ],
+)
+
+cc_library(
+    name = "util",
+    hdrs = ["util.hh"],
+    copts = copts,
+    defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    deps = [
+        ":comps_with_caps",
+        "@ecsact_codegen//:plugin",
+        "@ecsact_lang_cpp//:support",
+        "@ecsact_runtime//:common",
+        "@ecsact_runtime//:meta",
+    ],
+)
+
+cc_library(
+    name = "comps_with_caps",
+    hdrs = ["comps_with_caps.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        "@ecsact_runtime//:common",
+        "@ecsact_runtime//:meta",
+    ],
+)

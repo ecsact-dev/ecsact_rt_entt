@@ -22,23 +22,22 @@ concept association_concept = //
 	};
 
 template<typename C>
-struct temp_storage;
+struct beforeremove_storage;
 
 template<typename C>
 	requires(std::is_empty_v<C>)
-struct temp_storage<C> {};
+struct beforeremove_storage<C> {};
 
 template<typename C>
 	requires(!std::is_empty_v<C>)
-struct temp_storage<C> {
+struct beforeremove_storage<C> {
 	C value;
 };
 
 template<typename C>
 	requires(!std::is_empty_v<C>)
 struct beforechange_storage {
-	C    value;
-	bool set = false;
+	C value;
 };
 
 template<typename C>

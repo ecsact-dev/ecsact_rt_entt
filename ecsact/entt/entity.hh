@@ -14,6 +14,9 @@ class entity_id {
 	std::int32_t _id;
 
 public:
+	inline entity_id() {
+	}
+
 	inline entity_id(::entt::entity entt_entity)
 		: _id(reinterpret_cast<std::int32_t&>(entt_entity)) {
 	}

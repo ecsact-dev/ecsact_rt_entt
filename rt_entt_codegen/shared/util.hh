@@ -1,0 +1,249 @@
+#pragma once
+
+#include <string_view>
+#include <vector>
+#include <string>
+#include <utility>
+#include "ecsact/codegen/plugin.hh"
+#include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/runtime/meta.hh"
+
+namespace ecsact::rt_entt_codegen::util {
+
+class global_initializer_printer {
+	bool                            disposed = false;
+	ecsact::codegen_plugin_context& ctx;
+
+public:
+	global_initializer_printer(
+		ecsact::codegen_plugin_context& ctx,
+		auto&&                          global_name
+	)
+		: ctx(ctx) {
+		ctx.write(
+			"decltype(ecsact::entt::detail::globals::",
+			global_name,
+			") ",
+			"ecsact::entt::detail::globals::",
+			global_name,
+			" = ",
+			"[]() -> "
+			"std::remove_cvref_t<decltype(ecsact::entt::detail::globals::",
+			global_name,
+			")> {"
+		);
+		ctx.indentation += 1;
+		ctx.write("\n");
+		ctx.write(
+			"auto result = "
+			"std::remove_cvref_t<decltype(ecsact::entt::detail::globals::",
+			global_name,
+			")>{};\n"
+		);
+	}
+
+	global_initializer_printer(global_initializer_printer&& other)
+		: ctx(other.ctx) {
+		disposed = other.disposed;
+		other.disposed = true;
+	}
+
+	~global_initializer_printer() {
+		if(disposed) {
+			return;
+		}
+		disposed = true;
+		ctx.write("return result;");
+		ctx.indentation -= 1;
+		ctx.write("\n}();\n\n");
+	}
+};
+
+template<typename DeclId>
+inline auto decl_cpp_ident(DeclId id) -> std::string {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
+	return "::" + cpp_identifier(decl_full_name(id));
+}
+
+inline auto init_global( //
+	ecsact::codegen_plugin_context& ctx,
+	auto&&                          global_name
+) -> void {
+	// globals can only be initialized at the top
+	assert(ctx.indentation == 0);
+
+	ctx.write(
+		"decltype(ecsact::entt::detail::globals::",
+		global_name,
+		") ecsact::entt::detail::globals::",
+		global_name,
+		" = {};\n"
+	);
+}
+
+inline auto init_global( //
+	ecsact::codegen_plugin_context& ctx,
+	auto&&                          global_name,
+	auto&&                          body_fn
+) -> void {
+	auto printer = global_initializer_printer{ctx, global_name};
+	body_fn();
+}
+
+inline auto inc_header( //
+	ecsact::codegen_plugin_context& ctx,
+	auto&&                          header_path
+) -> void {
+	ctx.write("#include \"", header_path, "\"\n");
+}
+
+inline auto inc_package_header( //
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_package_id               pkg_id
+) -> void {
+	namespace fs = std::filesystem;
+
+	auto main_ecsact_file_path = ecsact::meta::package_file_path(ctx.package_id);
+	if(ctx.package_id == pkg_id) {
+		main_ecsact_file_path.replace_extension(
+			main_ecsact_file_path.extension().string() + ".hh"
+		);
+
+		inc_header(ctx, main_ecsact_file_path.filename().string());
+	} else {
+		auto cpp_header_path = ecsact::meta::package_file_path(pkg_id);
+		cpp_header_path.replace_extension(
+			cpp_header_path.extension().string() + ".hh"
+		);
+		if(main_ecsact_file_path.has_parent_path()) {
+			cpp_header_path =
+				fs::relative(cpp_header_path, main_ecsact_file_path.parent_path());
+		}
+		inc_header(ctx, cpp_header_path.filename().string());
+	}
+}
+
+inline auto is_transient_component(
+	ecsact_package_id        package_id,
+	ecsact_component_like_id comp_id
+) -> bool {
+	auto transient_ids = ecsact::meta::get_transient_ids(package_id);
+	for(auto transient_id : transient_ids) {
+		auto transient_component_like_id =
+			ecsact_id_cast<ecsact_component_like_id>(transient_id);
+		if(transient_component_like_id == comp_id) {
+			return true;
+		}
+	}
+	return false;
+}
+
+class method_printer {
+	using parameters_list_t = std::vector<std::pair<std::string, std::string>>;
+
+	bool                             disposed = false;
+	std::optional<parameters_list_t> parameters;
+	ecsact::codegen_plugin_context&  ctx;
+
+	auto _parameter(std::string param_type, std::string param_name) -> void {
+		assert(!disposed);
+		if(disposed) {
+			return;
+		}
+
+		assert(
+			parameters.has_value() &&
+			"Cannot set parametrs after return type has been set"
+		);
+		parameters->push_back({param_type, param_name});
+	}
+
+	auto _return_type(std::string type) {
+		assert(!disposed);
+		if(disposed) {
+			return;
+		}
+
+		assert(parameters.has_value());
+		if(!parameters.has_value()) {
+			return;
+		}
+
+		if(!parameters->empty()) {
+			ctx.write("\n");
+		}
+
+		for(auto i = 0; parameters->size() > i; ++i) {
+			auto&& [param_type, param_name] = parameters->at(i);
+			ctx.write("\t", param_type, " ", param_name);
+			if(i + 1 < parameters->size()) {
+				ctx.write(",");
+			}
+			ctx.write("\n");
+		}
+
+		parameters = std::nullopt;
+
+		ctx.write(") -> ", type, " {");
+		ctx.indentation += 1;
+		ctx.write("\n");
+	}
+
+public:
+	method_printer( //
+		ecsact::codegen_plugin_context& ctx,
+		std::string                     method_name
+	)
+		: ctx(ctx) {
+		parameters.emplace();
+		ctx.write("auto ", method_name, "(");
+	}
+
+	method_printer(method_printer&& other) : ctx(other.ctx) {
+		disposed = other.disposed;
+
+		if(!disposed) {
+			parameters = std::move(other.parameters);
+		}
+
+		other.disposed = true;
+	}
+
+	auto parameter(
+		std::string param_type,
+		std::string param_name
+	) & -> method_printer& {
+		_parameter(param_type, param_name);
+		return *this;
+	}
+
+	auto parameter(
+		std::string param_type,
+		std::string param_name
+	) && -> method_printer {
+		_parameter(param_type, param_name);
+		return std::move(*this);
+	}
+
+	auto return_type(std::string type) & -> method_printer& {
+		_return_type(type);
+		return *this;
+	}
+
+	auto return_type(std::string type) && -> method_printer {
+		_return_type(type);
+		return std::move(*this);
+	}
+
+	~method_printer() {
+		if(disposed) {
+			return;
+		}
+		disposed = true;
+		ctx.indentation -= 1;
+		ctx.write("\n}\n\n");
+	}
+};
+
+} // namespace ecsact::rt_entt_codegen::util

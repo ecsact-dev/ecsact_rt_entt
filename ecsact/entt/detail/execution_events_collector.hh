@@ -3,7 +3,7 @@
 #include <type_traits>
 #include "ecsact/runtime/core.h"
 
-namespace ecsact_entt_rt {
+namespace ecsact::entt::detail {
 
 struct execution_events_collector {
 	const ecsact_execution_events_collector* target;
@@ -123,4 +123,4 @@ struct execution_events_collector {
 	}
 };
 
-} // namespace ecsact_entt_rt
+} // namespace ecsact::entt::detail

@@ -120,3 +120,39 @@ system AddsAutoRemovedTag {
 	adds AutoRemovedTag;
 }
 
+component AddA;
+component AddB;
+
+system TestTwoAdds {
+	readonly Health;
+	adds AddA;
+	adds AddB;
+}
+
+system TestOneAdd {
+	readonly Health;
+	adds AddA;
+}
+
+component RemoveA;
+component RemoveB;
+
+system TestTwoRemoves {
+	removes RemoveA;
+	removes RemoveB;
+}
+
+component ParentComponent {
+	i32 a;
+}
+
+component NestedComponent {
+	f32 b;
+};
+
+system ParentSystem {
+	readwrite ParentComponent;
+	system NestedSystem {
+		readwrite NestedComponent;
+	}
+}
