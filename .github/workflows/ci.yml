@@ -11,13 +11,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  formatting-check:
-    name: Formatting Check
+  linter:
+    name: Linter
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: jidicula/clang-format-action@v4.9.0
-        with: { clang-format-version: "15" }
+      - run: 'bazel --bazelrc=.bazelrc --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc build //... -k'
+      - run: 'bazel --bazelrc=.bazelrc --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc run @hedron_compile_commands//:refresh_all'
+      - uses: cpp-linter/cpp-linter-action@77982d55693d154611fbb8b1304a447c44ae6f2d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: file
+          version: 16
+          files-changed-only: false
+          database: '.'
+
   test-windows:
     runs-on: windows-latest
     steps:
@@ -31,6 +40,7 @@ jobs:
       - run: bazel  --bazelrc=.bazelrc --bazelrc=.github/workflows/ci-windows.bazelrc test //...
   test-linux:
     runs-on: ubuntu-latest
+    needs: linter
     steps:
       - uses: actions/checkout@v3
       - name: Mount bazel caches
