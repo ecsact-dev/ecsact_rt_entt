@@ -1,19 +1,12 @@
 workspace(name = "ecsact_rt_entt")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 
 http_archive(
     name = "com_github_skypjack_entt",
     sha256 = "0ac010f232d3089200c5e545bcbd6480cf68b705de6930d8ff7cdb0a29f5b47b",
     strip_prefix = "entt-3.11.1",
     url = "https://github.com/skypjack/entt/archive/refs/tags/v3.11.1.tar.gz",
-)
-
-http_archive(
-    name = "rules_ecsact",
-    sha256 = "c170cebbee0af5bf9a26e9d038aa32e3c164aa8cc7f2d4f3996e19bf3510dd0f",
-    strip_prefix = "rules_ecsact-0.2.3",
-    url = "https://github.com/ecsact-dev/rules_ecsact/archive/refs/tags/0.2.3.tar.gz",
 )
 
 http_archive(
@@ -25,16 +18,40 @@ http_archive(
 
 http_archive(
     name = "ecsact_runtime",
-    sha256 = "ba5b8f1649fc86b9c803ab852d0612e2d100a64e2a06a13b612e111bf8d18735",
-    strip_prefix = "ecsact_runtime-c6cdc81000bbee028a8e7a2bc95fc35711db1b75",
-    url = "https://github.com/ecsact-dev/ecsact_runtime/archive/c6cdc81000bbee028a8e7a2bc95fc35711db1b75.zip",
+    sha256 = "dfc71e519d24b943c855d288d19f539fc9b9c65636c0376c7febb865233161b6",
+    strip_prefix = "ecsact_runtime-0.2.0",
+    urls = ["https://github.com/ecsact-dev/ecsact_runtime/archive/refs/tags/0.2.0.tar.gz"],
 )
 
-load("@rules_ecsact//ecsact:repositories.bzl", "ecsact_register_toolchains", "rules_ecsact_dependencies")
+http_file(
+    name = "ecsact_cli_windows",
+    url = "https://github.com/ecsact-dev/ecsact_cli/releases/download/0.1.0/ecsact_0.1.0_windows_x64.exe",
+    executable = True,
+    downloaded_file_path = "ecsact.exe",
+)
+
+http_file(
+    name = "ecsact_cli_linux",
+    url = "https://github.com/ecsact-dev/ecsact_cli/releases/download/0.1.0/ecsact_0.1.0_linux_x64",
+    executable = True,
+    downloaded_file_path = "ecsact",
+)
+
+http_archive(
+    name = "rules_ecsact",
+    sha256 = "3db6d498a681e036dabdcc1bb7e5ee254acadae4ab2ecf19d253f824db88d5e4",
+    strip_prefix = "rules_ecsact-0.3.0",
+    urls = ["https://github.com/ecsact-dev/rules_ecsact/archive/refs/tags/0.3.0.tar.gz"],
+)
+
+load("@rules_ecsact//ecsact:repositories.bzl", "rules_ecsact_dependencies")
 
 rules_ecsact_dependencies()
 
-ecsact_register_toolchains()
+register_toolchains(
+    "//:ecsact_windows_toolchain",
+    "//:ecsact_linux_toolchain",
+)
 
 http_archive(
     name = "com_google_googletest",
