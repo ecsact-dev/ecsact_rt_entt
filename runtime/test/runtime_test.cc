@@ -94,6 +94,9 @@ void runtime_test::AttackDamageWeakened::impl(context& ctx) {
 	// target_ctx.update(target_health);
 }
 
+void runtime_test::AddsAutoRemovedTag::impl(context& ctx) {
+}
+
 static std::atomic_bool AddAssocTest_ran = false;
 
 void runtime_test::AddAssocTest::impl(context& ctx) {

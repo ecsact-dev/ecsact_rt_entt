@@ -102,7 +102,7 @@ static inline void _add_fn(
 	);
 
 	if constexpr(std::is_empty_v<Component>) {
-		typed_context.template add<Component>();
+		typed_context.template add<Component>({});
 	} else {
 		typed_context.template add<Component>(
 			*static_cast<const Component*>(component_data)
