@@ -27,6 +27,8 @@ component EmptyComponent;
 
 component AlwaysRemoveMe;
 
+transient AutoRemovedTag;
+
 system SimpleSystem {
 	readwrite ComponentA;
 }
@@ -111,5 +113,10 @@ component EntityTesting {
 
 system SimpleIncrementImportedComp {
 	readwrite imported.test_pkg.ImportedComponent;
+}
+
+system AddsAutoRemovedTag {
+	readwrite ComponentA;
+	adds AutoRemovedTag;
 }
 
