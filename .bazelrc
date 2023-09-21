@@ -1,6 +1,3 @@
-# workaround long path issues on GitHub actions Windows machine
-startup:ci --output_user_root=C:/tmp
-
 import %workspace%/bazel/common.bazelrc
 
 try-import %workspace%/user.bazelrc
