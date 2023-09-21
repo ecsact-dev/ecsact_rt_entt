@@ -1,75 +1,4 @@
-workspace(name = "ecsact_rt_entt")
-
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-
-http_archive(
-    name = "com_github_skypjack_entt",
-    sha256 = "0ac010f232d3089200c5e545bcbd6480cf68b705de6930d8ff7cdb0a29f5b47b",
-    strip_prefix = "entt-3.11.1",
-    url = "https://github.com/skypjack/entt/archive/refs/tags/v3.11.1.tar.gz",
-)
-
-http_archive(
-    name = "ecsact_lang_cpp",
-    sha256 = "7ecf1d23fba53edfa5abf75498028b03068970a044eab3c703bd74b1edb0b2d5",
-    strip_prefix = "ecsact_lang_cpp-0.2.0",
-    urls = ["https://github.com/ecsact-dev/ecsact_lang_cpp/archive/refs/tags/0.2.0.tar.gz"],
-)
-
-http_archive(
-    name = "ecsact_runtime",
-    sha256 = "dfc71e519d24b943c855d288d19f539fc9b9c65636c0376c7febb865233161b6",
-    strip_prefix = "ecsact_runtime-0.2.0",
-    urls = ["https://github.com/ecsact-dev/ecsact_runtime/archive/refs/tags/0.2.0.tar.gz"],
-)
-
-http_file(
-    name = "ecsact_cli_windows",
-    url = "https://github.com/ecsact-dev/ecsact_cli/releases/download/0.1.0/ecsact_0.1.0_windows_x64.exe",
-    executable = True,
-    downloaded_file_path = "ecsact.exe",
-)
-
-http_file(
-    name = "ecsact_cli_linux",
-    url = "https://github.com/ecsact-dev/ecsact_cli/releases/download/0.1.0/ecsact_0.1.0_linux_x64",
-    executable = True,
-    downloaded_file_path = "ecsact",
-)
-
-http_archive(
-    name = "rules_ecsact",
-    sha256 = "3db6d498a681e036dabdcc1bb7e5ee254acadae4ab2ecf19d253f824db88d5e4",
-    strip_prefix = "rules_ecsact-0.3.0",
-    urls = ["https://github.com/ecsact-dev/rules_ecsact/archive/refs/tags/0.3.0.tar.gz"],
-)
-
-load("@rules_ecsact//ecsact:repositories.bzl", "rules_ecsact_dependencies")
-
-rules_ecsact_dependencies()
-
-register_toolchains(
-    "//:ecsact_windows_toolchain",
-    "//:ecsact_linux_toolchain",
-)
-
-http_archive(
-    name = "com_google_googletest",
-    sha256 = "ca6c78876bd052a7730dd717ba083e7351e26b3cfa68c5e3babd1b9d9925402e",
-    strip_prefix = "googletest-0e0d9feefab1b51aaab9dfd70132e93c0b6964e5",
-    url = "https://github.com/google/googletest/archive/0e0d9feefab1b51aaab9dfd70132e93c0b6964e5.zip",
-)
-
-http_archive(
-    name = "boost",
-    sha256 = "4a79c389add7e3d54d0e12c83098d471d24536ba2d6b8593d3a95f151f25eebb",
-    strip_prefix = "boost-da62319c330d81ef032517cbe13b6f35d97387cb",
-    urls = ["https://github.com/bazelboost/boost/archive/da62319c330d81ef032517cbe13b6f35d97387cb.zip"],
-)
-
-load("@boost//:index.bzl", "boost_http_archives")
-
-boost_http_archives()
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "hedron_compile_commands",
@@ -97,9 +26,7 @@ load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
 
 llvm_toolchain(
     name = "llvm_toolchain",
-    cxx_standard = {"linux": "c++20"},
-    distribution = "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz",
-    llvm_version = "15.0.6",
+    llvm_version = "16.0.4",
 )
 
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")

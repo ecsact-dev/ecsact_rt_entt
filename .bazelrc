@@ -1,16 +1,3 @@
-startup --windows_enable_symlinks
-build --enable_platform_specific_config
-build --incompatible_use_platforms_repo_for_constraints
-build --incompatible_enable_cc_toolchain_resolution
-build --incompatible_strict_action_env
-build --enable_runfiles
-
-build:windows --platforms=//bazel/platforms:windows
-build:windows --host_platform=//bazel/platforms:windows
-
-build:linux --platforms=//bazel/platforms:linux
-build:linux --extra_toolchains=@llvm_toolchain//:cc-toolchain-x86_64-linux
-
-build:no-warnings --per_file_copt=//.*@-Werror
+import %workspace%/bazel/common.bazelrc
 
 try-import %workspace%/user.bazelrc

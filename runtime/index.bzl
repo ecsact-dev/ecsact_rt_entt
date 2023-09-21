@@ -64,12 +64,12 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
 
     # keep sorted
     _cc_deps = [
-        "@boost//libs/mp11",
-        "@com_github_skypjack_entt//:entt",
+        "@boost.mp11",
         "@ecsact_rt_entt//:lib",
         "@ecsact_runtime//:core",
         "@ecsact_runtime//:dynamic",
         "@ecsact_runtime//:lib",
+        "@entt",
         "%s__public_cc" % name,
     ]
 

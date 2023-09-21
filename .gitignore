@@ -1,5 +1,5 @@
-/bazel-*
-/user.bazelrc
-/compile_commands.json
-/external
-/.cache/
+bazel-*
+user.bazelrc
+compile_commands.json
+external
+.cache

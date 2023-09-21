@@ -1,6 +1,6 @@
-load("@rules_cc//cc:defs.bzl", "cc_test")
-load("//bazel:copts.bzl", "copts")
-load("//runtime:index.bzl", "ecsact_entt_runtime")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
+load("@ecsact_rt_entt//runtime:index.bzl", "ecsact_entt_runtime")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 
 ecsact_codegen(
@@ -38,8 +38,8 @@ cc_test(
     args = ["--gtest_catch_exceptions=0"],
     deps = [
         ":runtime",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -49,8 +49,8 @@ cc_binary(
     copts = copts,
     deps = [
         ":runtime__public_cc",
-        "//:lib",
-        "@boost//libs/mp11",
-        "@com_github_skypjack_entt//:entt",
+        "@ecsact_rt_entt//:lib",
+        "@boost.mp11",
+        "@entt",
     ],
 )
