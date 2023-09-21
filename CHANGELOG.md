@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.2.1 - 2023-09-21
+#### Features
+- bzlmodify (#78) - (dee1e89) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update com_grail_bazel_toolchain digest to 2733561 (#75) - (b614711) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to 3e6d4d9 (#74) - (b15e8d7) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to edc058a (#73) - (de146ad) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to e4fad4e (#72) - (7ddf8cb) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to c217c03 (#71) - (0955a83) - renovate[bot]
+- **(deps)** update com_grail_bazel_toolchain digest to 9d8cc8a (#69) - (dcb5966) - renovate[bot]
+- **(deps)** update bazel c++ tooling repositories (#68) - (2bf2c9a) - renovate[bot]
+- **(deps)** update bazel c++ tooling repositories (#66) - (b337746) - renovate[bot]
+
+- - -
+
 ## 0.2.0 - 2023-06-24
 #### Bug Fixes
 - tag components can now be added (#62) - (dd15872) - Ezekiel Warren
