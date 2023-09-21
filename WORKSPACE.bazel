@@ -55,9 +55,9 @@ register_toolchains(
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "ca6c78876bd052a7730dd717ba083e7351e26b3cfa68c5e3babd1b9d9925402e",
-    strip_prefix = "googletest-0e0d9feefab1b51aaab9dfd70132e93c0b6964e5",
-    url = "https://github.com/google/googletest/archive/0e0d9feefab1b51aaab9dfd70132e93c0b6964e5.zip",
+    sha256 = "530c078038b8d216ee2527ca603740e2922b832f0436366892cef7f806dd38f6",
+    strip_prefix = "googletest-adc514538678a61b13c240f7b41babbc03b2ac24",
+    url = "https://github.com/google/googletest/archive/adc514538678a61b13c240f7b41babbc03b2ac24.zip",
 )
 
 http_archive(
