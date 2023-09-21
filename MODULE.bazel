@@ -1,0 +1,19 @@
+module(
+    name = "ecsact_rt_entt",
+    version = "0.2.0",
+    compatibility_level = 2,
+)
+
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "bazel_skylib", version = "1.4.2")
+bazel_dep(name = "rules_ecsact", version = "0.4.0")
+bazel_dep(name = "ecsact_runtime", version = "0.5.1")
+bazel_dep(name = "ecsact_lang_cpp", version = "0.3.0")
+bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
+bazel_dep(name = "entt", version = "3.12.2")
+
+ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact")
+ecsact.sdk_toolchain(version = "0.6.2")
+use_repo(ecsact, "ecsact_sdk", "ecsact_toolchains")
+
+register_toolchains("@ecsact_toolchains//:all")

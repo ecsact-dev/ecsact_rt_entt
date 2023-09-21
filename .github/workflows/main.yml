@@ -1,0 +1,50 @@
+# This file is maintained by ecsact-dev/ecsact_common
+# If changes are required please make them there
+
+name: main
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jidicula/clang-format-action@v4.9.0
+        with: { clang-format-version: "16" }
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: ecsact-dev/github-action@0.1.0
+      - uses: actions/cache@v3
+        with:
+          path: |
+            /Users/runneradmin/AppData/Local/bazelisk
+            /Users/runneradmin/.cache/bazel-disk-cache
+          key: ${{runner.os}}-bazel-cache
+      - uses: actions/checkout@v4
+      - run: bazelisk --output_user_root=C:/tmp build --config=ci //...
+      - if: ${{ hashfiles('test/MODULE.bazel') != '' }}
+        run: bazelisk --output_user_root=C:/tmp test --config=ci ...
+        working-directory: test
+
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ecsact-dev/github-action@0.1.0
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/bazelisk
+            ~/.cache/bazel-disk-cache
+          key: ${{runner.os}}-bazel-cache
+      - uses: actions/checkout@v4
+      - run: bazelisk build --config=ci //...
+      - if: ${{ hashfiles('test/MODULE.bazel') != '' }}
+        run: bazelisk test --config=ci ...
+        working-directory: test
