@@ -11,10 +11,11 @@ bazel_dep(name = "rules_ecsact", version = "0.4.0")
 bazel_dep(name = "ecsact_lang_cpp", version = "0.3.0")
 bazel_dep(name = "ecsact_runtime", version = "0.5.1")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
+bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2")
 bazel_dep(name = "entt", version = "3.12.2")
-bazel_dep(name = "ecsact_rt_entt")
+bazel_dep(name = "ecsact_cli", version = "0.2.1")
 
-local_path_override(
-    module_name = "ecsact_rt_entt",
-    path = "..",
-)
+bazel_dep(name = "ecsact_rt_entt")
+local_path_override(module_name = "ecsact_rt_entt", path = "..")
+
+register_toolchains("@ecsact_cli//:all")
