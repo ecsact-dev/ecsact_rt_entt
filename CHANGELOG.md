@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.2.2 - 2023-09-22
+#### Bug Fixes
+- remove toolchain config ecsact (#79) - (55afa5e) - Ezekiel Warren
+
+- - -
+
 ## 0.2.1 - 2023-09-21
 #### Features
 - bzlmodify (#78) - (dee1e89) - Ezekiel Warren
