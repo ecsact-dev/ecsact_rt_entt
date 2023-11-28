@@ -111,7 +111,7 @@ component EntityTesting {
 	i32 a;
 }
 
-system SimpleIncrementImportedComp {
+system SimpleIncrementImportedComp(parallel) {
 	readwrite imported.test_pkg.ImportedComponent;
 }
 

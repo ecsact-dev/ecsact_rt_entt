@@ -692,71 +692,93 @@ private:
 		using caps_info = ecsact::system_capabilities_info<SystemT>;
 		using associations = typename caps_info::associations;
 
+		constexpr auto parallel_hint =
+			ecsact::system_parallel_execution<SystemT>::value;
+
 		auto assoc_views = system_association_views<SystemT>(info.registry);
 		auto assoc_views_itrs = system_association_views_iterators(assoc_views);
 
 		auto        view = system_view<SystemT>(info.registry);
 		const void* action_data = nullptr;
 
+		auto itr_view_one = [&](entt_entity_type entity) {
+			_execute_system_user_itr<SystemT, ChildSystemsListT>(
+				info,
+				view,
+				assoc_views,
+				entity,
+				parent,
+				action_data,
+				actions
+			);
+		};
+
 		auto itr_view = [&] {
-			for(auto entity : view) {
-				bool missing_assoc_entities = false;
-				mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
-					using boost::mp11::mp_at;
-					using boost::mp11::mp_size_t;
-
-					using Assoc = mp_at<associations, mp_size_t<I>>;
-					using ComponentT = typename Assoc::component_type;
-
-					constexpr auto offset = Assoc::field_offset;
-
-					auto& assoc_view = std::get<I>(assoc_views);
-					auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
-					if(assoc_view.begin() == assoc_view.end()) {
-						missing_assoc_entities = true;
-						return;
+			if constexpr(mp_size<associations>::value == 0) {
+				if constexpr(parallel_hint) {
+					std::for_each(
+						std::execution::par_unseq,
+						view.begin(),
+						view.end(),
+						[&](auto entity) { itr_view_one(entity); }
+					);
+				} else {
+					for(auto entity : view) {
+						itr_view_one(entity);
 					}
+				}
+			} else {
+				for(auto entity : view) {
+					bool missing_assoc_entities = false;
+					mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+						using boost::mp11::mp_at;
+						using boost::mp11::mp_size_t;
 
-					assert(view.contains(entity));
-					auto& comp = view.template get<ComponentT>(entity);
+						using Assoc = mp_at<associations, mp_size_t<I>>;
+						using ComponentT = typename Assoc::component_type;
 
-					ecsact::entt::entity_id field_entity_value =
-						*reinterpret_cast<const ecsact_entity_id*>(
-							reinterpret_cast<const char*>(&comp) + offset
-						);
+						constexpr auto offset = Assoc::field_offset;
 
-					bool found_associated_entity = *assoc_view_itr ==
-						field_entity_value.as_entt();
-					if(!found_associated_entity) {
-						assoc_view_itr = assoc_view.begin();
-						for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
-							found_associated_entity = *assoc_view_itr ==
-								field_entity_value.as_entt();
-							if(found_associated_entity) {
-								break;
+						auto& assoc_view = std::get<I>(assoc_views);
+						auto& assoc_view_itr = std::get<I>(assoc_views_itrs);
+						if(assoc_view.begin() == assoc_view.end()) {
+							missing_assoc_entities = true;
+							return;
+						}
+
+						assert(view.contains(entity));
+						auto& comp = view.template get<ComponentT>(entity);
+
+						ecsact::entt::entity_id field_entity_value =
+							*reinterpret_cast<const ecsact_entity_id*>(
+								reinterpret_cast<const char*>(&comp) + offset
+							);
+
+						bool found_associated_entity = *assoc_view_itr ==
+							field_entity_value.as_entt();
+						if(!found_associated_entity) {
+							assoc_view_itr = assoc_view.begin();
+							for(; assoc_view_itr != assoc_view.end(); ++assoc_view_itr) {
+								found_associated_entity = *assoc_view_itr ==
+									field_entity_value.as_entt();
+								if(found_associated_entity) {
+									break;
+								}
 							}
 						}
-					}
 
-					if(!found_associated_entity) {
-						missing_assoc_entities = true;
-					}
-				});
-
-				if(!missing_assoc_entities) {
-					_execute_system_user_itr<SystemT, ChildSystemsListT>(
-						info,
-						view,
-						assoc_views,
-						entity,
-						parent,
-						action_data,
-						actions
-					);
-
-					mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
-						++std::get<I>(assoc_views_itrs);
+						if(!found_associated_entity) {
+							missing_assoc_entities = true;
+						}
 					});
+
+					if(!missing_assoc_entities) {
+						itr_view_one(entity);
+
+						mp_for_each<mp_iota_c<mp_size<associations>::value>>([&](auto I) {
+							++std::get<I>(assoc_views_itrs);
+						});
+					}
 				}
 			}
 		};
