@@ -6,8 +6,15 @@ module(
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.4.2")
-bazel_dep(name = "rules_ecsact", version = "0.4.0")
+bazel_dep(name = "rules_ecsact", version = "0.4.7")
 bazel_dep(name = "ecsact_runtime", version = "0.5.1")
 bazel_dep(name = "ecsact_lang_cpp", version = "0.3.0")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
 bazel_dep(name = "entt", version = "3.12.2")
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+
+git_override(
+    module_name = "hedron_compile_commands",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    commit = "204aa593e002cbd177d30f11f54cff3559110bb9",
+)
