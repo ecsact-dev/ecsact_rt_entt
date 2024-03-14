@@ -1,10 +1,11 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
 load("@ecsact_rt_entt//runtime:index.bzl", "ecsact_entt_runtime")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 
 ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",
+    output_directory = "_ecsact_cc_system_impl_srcs",
     srcs = [
         "runtime_test.ecsact",
         "imported_pkg.ecsact",

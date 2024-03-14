@@ -8,7 +8,7 @@ bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.4.2")
 bazel_dep(name = "googletest", version = "1.14.0")
 bazel_dep(name = "rules_ecsact", version = "0.4.7")
-bazel_dep(name = "ecsact_lang_cpp", version = "0.3.0")
+bazel_dep(name = "ecsact_lang_cpp", version = "0.3.2")
 bazel_dep(name = "ecsact_runtime", version = "0.5.1")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
 bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2")
@@ -16,6 +16,17 @@ bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "ecsact_cli", version = "0.2.1")
 bazel_dep(name = "toolchains_llvm", version = "0.10.3")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+
+local_path_override(
+    module_name = "rules_ecsact",
+    path = "C:/Users/zekew/projects/ecsact-dev/rules_ecsact",
+)
+
+# git_override(
+#     module_name = "ecsact_codegen",
+#     remote = "https://github.com/ecsact-dev/ecsact_codegen.git",
+#     commit = "1c4a1ce8393dc1bd2691f5416cb22a127a1e76b6",
+# )
 
 git_override(
     module_name = "hedron_compile_commands",
