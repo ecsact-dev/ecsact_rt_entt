@@ -3,3 +3,4 @@ user.bazelrc
 compile_commands.json
 external
 .cache
+*.bazel.lock
