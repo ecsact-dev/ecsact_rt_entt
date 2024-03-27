@@ -20,6 +20,8 @@ jobs:
   test-windows:
     runs-on: windows-latest
     steps:
+      - name: Ecsact SDK
+        uses: ecsact-dev/github-action@0.1.0
       - uses: actions/cache@v3
         with:
           path: |
@@ -35,6 +37,8 @@ jobs:
   test-linux:
     runs-on: ubuntu-latest
     steps:
+      - name: Ecsact SDK
+        uses: ecsact-dev/github-action@0.1.0
       - uses: actions/cache@v3
         with:
           path: |

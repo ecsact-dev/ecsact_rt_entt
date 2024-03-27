@@ -6,7 +6,7 @@ copts = selects.with_or({
         "-std=c++20",
     ],
     ("@rules_cc//cc/compiler:clang"): [
-        "-std=c++2b",
+        "-std=c++20",
         "-fexperimental-library",
     ],
     ("@rules_cc//cc/compiler:msvc-cl", "@rules_cc//cc/compiler:clang-cl"): [

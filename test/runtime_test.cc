@@ -105,6 +105,7 @@ void runtime_test::AddAssocTest::impl(context& ctx) {
 
 	// Get Target other context from OtherEntityComponent
 	auto target_ctx = ctx._ctx.other(other_entity.target);
+	assert(target_ctx._ctx != nullptr);
 	target_ctx.add(AddAssocTestComponent{.num = 10});
 }
 
@@ -117,6 +118,21 @@ void runtime_test::RemoveAssocTest::impl(context& ctx) {
 	// Get Target other context from OtherEntityComponent
 	auto target_ctx = ctx._ctx.other(other_entity.target);
 	target_ctx.remove<RemoveAssocTestComponent>();
+}
+
+void runtime_test::TestTwoAdds::impl(context& ctx) {
+}
+
+void runtime_test::TestOneAdd::impl(context& ctx) {
+}
+
+void runtime_test::TestTwoRemoves::impl(context& ctx) {
+}
+
+void runtime_test::ParentSystem::impl(context& ctx) {
+}
+
+void runtime_test::ParentSystem::NestedSystem::impl(context& ctx) {
 }
 
 TEST(Core, CreateRegistry) {
@@ -444,8 +460,8 @@ TEST(Core, AddAssocOk) {
 	AddAssocTest_ran = false;
 	AssocTestAction_ran = false;
 	auto exec_err = reg.execute_systems(std::array{options});
-	EXPECT_TRUE(AddAssocTest_ran) << "AddAssocTest Impl Didn't Executed";
-	EXPECT_TRUE(AssocTestAction_ran) << "AssocTestAction Impl Didn't Executed";
+	EXPECT_TRUE(AddAssocTest_ran) << "AddAssocTest Impl Didn't Execute";
+	EXPECT_TRUE(AssocTestAction_ran) << "AssocTestAction Impl Didn't Execute";
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
 	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
