@@ -1,13 +1,24 @@
 """
 """
 
-load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 
 def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
     """
     """
+
+    ecsact_codegen(
+        name = "%s__cc_srcs" % name,
+        srcs = srcs,
+        tags = tags,
+        plugins = [
+            "@ecsact_rt_entt//rt_entt_codegen",
+        ],
+        output_directory = "_%s__cc_srcs" % name,
+        **kwargs
+    )
 
     ecsact_codegen(
         name = "%s__public_hdrs" % name,
@@ -19,6 +30,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
             "@ecsact_lang_cpp//systems_header_codegen",
             "@ecsact_lang_cpp//cpp_meta_header_codegen",
         ],
+        output_directory = "_%s__public_hdrs" % name,
         **kwargs
     )
 
@@ -27,7 +39,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         hdrs = [":%s__public_hdrs" % name],
         tags = tags,
         copts = copts,
-        strip_include_prefix = "%s__public_hdrs" % name,
+        strip_include_prefix = "_%s__public_hdrs" % name,
         deps = [
             "@ecsact_lang_cpp//:execution_context",
             "@ecsact_lang_cpp//:type_info",
@@ -60,6 +72,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
 
     _cc_srcs = [
         "@ecsact_rt_entt//runtime:sources",
+        "%s__cc_srcs" % name,
     ]
 
     # keep sorted
