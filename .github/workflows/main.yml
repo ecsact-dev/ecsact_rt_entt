@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Ecsact SDK
         uses: ecsact-dev/github-action@0.1.0
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             /Users/runneradmin/AppData/Local/bazelisk
@@ -39,7 +39,7 @@ jobs:
     steps:
       - name: Ecsact SDK
         uses: ecsact-dev/github-action@0.1.0
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/bazelisk
