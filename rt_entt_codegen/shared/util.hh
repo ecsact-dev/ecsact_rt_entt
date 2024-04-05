@@ -154,7 +154,7 @@ class method_printer {
 
 		assert(
 			parameters.has_value() &&
-			"Cannot set parametrs after return type has been set"
+			"Cannot set parameters after return type has been set"
 		);
 		parameters->push_back({param_type, param_name});
 	}
