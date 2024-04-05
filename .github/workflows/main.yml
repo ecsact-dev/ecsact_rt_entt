@@ -4,42 +4,44 @@
 name: main
 
 on:
-  push:
-    branches:
-      - "**"
+  pull_request:
+  merge_group:
 
 jobs:
+  typos-check:
+    name: Typos Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@v1.19.0
+
   formatting-check:
     name: Formatting Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: jidicula/clang-format-action@v4.9.0
-        with: { clang-format-version: "16" }
+      - uses: jidicula/clang-format-action@v4.11.0
+        with: { clang-format-version: "18" }
 
   test-windows:
     runs-on: windows-latest
     steps:
-      - name: Ecsact SDK
-        uses: ecsact-dev/github-action@0.1.0
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             /Users/runneradmin/AppData/Local/bazelisk
             /Users/runneradmin/.cache/bazel-disk-cache
           key: ${{runner.os}}-bazel-cache
       - uses: actions/checkout@v4
-      - run: bazelisk --output_user_root=C:/tmp build --config=ci //...
+      - run: bazelisk build --config=ci //...
       - if: ${{ hashfiles('test/MODULE.bazel') != '' }}
-        run: bazelisk --output_user_root=C:/tmp test --config=ci ...
+        run: bazelisk test --config=ci ...
         working-directory: test
 
   test-linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Ecsact SDK
-        uses: ecsact-dev/github-action@0.1.0
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/bazelisk

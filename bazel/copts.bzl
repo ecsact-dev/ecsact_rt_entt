@@ -10,7 +10,7 @@ copts = selects.with_or({
         "-fexperimental-library",
     ],
     ("@rules_cc//cc/compiler:msvc-cl", "@rules_cc//cc/compiler:clang-cl"): [
-        "/std:c++latest",
+        "/std:c++20",
         "/permissive-",
         "/Zc:preprocessor",
     ],

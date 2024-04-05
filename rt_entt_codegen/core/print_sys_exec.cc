@@ -443,8 +443,9 @@ static auto print_sys_exec_ctx_generate(
 	});
 }
 
-static auto print_sys_exec_ctx_parent(ecsact::codegen_plugin_context& ctx)
-	-> void {
+static auto print_sys_exec_ctx_parent( //
+	ecsact::codegen_plugin_context& ctx
+) -> void {
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	auto printer = //
@@ -761,8 +762,9 @@ static auto get_unique_view_name() -> std::string {
 }
 
 template<typename ComponentLikeID>
-static auto create_context_struct_name(ComponentLikeID component_like_id)
-	-> std::string {
+static auto create_context_struct_name( //
+	ComponentLikeID component_like_id
+) -> std::string {
 	using ecsact::cc_lang_support::c_identifier;
 	auto full_name =
 		c_identifier(ecsact::meta::decl_full_name(component_like_id));
@@ -770,8 +772,9 @@ static auto create_context_struct_name(ComponentLikeID component_like_id)
 }
 
 template<typename ComponentLikeID>
-static auto create_context_var_name(ComponentLikeID component_like_id)
-	-> std::string {
+static auto create_context_var_name( //
+	ComponentLikeID component_like_id
+) -> std::string {
 	using ecsact::cc_lang_support::c_identifier;
 	auto full_name =
 		c_identifier(ecsact::meta::decl_full_name(component_like_id));
