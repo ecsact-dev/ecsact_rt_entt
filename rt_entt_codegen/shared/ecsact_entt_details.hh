@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
-#include <ecsact/runtime/common.h>
+#include "ecsact/runtime/common.h"
 
 namespace ecsact::rt_entt_codegen {
 
