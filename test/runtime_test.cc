@@ -613,7 +613,7 @@ TEST(Core, AssociationEntityCorrectness) {
 			ecsact::execution_context ctx{cctx};
 			ASSERT_TRUE(attacker_entities.contains(ctx.entity()));
 
-			// Santity check - no exception
+			// Sanity check - no exception
 			ctx.other(ctx.get<runtime_test::Attacking>().target);
 		}
 	);

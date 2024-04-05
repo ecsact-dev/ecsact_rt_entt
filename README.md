@@ -4,7 +4,7 @@
 
 ## System Views
 
-In the simpliest cases an Ecsact system lines up 1:1 with an EnTT view.
+In the simplest cases an Ecsact system lines up 1:1 with an EnTT view.
 
 ```ecsact
 package example;

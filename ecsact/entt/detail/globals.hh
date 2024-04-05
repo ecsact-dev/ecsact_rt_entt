@@ -9,7 +9,7 @@
 #include "ecsact/entt/detail/system_execution_context.hh"
 
 /**
- * A small set of globals exepected to be available the ecsact_rt_entt_codegen
+ * A small set of globals expected to be available the ecsact_rt_entt_codegen
  * generated source.
  */
 namespace ecsact::entt::detail::globals {
