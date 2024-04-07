@@ -62,4 +62,7 @@ struct created_entity {
 
 struct destroyed_entity {};
 
+template<typename S>
+struct system_sorted;
+
 } // namespace ecsact::entt::detail

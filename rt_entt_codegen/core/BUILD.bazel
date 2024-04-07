@@ -22,6 +22,7 @@ _CORE_CODEGEN_METHODS = {
     ],
     "check_error_template_specializations": [],
     "execution_options": [],
+    "sorting_components": [],
 }
 
 [cc_library(

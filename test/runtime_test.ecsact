@@ -156,3 +156,25 @@ system ParentSystem {
 		readwrite NestedComponent;
 	}
 }
+
+component TestLazySystemComponentA {
+    i8 ai8;
+    u8 au8;
+    i16 ai16;
+    u16 au16;
+    i32 ai32;
+    u32 au32;
+    f32 af32;
+}
+
+component TestLazySystemComponentB {
+    i32 num;
+}
+
+component TestLazySystemTag;
+
+system TestLazySystem(lazy) {
+    include TestLazySystemTag;
+    readwrite TestLazySystemComponentA;
+    readwrite TestLazySystemComponentB;
+}

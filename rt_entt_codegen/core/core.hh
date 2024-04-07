@@ -51,4 +51,9 @@ auto print_cleanup_ecsact_component_events( //
 	const ecsact_entt_details& details
 ) -> void;
 
+auto print_entity_sorting_components( //
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
 } // namespace ecsact::rt_entt_codegen::core

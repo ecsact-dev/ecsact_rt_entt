@@ -16,7 +16,7 @@
   },
   "localOverrideHashes": {
     "bazel_tools": "1ae69322ac3823527337acf02016e8ee95813d8d356f47060255b8956fa642f0",
-    "ecsact_rt_entt": "9a287752911fcdc57aaaad55840931e990c56b3fffe3dceae2eef0582be50581"
+    "ecsact_rt_entt": "392dd8ebbe3c172b1c4e21aaa8d14c2f4ea0efbfb932d87f224a0787c2b15f77"
   },
   "moduleDepGraph": {
     "<root>": {
@@ -627,6 +627,7 @@
         "entt": "entt@3.12.2",
         "ecsact_codegen": "ecsact_codegen@0.2.0",
         "ecsact_cli": "ecsact_cli@0.3.4",
+        "xxhash": "xxhash@0.8.2",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
       }
@@ -1965,6 +1966,35 @@
           "integrity": "sha256-T7NE8zouucceud/lWIjSLhCLffm3cVgQzIIw805irRc=",
           "strip_prefix": "",
           "remote_patches": {},
+          "remote_patch_strip": 0
+        }
+      }
+    },
+    "xxhash@0.8.2": {
+      "name": "xxhash",
+      "version": "0.8.2",
+      "key": "xxhash@0.8.2",
+      "repoName": "xxhash",
+      "executionPlatformsToRegister": [],
+      "toolchainsToRegister": [],
+      "extensionUsages": [],
+      "deps": {
+        "bazel_tools": "bazel_tools@_",
+        "local_config_platform": "local_config_platform@_"
+      },
+      "repoSpec": {
+        "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+        "ruleClassName": "http_archive",
+        "attributes": {
+          "urls": [
+            "https://github.com/Cyan4973/xxHash/archive/refs/tags/v0.8.2.tar.gz"
+          ],
+          "integrity": "sha256-uu4Mav1PAxZd56TmeYjRbw8rJXtR0OPLkZCTAqJqecQ=",
+          "strip_prefix": "xxHash-0.8.2",
+          "remote_patches": {
+            "https://bcr.bazel.build/modules/xxhash/0.8.2/patches/add_build_file.patch": "sha256-WQDdUpYas3Sbezqz0dJ5kMdr/c729ki+QLZv4iwEOj8=",
+            "https://bcr.bazel.build/modules/xxhash/0.8.2/patches/module_dot_bazel.patch": "sha256-ZLVQs0CBa7/fVGDx0804Hg7ORsWd92G06m2z1N5PeMg="
+          },
           "remote_patch_strip": 0
         }
       }
