@@ -25,7 +25,12 @@ git_override(
 )
 
 bazel_dep(name = "ecsact_rt_entt")
-local_path_override(module_name = "ecsact_rt_entt", path = "..")
+bazel_dep(name = "xxhash", version = "0.8.2")
+
+local_path_override(
+    module_name = "ecsact_rt_entt",
+    path = "..",
+)
 
 register_toolchains("@ecsact_cli//:all")
 

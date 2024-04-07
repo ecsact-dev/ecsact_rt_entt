@@ -25,6 +25,12 @@ static auto print_system_entity_sorting_component_struct(
 			system_cpp_name
 		),
 		[&] {
+			ctx.write("std::uint64_t hash = 0;\n\n");
+			ctx.write(
+				"friend auto operator<=>(const system_sorted&, const system_sorted&) = "
+				"default;\n\n"
+			);
+
 			auto printer = method_printer{ctx, "recalc"};
 
 			auto gen_comp_var_name = [](auto comp_id) -> std::string {
@@ -39,18 +45,33 @@ static auto print_system_entity_sorting_component_struct(
 
 			printer.return_type("void");
 
+			ctx.write("auto bytes = ::ecsact::entt::detail::bytes_copy(");
+			ctx.indentation += 1;
+
+			auto prefix = std::string{"\n"};
+
 			for(auto&& [comp_id, caps] : caps_map) {
 				auto comp_cpp_name = decl_cpp_ident(comp_id);
 				auto comp_var = gen_comp_var_name(comp_id);
 
-				// ctx.write(
-				// 	"const auto& ",
-				// 	comp_var,
-				// 	" = view.get<",
-				// 	comp_cpp_name,
-				// 	">(entity);\n"
-				// );
+				for(auto field_id : ecsact::meta::get_field_ids(comp_id)) {
+					auto field_name = std::string{ecsact_meta_field_name(
+						ecsact_id_cast<ecsact_composite_id>(comp_id),
+						field_id
+					)};
+
+					ctx.write(prefix, comp_var, ".", field_name);
+					prefix = ",\n";
+				}
 			}
+
+			ctx.indentation -= 1;
+			ctx.write("\n);\n");
+
+			ctx.write(
+				"hash = ::ecsact::entt::detail::bytes_hash(bytes.data(), "
+				"bytes.size());\n"
+			);
 		}
 	);
 

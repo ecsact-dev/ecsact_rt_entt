@@ -83,6 +83,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         "@ecsact_runtime//:dynamic",
         "@ecsact_runtime//:lib",
         "@entt",
+        "@xxhash",
         "%s__public_cc" % name,
     ]
 

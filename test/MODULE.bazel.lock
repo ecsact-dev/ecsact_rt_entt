@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "bcfa89738e0cf3c5febd0e56ed1b7c59766a18f1f671ef62dce5d029cc7249e5",
+  "moduleFileHash": "005d1a376622b6b76f074f70c8feeb5a0880461438d4a2cf664a9ebe9bee8aa7",
   "flags": {
     "cmdRegistries": [
       "https://raw.githubusercontent.com/ecsact-dev/bazel_registry/main",
@@ -16,7 +16,7 @@
   },
   "localOverrideHashes": {
     "bazel_tools": "1ae69322ac3823527337acf02016e8ee95813d8d356f47060255b8956fa642f0",
-    "ecsact_rt_entt": "392dd8ebbe3c172b1c4e21aaa8d14c2f4ea0efbfb932d87f224a0787c2b15f77"
+    "ecsact_rt_entt": "23faeb185af6072c510cec32508e6e64036e27affa0a68b0a06ea14a591882dc"
   },
   "moduleDepGraph": {
     "<root>": {
@@ -37,7 +37,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 32,
+            "line": 37,
             "column": 21
           },
           "imports": {
@@ -55,7 +55,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 33,
+                "line": 38,
                 "column": 15
               }
             }
@@ -69,7 +69,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 36,
+            "line": 41,
             "column": 23
           },
           "imports": {
@@ -87,7 +87,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 37,
+                "line": 42,
                 "column": 17
               }
             }
@@ -111,6 +111,7 @@
         "toolchains_llvm": "toolchains_llvm@1.0.0",
         "hedron_compile_commands": "hedron_compile_commands@_",
         "ecsact_rt_entt": "ecsact_rt_entt@_",
+        "xxhash": "xxhash@0.8.2",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
       }
@@ -630,6 +631,35 @@
         "xxhash": "xxhash@0.8.2",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
+      }
+    },
+    "xxhash@0.8.2": {
+      "name": "xxhash",
+      "version": "0.8.2",
+      "key": "xxhash@0.8.2",
+      "repoName": "xxhash",
+      "executionPlatformsToRegister": [],
+      "toolchainsToRegister": [],
+      "extensionUsages": [],
+      "deps": {
+        "bazel_tools": "bazel_tools@_",
+        "local_config_platform": "local_config_platform@_"
+      },
+      "repoSpec": {
+        "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+        "ruleClassName": "http_archive",
+        "attributes": {
+          "urls": [
+            "https://github.com/Cyan4973/xxHash/archive/refs/tags/v0.8.2.tar.gz"
+          ],
+          "integrity": "sha256-uu4Mav1PAxZd56TmeYjRbw8rJXtR0OPLkZCTAqJqecQ=",
+          "strip_prefix": "xxHash-0.8.2",
+          "remote_patches": {
+            "https://bcr.bazel.build/modules/xxhash/0.8.2/patches/add_build_file.patch": "sha256-WQDdUpYas3Sbezqz0dJ5kMdr/c729ki+QLZv4iwEOj8=",
+            "https://bcr.bazel.build/modules/xxhash/0.8.2/patches/module_dot_bazel.patch": "sha256-ZLVQs0CBa7/fVGDx0804Hg7ORsWd92G06m2z1N5PeMg="
+          },
+          "remote_patch_strip": 0
+        }
       }
     },
     "bazel_tools@_": {
@@ -1966,35 +1996,6 @@
           "integrity": "sha256-T7NE8zouucceud/lWIjSLhCLffm3cVgQzIIw805irRc=",
           "strip_prefix": "",
           "remote_patches": {},
-          "remote_patch_strip": 0
-        }
-      }
-    },
-    "xxhash@0.8.2": {
-      "name": "xxhash",
-      "version": "0.8.2",
-      "key": "xxhash@0.8.2",
-      "repoName": "xxhash",
-      "executionPlatformsToRegister": [],
-      "toolchainsToRegister": [],
-      "extensionUsages": [],
-      "deps": {
-        "bazel_tools": "bazel_tools@_",
-        "local_config_platform": "local_config_platform@_"
-      },
-      "repoSpec": {
-        "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
-        "ruleClassName": "http_archive",
-        "attributes": {
-          "urls": [
-            "https://github.com/Cyan4973/xxHash/archive/refs/tags/v0.8.2.tar.gz"
-          ],
-          "integrity": "sha256-uu4Mav1PAxZd56TmeYjRbw8rJXtR0OPLkZCTAqJqecQ=",
-          "strip_prefix": "xxHash-0.8.2",
-          "remote_patches": {
-            "https://bcr.bazel.build/modules/xxhash/0.8.2/patches/add_build_file.patch": "sha256-WQDdUpYas3Sbezqz0dJ5kMdr/c729ki+QLZv4iwEOj8=",
-            "https://bcr.bazel.build/modules/xxhash/0.8.2/patches/module_dot_bazel.patch": "sha256-ZLVQs0CBa7/fVGDx0804Hg7ORsWd92G06m2z1N5PeMg="
-          },
           "remote_patch_strip": 0
         }
       }

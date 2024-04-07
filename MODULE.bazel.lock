@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "392dd8ebbe3c172b1c4e21aaa8d14c2f4ea0efbfb932d87f224a0787c2b15f77",
+  "moduleFileHash": "23faeb185af6072c510cec32508e6e64036e27affa0a68b0a06ea14a591882dc",
   "flags": {
     "cmdRegistries": [
       "https://raw.githubusercontent.com/ecsact-dev/bazel_registry/main",
@@ -34,7 +34,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 27,
+            "line": 26,
             "column": 21
           },
           "imports": {
@@ -52,7 +52,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 28,
+                "line": 27,
                 "column": 15
               }
             }

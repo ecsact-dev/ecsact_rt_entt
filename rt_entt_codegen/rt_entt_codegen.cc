@@ -50,6 +50,8 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/registry_util.hh");
 	inc_header(ctx, "ecsact/entt/detail/globals.hh");
 	inc_header(ctx, "ecsact/entt/detail/apply_pending.hh");
+	inc_header(ctx, "ecsact/entt/detail/bytes.hh");
+	inc_header(ctx, "ecsact/entt/detail/hash.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/core.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/dynamic.hh");
 	inc_header(ctx, "ecsact/entt/error_check.hh");
