@@ -615,13 +615,13 @@ static auto print_ecsact_entt_system_details(
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
-	constexpr auto is_action_id =
+	constexpr auto is_system_id =
 		std::is_same_v<ecsact_system_id, std::remove_cvref_t<SystemLikeID>>;
 
 	auto sys_caps = ecsact::meta::system_capabilities(options.sys_like_id);
 	auto lazy_iteration_rate = 0;
 
-	if constexpr(is_action_id) {
+	if constexpr(is_system_id) {
 		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
 			static_cast<ecsact_system_id>(options.sys_like_id)
 		);
