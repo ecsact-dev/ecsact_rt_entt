@@ -50,6 +50,8 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/registry_util.hh");
 	inc_header(ctx, "ecsact/entt/detail/globals.hh");
 	inc_header(ctx, "ecsact/entt/detail/apply_pending.hh");
+	inc_header(ctx, "ecsact/entt/detail/bytes.hh");
+	inc_header(ctx, "ecsact/entt/detail/hash.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/core.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/dynamic.hh");
 	inc_header(ctx, "ecsact/entt/error_check.hh");
@@ -202,6 +204,7 @@ void ecsact_codegen_plugin(
 	{ // Print core Ecsact API methods
 		using namespace ecsact::rt_entt_codegen;
 
+		core::print_entity_sorting_components(ctx, details);
 		core::print_check_error_template_specializations(ctx, details);
 		core::print_execute_system_like_template_specializations(ctx, details);
 		core::print_init_registry_storage(ctx, details);

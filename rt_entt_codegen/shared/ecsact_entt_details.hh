@@ -75,12 +75,6 @@ private:
 struct ecsact_entt_details {
 	static auto from_package(ecsact_package_id pkg_id) -> ecsact_entt_details;
 
-	// Systems/actions we've decided will use an EnTT group
-	std::unordered_set<ecsact_system_like_id> group_systems;
-
-	// Systems/actions we've decided will use an Entt view
-	std::unordered_set<ecsact_system_like_id> view_systems;
-
 	// Top level sysetms/actions in execution order
 	std::vector<ecsact_system_like_id> top_execution_order;
 

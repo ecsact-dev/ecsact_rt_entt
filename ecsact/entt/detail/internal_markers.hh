@@ -62,4 +62,10 @@ struct created_entity {
 
 struct destroyed_entity {};
 
+template<typename S>
+struct system_sorted;
+
+template<typename S>
+struct pending_lazy_execution {};
+
 } // namespace ecsact::entt::detail

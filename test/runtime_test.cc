@@ -97,6 +97,24 @@ void runtime_test::AttackDamageWeakened::impl(context& ctx) {
 void runtime_test::AddsAutoRemovedTag::impl(context& ctx) {
 }
 
+void runtime_test::TestLazySystem::impl(context& ctx) {
+	auto comp_a = ctx.get<TestLazySystemComponentA>();
+	auto comp_b = ctx.get<TestLazySystemComponentB>();
+
+	comp_a.ai8 += 1;
+	comp_a.au8 += 1;
+	comp_a.ai16 += 1;
+	comp_a.au16 += 1;
+	comp_a.ai32 += 1;
+	comp_a.au32 += 1;
+	comp_a.af32 += 1.0;
+
+	comp_b.num += 1;
+
+	ctx.update(comp_a);
+	ctx.update(comp_b);
+}
+
 static std::atomic_bool AddAssocTest_ran = false;
 
 void runtime_test::AddAssocTest::impl(context& ctx) {
@@ -849,6 +867,84 @@ TEST(Core, NoAction) {
 	exec_err = reg.execute_systems(std::array{exec_opts}, evc);
 	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 	ASSERT_FALSE(action_executed);
+}
+
+TEST(Core, LazySystem) {
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::TestLazySystem::id),
+		runtime_test__TestLazySystem
+	);
+
+	auto reg = ecsact::core::registry{"TestLazySystemRegistry"};
+	auto test_entities = std::array<ecsact_entity_id, 10>{
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+	};
+
+	for(auto entity : test_entities) {
+		reg.add_component<runtime_test::TestLazySystemTag>(entity);
+		reg.add_component(entity, runtime_test::TestLazySystemComponentA{});
+		reg.add_component(entity, runtime_test::TestLazySystemComponentB{});
+	}
+
+	auto count_entities_with_value = [&](int num) -> int {
+		auto count = 0;
+		for(auto entity : test_entities) {
+			auto comp =
+				reg.get_component<runtime_test::TestLazySystemComponentB>(entity);
+
+			if(comp.num == num) {
+				count += 1;
+			}
+		}
+
+		return count;
+	};
+
+	EXPECT_EQ(count_entities_with_value(0), 10);
+	reg.execute_systems();
+
+	EXPECT_EQ(count_entities_with_value(1), 1);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 2);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 3);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 4);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 5);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 6);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 7);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 8);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 9);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 10);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 9);
+	EXPECT_EQ(count_entities_with_value(2), 1);
+	EXPECT_EQ(count_entities_with_value(0), 0);
 }
 
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
