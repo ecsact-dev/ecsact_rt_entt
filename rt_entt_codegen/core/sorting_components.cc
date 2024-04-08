@@ -77,10 +77,6 @@ static auto print_system_entity_sorting_component_struct(
 	);
 
 	ctx.write(";");
-
-	// block("struct")
-
-	// auto method = method_printer{ctx, ""};
 }
 
 static auto system_needs_sorted_entities(
