@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "069b66db69b6bab4adf3cd1542f95a24959ad45aa54601ca559ed005e0c49c40",
+  "moduleFileHash": "ee6a795941f37fa15ef506225aae320cc0b8eea3d52b820e8c9b87801ce1c9c3",
   "flags": {
     "cmdRegistries": [
       "https://raw.githubusercontent.com/ecsact-dev/bazel_registry/main",
@@ -15,7 +15,6 @@
     "compatibilityMode": "ERROR"
   },
   "localOverrideHashes": {
-    "ecsact_lang_cpp": "84a65d1af535cda2923313eeab0212c9a1d95fdd1fd53b5b8fac24fb2b8fc3f9",
     "bazel_tools": "1ae69322ac3823527337acf02016e8ee95813d8d356f47060255b8956fa642f0",
     "ecsact_rt_entt": "69761f01f40efe24c97560ea74f0a192b8ee362dde72797433bfb929aab5f4ab"
   },
@@ -38,7 +37,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 42,
+            "line": 37,
             "column": 21
           },
           "imports": {
@@ -56,7 +55,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 43,
+                "line": 38,
                 "column": 15
               }
             }
@@ -70,7 +69,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 46,
+            "line": 41,
             "column": 23
           },
           "imports": {
@@ -88,7 +87,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 47,
+                "line": 42,
                 "column": 17
               }
             }
@@ -102,7 +101,7 @@
         "bazel_skylib": "bazel_skylib@1.5.0",
         "googletest": "googletest@1.14.0",
         "rules_ecsact": "rules_ecsact@0.5.0",
-        "ecsact_lang_cpp": "ecsact_lang_cpp@_",
+        "ecsact_lang_cpp": "ecsact_lang_cpp@0.4.1",
         "ecsact_runtime": "ecsact_runtime@0.6.1",
         "boost.mp11": "boost.mp11@1.83.0.bzl.1",
         "boost.dll": "boost.dll@1.83.0.bzl.2",
@@ -257,10 +256,10 @@
         }
       }
     },
-    "ecsact_lang_cpp@_": {
+    "ecsact_lang_cpp@0.4.1": {
       "name": "ecsact_lang_cpp",
       "version": "0.4.1",
-      "key": "ecsact_lang_cpp@_",
+      "key": "ecsact_lang_cpp@0.4.1",
       "repoName": "ecsact_lang_cpp",
       "executionPlatformsToRegister": [],
       "toolchainsToRegister": [],
@@ -273,6 +272,19 @@
         "ecsact_codegen": "ecsact_codegen@0.2.0",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
+      },
+      "repoSpec": {
+        "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+        "ruleClassName": "http_archive",
+        "attributes": {
+          "urls": [
+            "https://github.com/ecsact-dev/ecsact_lang_cpp/releases/download/0.4.1/ecsact_lang_cpp-0.4.1.tar.gz"
+          ],
+          "integrity": "sha256-rJGpXv0S1oe4Qsm1+6AV6U6/kXUOIp+1bYJxAbQAsX8=",
+          "strip_prefix": "",
+          "remote_patches": {},
+          "remote_patch_strip": 0
+        }
       }
     },
     "ecsact_runtime@0.6.1": {
@@ -611,7 +623,7 @@
         "bazel_skylib": "bazel_skylib@1.5.0",
         "rules_ecsact": "rules_ecsact@0.5.0",
         "ecsact_runtime": "ecsact_runtime@0.6.1",
-        "ecsact_lang_cpp": "ecsact_lang_cpp@_",
+        "ecsact_lang_cpp": "ecsact_lang_cpp@0.4.1",
         "boost.mp11": "boost.mp11@1.83.0.bzl.1",
         "entt": "entt@3.12.2",
         "ecsact_codegen": "ecsact_codegen@0.2.0",
