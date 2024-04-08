@@ -192,12 +192,5 @@ auto ecsact_entt_details::from_package( //
 	collect_all_actions(pkg_id, details);
 	collect_all_components(pkg_id, details);
 
-	for(auto sys_id : details.top_execution_order) {
-		assert(
-			details.view_systems.contains(sys_id) ||
-			details.group_systems.contains(sys_id)
-		);
-	}
-
 	return details;
 }

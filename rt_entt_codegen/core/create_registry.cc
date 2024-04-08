@@ -16,18 +16,6 @@ auto ecsact::rt_entt_codegen::core::print_create_registry( //
 			.return_type("ecsact_registry_id");
 
 	ctx.write("auto&& [registry_id, reg] = ecsact::entt::create_registry();\n\n");
-
-	if(!details.group_systems.empty()) {
-		ctx.write(
-			"// These groups were automatically selected based on the input ecsact "
-			"files\n"
-		);
-		for(auto sys_id : details.group_systems) {
-			auto decl_name = ecsact::meta::decl_full_name(sys_id);
-		}
-	}
-
 	ctx.write("ecsact_init_registry_storage(registry_id);\n");
-
 	ctx.write("\nreturn registry_id;");
 }

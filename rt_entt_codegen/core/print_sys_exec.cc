@@ -599,6 +599,9 @@ struct print_ecsact_entt_system_details_options {
 };
 
 template<typename SystemLikeID>
+	requires(!std::is_same_v<
+						ecsact_system_like_id,
+						std::remove_cvref_t<SystemLikeID>>)
 static auto print_ecsact_entt_system_details(
 	ecsact::codegen_plugin_context&                              ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details&   details,
@@ -611,12 +614,19 @@ static auto print_ecsact_entt_system_details(
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
+	constexpr auto is_action_id =
+		std::is_same_v<ecsact_system_id, std::remove_cvref_t<SystemLikeID>>;
+
 	auto sys_caps = ecsact::meta::system_capabilities(options.sys_like_id);
-	auto lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-		static_cast<ecsact_system_id>(options.sys_like_id)
-	);
+	auto lazy_iteration_rate = 0;
+
+	if constexpr(is_action_id) {
+		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
+			static_cast<ecsact_system_id>(options.sys_like_id)
+		);
+	}
 	auto exec_start_label_name =
-		std::format("exec_start_{}_", options.system_name);
+		std::format("exec_start_{}_", static_cast<int>(options.sys_like_id));
 
 	auto pending_lazy_exec_struct = std::format(
 		"::ecsact::entt::detail::pending_lazy_execution<::{}>",
@@ -810,22 +820,25 @@ static auto print_ecsact_entt_system_details(
 				details
 			);
 
+			ctx.write("auto view_no_pending_lazy_count_ = 0;\n");
+
 			block(
 				ctx,
 				"for(ecsact::entt::entity_id entity : view_no_pending_lazy_)",
 				[&] {
+					ctx.write("view_no_pending_lazy_count_ += 1;\n");
 					ctx.write(
 						options.registry_var_name,
 						".emplace<",
 						pending_lazy_exec_struct,
-						">(entity)"
+						">(entity);\n"
 					);
 				}
 			);
 
 			block(
 				ctx,
-				"if(view_no_pending_lazy_.size() >= lazy_iteration_rate_)",
+				"if(view_no_pending_lazy_count_ >= lazy_iteration_rate_)",
 				[&] { ctx.write("goto ", exec_start_label_name, ";\n"); }
 			);
 		});
