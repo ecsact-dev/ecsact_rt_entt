@@ -32,11 +32,6 @@ local_path_override(
     path = "..",
 )
 
-local_path_override(
-    module_name = "ecsact_lang_cpp",
-    path = "../../ecsact_lang_cpp",
-)
-
 register_toolchains("@ecsact_cli//:all")
 
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
