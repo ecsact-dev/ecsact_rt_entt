@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <map>
 #include <array>
+#include <format>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
 #include "ecsact/lang-support/lang-cc.hh"
