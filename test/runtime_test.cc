@@ -1058,40 +1058,39 @@ TEST(Core, LazyParentSystem) {
 	auto g = std::mt19937(rd());
 
 	for(auto attempt = 0; 100 > attempt; ++attempt) {
-	std::shuffle(test_components_c.begin(), test_components_c.end(), g);
+		std::shuffle(test_components_c.begin(), test_components_c.end(), g);
 
-	changed_index = std::distance(
-		test_components_c.begin(),
-		std::find(
+		changed_index = std::distance(
 			test_components_c.begin(),
-			test_components_c.end(),
-			changed_component
-		)
-	);
-
-	ASSERT_NE(changed_index, -1);
-	ASSERT_LT(changed_index, test_components_c.size());
-
-	for(int i = 0; test_entities.size() > i; ++i) {
-		reg.update_component<runtime_test::TestLazySystemComponentB>(
-			test_entities[i],
-			test_components_b[i]
+			std::find(
+				test_components_c.begin(),
+				test_components_c.end(),
+				changed_component
+			)
 		);
-		reg.update_component<runtime_test::TestLazySystemComponentC>(
-			test_entities[i],
-			test_components_c[i]
-		);
-	}
-	CALC_CHANGED_INDEX(); // sanity check
-	ASSERT_EQ(changed_index, -1);
 
-	reg.execute_systems();
-	CALC_CHANGED_INDEX();
-	ASSERT_NE(changed_index, -1);
-	ASSERT_EQ(changed_component.num_c, test_components_c[changed_index].num_c)
-		<< "different component was changed with same set of data";
-	}
+		ASSERT_NE(changed_index, -1);
+		ASSERT_LT(changed_index, test_components_c.size());
 
+		for(int i = 0; test_entities.size() > i; ++i) {
+			reg.update_component<runtime_test::TestLazySystemComponentB>(
+				test_entities[i],
+				test_components_b[i]
+			);
+			reg.update_component<runtime_test::TestLazySystemComponentC>(
+				test_entities[i],
+				test_components_c[i]
+			);
+		}
+		CALC_CHANGED_INDEX(); // sanity check
+		ASSERT_EQ(changed_index, -1);
+
+		reg.execute_systems();
+		CALC_CHANGED_INDEX();
+		ASSERT_NE(changed_index, -1);
+		ASSERT_EQ(changed_component.num_c, test_components_c[changed_index].num_c)
+			<< "different component was changed with same set of data";
+	}
 
 #undef CALC_CHANGED_INDEX
 }
