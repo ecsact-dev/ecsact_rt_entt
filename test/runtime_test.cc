@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <version>
 #include <ranges>
+#include <random>
 #include "ecsact/runtime/core.hh"
 #include "ecsact/runtime/dynamic.h"
 
@@ -113,6 +114,21 @@ void runtime_test::TestLazySystem::impl(context& ctx) {
 
 	ctx.update(comp_a);
 	ctx.update(comp_b);
+}
+
+void runtime_test::LazyParentSystem::impl(context& ctx) {
+	auto comp = ctx.get<TestLazySystemComponentC>();
+	comp.num_c += 1;
+	ctx.update(comp);
+}
+
+void runtime_test::LazyParentSystem::LazyParentNestedSystem::impl( //
+	context& ctx
+) {
+	auto parent_comp = ctx._ctx.parent().get<TestLazySystemComponentC>();
+	auto comp = ctx.get<TestLazySystemComponentB>();
+	comp.num *= parent_comp.num_c;
+	ctx.update(comp);
 }
 
 static std::atomic_bool AddAssocTest_ran = false;
@@ -945,6 +961,136 @@ TEST(Core, LazySystem) {
 	EXPECT_EQ(count_entities_with_value(1), 9);
 	EXPECT_EQ(count_entities_with_value(2), 1);
 	EXPECT_EQ(count_entities_with_value(0), 0);
+}
+
+TEST(Core, LazyParentSystem) {
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::LazyParentSystem::id),
+		runtime_test__LazyParentSystem
+	);
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::LazyParentSystem::LazyParentNestedSystem::id
+		),
+		runtime_test__LazyParentSystem__LazyParentNestedSystem
+	);
+
+	auto reg = ecsact::core::registry{"LazyParentSystemRegistry"};
+
+	auto test_entities = std::array{
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+		reg.create_entity(),
+	};
+
+	auto test_components_b = std::array{
+		runtime_test::TestLazySystemComponentB{0},
+		runtime_test::TestLazySystemComponentB{10},
+		runtime_test::TestLazySystemComponentB{20},
+		runtime_test::TestLazySystemComponentB{30},
+		runtime_test::TestLazySystemComponentB{40},
+	};
+
+	auto test_components_c = std::array{
+		runtime_test::TestLazySystemComponentC{3},
+		runtime_test::TestLazySystemComponentC{13},
+		runtime_test::TestLazySystemComponentC{23},
+		runtime_test::TestLazySystemComponentC{33},
+		runtime_test::TestLazySystemComponentC{43},
+	};
+
+	static_assert(test_entities.size() == test_components_b.size());
+	static_assert(test_entities.size() == test_components_c.size());
+
+	for(int i = 0; test_entities.size() > i; ++i) {
+		reg.add_component(test_entities[i], test_components_b[i]);
+		reg.add_component(test_entities[i], test_components_c[i]);
+	}
+
+	// santity check
+	for(int i = 0; test_entities.size() > i; ++i) {
+		auto comp_b = reg.get_component<runtime_test::TestLazySystemComponentB>( //
+			test_entities[i]
+		);
+		auto comp_c = reg.get_component<runtime_test::TestLazySystemComponentC>( //
+			test_entities[i]
+		);
+		ASSERT_EQ(comp_b.num, test_components_b[i].num);
+		ASSERT_EQ(comp_c.num_c, test_components_c[i].num_c);
+	}
+
+	reg.execute_systems();
+
+	auto changed_index = -1;
+	auto changed_components_b = decltype(test_components_b){};
+	auto changed_components_c = decltype(test_components_c){};
+
+#define CALC_CHANGED_INDEX()                                                  \
+	changed_index = -1;                                                         \
+	for(int i = 0; test_entities.size() > i; ++i) {                             \
+		auto comp = reg.get_component<runtime_test::TestLazySystemComponentB>(    \
+			test_entities[i]                                                        \
+		);                                                                        \
+		changed_components_b[i] = comp;                                           \
+	}                                                                           \
+	for(int i = 0; test_entities.size() > i; ++i) {                             \
+		auto comp = reg.get_component<runtime_test::TestLazySystemComponentC>(    \
+			test_entities[i]                                                        \
+		);                                                                        \
+		changed_components_c[i] = comp;                                           \
+	}                                                                           \
+                                                                              \
+	for(int i = 0; test_entities.size() > i; ++i) {                             \
+		if(changed_components_c[i].num_c != test_components_c[i].num_c) {         \
+			ASSERT_EQ(changed_index, -1) << "more than one test component changed"; \
+			changed_index = i;                                                      \
+		}                                                                         \
+	}                                                                           \
+	static_assert(true, "macro requires ;")
+
+	CALC_CHANGED_INDEX();
+	ASSERT_NE(changed_index, -1);
+	auto changed_component = test_components_c[changed_index];
+
+	auto rd = std::random_device{};
+	auto g = std::mt19937(rd());
+	std::shuffle(test_components_b.begin(), test_components_b.end(), g);
+	std::shuffle(test_components_c.begin(), test_components_c.end(), g);
+
+	changed_index = std::distance(
+		test_components_c.begin(),
+		std::find(
+			test_components_c.begin(),
+			test_components_c.end(),
+			changed_component
+		)
+	);
+
+	ASSERT_NE(changed_index, -1);
+	ASSERT_LT(changed_index, test_components_c.size());
+
+	for(int i = 0; test_entities.size() > i; ++i) {
+		reg.update_component<runtime_test::TestLazySystemComponentB>(
+			test_entities[i],
+			test_components_b[i]
+		);
+		reg.update_component<runtime_test::TestLazySystemComponentC>(
+			test_entities[i],
+			test_components_c[i]
+		);
+	}
+	CALC_CHANGED_INDEX(); // sanity check
+	ASSERT_EQ(changed_index, -1);
+
+	reg.execute_systems();
+	CALC_CHANGED_INDEX();
+	ASSERT_NE(changed_index, -1);
+	ASSERT_EQ(changed_component.num_c, test_components_c[changed_index].num_c)
+		<< "different component was changed with same set of data";
+
+#undef CALC_CHANGED_INDEX
 }
 
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL

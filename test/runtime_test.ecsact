@@ -178,3 +178,15 @@ system TestLazySystem(lazy) {
     readwrite TestLazySystemComponentA;
     readwrite TestLazySystemComponentB;
 }
+
+component TestLazySystemComponentC {
+    i32 num_c;
+}
+
+system LazyParentSystem(lazy) {
+    readwrite TestLazySystemComponentC;
+
+    system LazyParentNestedSystem {
+        readwrite TestLazySystemComponentB;
+    }
+}

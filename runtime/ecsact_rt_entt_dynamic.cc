@@ -113,3 +113,10 @@ void ecsact_system_execution_context_action(
 	assert(context != nullptr);
 	return context->action(out_action_data);
 }
+
+const ecsact_system_execution_context* ecsact_system_execution_context_parent(
+	ecsact_system_execution_context* context
+) {
+	assert(context != nullptr);
+	return context->parent_ctx;
+}
