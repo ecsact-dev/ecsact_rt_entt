@@ -1056,7 +1056,8 @@ TEST(Core, LazyParentSystem) {
 
 	auto rd = std::random_device{};
 	auto g = std::mt19937(rd());
-	std::shuffle(test_components_b.begin(), test_components_b.end(), g);
+
+	for(auto attempt = 0; 100 > attempt; ++attempt) {
 	std::shuffle(test_components_c.begin(), test_components_c.end(), g);
 
 	changed_index = std::distance(
@@ -1089,6 +1090,8 @@ TEST(Core, LazyParentSystem) {
 	ASSERT_NE(changed_index, -1);
 	ASSERT_EQ(changed_component.num_c, test_components_c[changed_index].num_c)
 		<< "different component was changed with same set of data";
+	}
+
 
 #undef CALC_CHANGED_INDEX
 }
