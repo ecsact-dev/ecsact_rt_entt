@@ -1009,7 +1009,7 @@ TEST(Core, LazyParentSystem) {
 		reg.add_component(test_entities[i], test_components_c[i]);
 	}
 
-	// santity check
+	// sanity check
 	for(int i = 0; test_entities.size() > i; ++i) {
 		auto comp_b = reg.get_component<runtime_test::TestLazySystemComponentB>( //
 			test_entities[i]
