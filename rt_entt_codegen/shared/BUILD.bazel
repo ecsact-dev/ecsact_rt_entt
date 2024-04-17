@@ -18,6 +18,17 @@ cc_library(
 )
 
 cc_library(
+    name = "sorting",
+    hdrs = ["sorting.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        "@ecsact_runtime//:common",
+        "@ecsact_runtime//:meta",
+    ],
+)
+
+cc_library(
     name = "util",
     hdrs = ["util.hh"],
     copts = copts,

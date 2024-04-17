@@ -1,113 +1,131 @@
 #include "rt_entt_codegen/core/core.hh"
 
 #include <format>
+#include "ecsact/runtime/common.h"
 #include "ecsact/runtime/meta.hh"
-#include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 #include "rt_entt_codegen/shared/util.hh"
+#include "rt_entt_codegen/shared/sorting.hh"
 
 using ecsact::cpp_codegen_plugin_util::method_printer;
 using ecsact::rt_entt_codegen::ecsact_entt_details;
+using ecsact::rt_entt_codegen::system_needs_sorted_entities;
 using ecsact::rt_entt_codegen::util::decl_cpp_ident;
 
+constexpr auto RECALC_COMPONENTS_HASH_DECL = R"cpp(
+template<typename S>
+static auto _recalc_sorting_hash(::entt::registry&) -> void;
+)cpp";
+
 static auto print_system_entity_sorting_component_struct(
-	ecsact::codegen_plugin_context& ctx,
-	ecsact_system_like_id           sys_like_id
+	ecsact::codegen_plugin_context&                     ctx,
+	ecsact_system_like_id                               sys_like_id,
+	ecsact::rt_entt_codegen::ecsact_entt_system_details sys_details
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
+	using ecsact::rt_entt_codegen::util::has_no_fields;
+	using ecsact::rt_entt_codegen::util::make_view;
 
 	auto system_cpp_name = decl_cpp_ident(sys_like_id);
 	auto caps_map = ecsact::meta::system_capabilities(sys_like_id);
 
-	block(
+	auto system_sorting_struct_name =
+		std::format("::ecsact::entt::detail::system_sorted<{}>", system_cpp_name);
+
+	ctx.write("template<>\n");
+	auto printer =
+		method_printer{ctx, "_recalc_sorting_hash<" + system_cpp_name + ">"}
+			.parameter("::entt::registry&", "reg")
+			.return_type("void");
+
+	auto gen_comp_var_name = [](auto comp_id) -> std::string {
+		return std::format("c{}", static_cast<int>(comp_id));
+	};
+
+	make_view(
 		ctx,
-		std::format(
-			"template<> struct ecsact::entt::detail::system_sorted<{}>",
-			system_cpp_name
-		),
-		[&] {
-			ctx.write("std::uint64_t hash = 0;\n\n");
-			ctx.write(
-				"friend auto operator<=>(const system_sorted&, const system_sorted&) = "
-				"default;\n\n"
-			);
-
-			auto printer = method_printer{ctx, "recalc"};
-
-			auto gen_comp_var_name = [](auto comp_id) -> std::string {
-				return std::format("c{}", static_cast<int>(comp_id));
-			};
-
-			for(auto&& [comp_id, caps] : caps_map) {
-				auto comp_cpp_name = decl_cpp_ident(comp_id);
-				auto comp_var = gen_comp_var_name(comp_id);
-				printer.parameter(std::format("const {}&", comp_cpp_name), comp_var);
-			}
-
-			printer.return_type("void");
-
-			ctx.write("auto bytes = ::ecsact::entt::detail::bytes_copy(");
-			ctx.indentation += 1;
-
-			auto prefix = std::string{"\n"};
-
-			for(auto&& [comp_id, caps] : caps_map) {
-				auto comp_cpp_name = decl_cpp_ident(comp_id);
-				auto comp_var = gen_comp_var_name(comp_id);
-
-				for(auto field_id : ecsact::meta::get_field_ids(comp_id)) {
-					auto field_name = std::string{ecsact_meta_field_name(
-						ecsact_id_cast<ecsact_composite_id>(comp_id),
-						field_id
-					)};
-
-					ctx.write(prefix, comp_var, ".", field_name);
-					prefix = ",\n";
-				}
-			}
-
-			ctx.indentation -= 1;
-			ctx.write("\n);\n");
-
-			ctx.write(
-				"hash = ::ecsact::entt::detail::bytes_hash(bytes.data(), "
-				"bytes.size());\n"
-			);
+		"view",
+		"reg",
+		sys_details,
+		std::vector{
+			system_sorting_struct_name,
 		}
 	);
 
-	ctx.write(";");
-}
-
-static auto system_needs_sorted_entities(
-	auto                       id,
-	const ecsact_entt_details& details
-) -> bool {
-	auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
-	auto needs_sorted_entities = false;
-
-	if(details.is_system(sys_like_id)) {
-		auto lazy_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(sys_like_id)
+	block(ctx, "for(auto entity : view)", [&] {
+		ctx.write(
+			"auto& sorted = view.get<",
+			system_sorting_struct_name,
+			">(entity);\n"
 		);
 
-		if(lazy_rate > 0) {
-			needs_sorted_entities = true;
-		}
-	}
+		for(auto&& [comp_id, caps] : caps_map) {
+			if(has_no_fields(comp_id)) {
+				continue;
+			}
 
-	return needs_sorted_entities;
+			auto comp_cpp_name = decl_cpp_ident(comp_id);
+			auto comp_var = gen_comp_var_name(comp_id);
+
+			ctx.write(
+				"const auto& ",
+				comp_var,
+				" = ",
+				"view.get<",
+				comp_cpp_name,
+				">(entity);\n"
+			);
+		}
+
+		ctx.write("auto bytes = ::ecsact::entt::detail::bytes_copy(");
+		ctx.indentation += 1;
+
+		auto prefix = std::string{"\n"};
+
+		for(auto&& [comp_id, caps] : caps_map) {
+			auto comp_cpp_name = decl_cpp_ident(comp_id);
+			auto comp_var = gen_comp_var_name(comp_id);
+
+			for(auto field_id : ecsact::meta::get_field_ids(comp_id)) {
+				auto field_name = std::string{ecsact_meta_field_name(
+					ecsact_id_cast<ecsact_composite_id>(comp_id),
+					field_id
+				)};
+
+				ctx.write(prefix, comp_var, ".", field_name);
+				prefix = ",\n";
+			}
+		}
+
+		ctx.indentation -= 1;
+		ctx.write("\n);\n");
+
+		ctx.write(
+			"sorted.hash = ::ecsact::entt::detail::bytes_hash(bytes.data(), "
+			"bytes.size());"
+		);
+	});
 }
 
 auto ecsact::rt_entt_codegen::core::print_entity_sorting_components(
 	codegen_plugin_context&    ctx,
 	const ecsact_entt_details& details
 ) -> void {
+	ctx.write(RECALC_COMPONENTS_HASH_DECL);
+
 	for(auto sys_id : details.all_systems) {
-		if(system_needs_sorted_entities(sys_id, details)) {
+		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
+		auto sys_details =
+			ecsact_entt_system_details::from_system_like(sys_like_id);
+
+		if(system_needs_sorted_entities(sys_id, sys_details)) {
+			auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
+			auto sys_details =
+				ecsact_entt_system_details::from_system_like(sys_like_id);
 			print_system_entity_sorting_component_struct(
 				ctx,
-				ecsact_id_cast<ecsact_system_like_id>(sys_id)
+				sys_like_id,
+				sys_details
 			);
 		}
 	}

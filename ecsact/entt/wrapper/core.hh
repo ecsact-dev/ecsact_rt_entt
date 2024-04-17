@@ -65,6 +65,8 @@ inline auto add_component( //
 			);
 			reg.emplace<C>(entity, *static_cast<const C*>(component_data));
 		}
+
+		ecsact::entt::detail::add_system_markers_if_needed<C>(reg, entity);
 	}
 
 	return err;
@@ -100,6 +102,7 @@ inline auto add_component_exec_options( //
 			reg.emplace<C>(entity, *static_cast<const C*>(component_data));
 		}
 		reg.template emplace_or_replace<component_added<C>>(entity);
+		ecsact::entt::detail::add_system_markers_if_needed<C>(reg, entity);
 	}
 
 	return err;
@@ -173,6 +176,7 @@ auto remove_component(
 	reg.template remove<component_added<C>>(entity);
 	reg.template remove<component_changed<C>>(entity);
 	reg.template emplace_or_replace<component_removed<C>>(entity);
+	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
 }
 
 template<typename C>
@@ -202,6 +206,8 @@ auto remove_component_exec_options(
 	if constexpr(!std::is_empty_v<C>) {
 		reg.template remove<detail::beforechange_storage<C>>(entity);
 	}
+
+	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
 }
 
 inline auto _trigger_create_entity_events(
