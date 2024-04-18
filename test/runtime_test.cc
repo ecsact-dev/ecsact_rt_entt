@@ -1052,7 +1052,7 @@ TEST(Core, LazyParentSystem) {
 
 	CALC_CHANGED_INDEX();
 	ASSERT_NE(changed_index, -1);
-	auto changed_component = test_components_c[changed_index];
+	auto initial_changed_component = test_components_c[changed_index];
 
 	auto rd = std::random_device{};
 	auto g = std::mt19937(rd());
@@ -1065,7 +1065,7 @@ TEST(Core, LazyParentSystem) {
 			std::find(
 				test_components_c.begin(),
 				test_components_c.end(),
-				changed_component
+				initial_changed_component
 			)
 		);
 
@@ -1088,8 +1088,13 @@ TEST(Core, LazyParentSystem) {
 		reg.execute_systems();
 		CALC_CHANGED_INDEX();
 		ASSERT_NE(changed_index, -1);
-		ASSERT_EQ(changed_component.num_c, test_components_c[changed_index].num_c)
-			<< "different component was changed with same set of data";
+
+		// We're expecting each iteration to change the same component
+		EXPECT_EQ(
+			initial_changed_component.num_c,
+			test_components_c[changed_index].num_c
+		) << "different component was changed with same set of data\nindex="
+			<< changed_index;
 	}
 
 #undef CALC_CHANGED_INDEX
