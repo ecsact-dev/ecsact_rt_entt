@@ -2,6 +2,23 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.0 - 2024-04-20
+#### Features
+- sorted lazy systems (#95) - (1356b93) - Ezekiel Warren
+- lazy systems (#94) - (b94cfcb) - Ezekiel Warren
+- ecsact codegen plugin for optimization (#56) - (177250a) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update dependency bazel to v7.1.1 (#88) - (a91f6f0) - renovate[bot]
+- **(deps)** update hedron_compile_commands digest to eca42c6 (#83) - (b1713bd) - renovate[bot]
+- **(deps)** update bazel c++ tooling repositories (#80) - (2e0a8e1) - renovate[bot]
+- sync with ecsact_common (#77) - (e6befa7) - seaubot
+- fix typos (#92) - (8ec3473) - Ezekiel Warren
+- use ecsact_cli for toolchain (#90) - (c4ef016) - Ezekiel Warren
+- cleanup line endings (#91) - (1c8a0a9) - Ezekiel Warren
+- bzlmod updates - (6342148) - Ezekiel Warren
+
+- - -
+
 ## 0.2.2 - 2023-09-22
 #### Bug Fixes
 - remove toolchain config ecsact (#79) - (55afa5e) - Ezekiel Warren

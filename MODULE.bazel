@@ -1,7 +1,7 @@
 module(
     name = "ecsact_rt_entt",
-    version = "0.2.2",
-    compatibility_level = 2,
+    version = "0.3.0",
+    compatibility_level = 3,
 )
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
