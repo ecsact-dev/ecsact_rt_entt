@@ -8,7 +8,8 @@
 namespace ecsact::rt_entt_codegen {
 
 template<typename SystemLikeID>
-	requires(std::is_same_v<std::remove_cvref_t<SystemLikeID>, ecsact_system_id> || std::is_same_v<std::remove_cvref_t<SystemLikeID>, ecsact_action_id>)
+	requires(std::is_same_v<std::remove_cvref_t<SystemLikeID>, ecsact_system_id> ||
+					 std::is_same_v<std::remove_cvref_t<SystemLikeID>, ecsact_action_id>)
 ECSACT_ALWAYS_INLINE auto system_needs_sorted_entities(
 	SystemLikeID                      id,
 	const ecsact_entt_system_details& details

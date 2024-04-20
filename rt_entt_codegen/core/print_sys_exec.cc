@@ -548,8 +548,8 @@ struct print_ecsact_entt_system_details_options {
 
 template<typename SystemLikeID>
 	requires(!std::is_same_v<
-					 ecsact_system_like_id,
-					 std::remove_cvref_t<SystemLikeID>>)
+						ecsact_system_like_id,
+						std::remove_cvref_t<SystemLikeID>>)
 static auto print_ecsact_entt_system_details(
 	ecsact::codegen_plugin_context&                              ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details&   details,
