@@ -4,9 +4,12 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <ranges>
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/runtime/meta.h"
 #include "ecsact/runtime/meta.hh"
+#include "ecsact_entt_details.hh"
 
 namespace ecsact::rt_entt_codegen::util {
 
@@ -64,6 +67,11 @@ inline auto decl_cpp_ident(DeclId id) -> std::string {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::decl_full_name;
 	return "::" + cpp_identifier(decl_full_name(id));
+}
+
+template<typename CompositeID>
+inline auto has_no_fields(CompositeID id) {
+	return ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(id)) == 0;
 }
 
 inline auto init_global( //
@@ -245,5 +253,58 @@ public:
 		ctx.write("\n}\n\n");
 	}
 };
+
+auto comma_delim(auto&& range) -> std::string {
+	auto result = std::string{};
+
+	for(auto str : range) {
+		result += str + ", ";
+	}
+
+	if(result.ends_with(", ")) {
+		result = result.substr(0, result.size() - 2);
+	}
+
+	return result;
+}
+
+auto make_view( //
+	ecsact::codegen_plugin_context&                            ctx,
+	auto&&                                                     view_var_name,
+	auto&&                                                     registry_var_name,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	std::vector<std::string> additional_components = {}
+) -> void {
+	using namespace std::string_literals;
+	using ecsact::rt_entt_codegen::util::comma_delim;
+	using ecsact::rt_entt_codegen::util::decl_cpp_ident;
+	using std::views::transform;
+
+	ctx.write("auto ", view_var_name, " = ", registry_var_name, ".view<");
+
+	ctx.write(comma_delim(
+		details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
+	));
+
+	if(!additional_components.empty()) {
+		ctx.write(", ");
+		ctx.write(comma_delim(additional_components));
+	}
+
+	ctx.write(">(");
+
+	if(!details.exclude_comps.empty()) {
+		ctx.write(
+			"::entt::exclude<",
+			comma_delim(
+				details.exclude_comps |
+				transform(decl_cpp_ident<ecsact_component_like_id>)
+			),
+			">"
+		);
+	}
+
+	ctx.write(");\n");
+}
 
 } // namespace ecsact::rt_entt_codegen::util

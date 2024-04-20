@@ -1,9 +1,6 @@
 #include "core.hh"
 
-#include <concepts>
-#include <fenv.h>
 #include <ranges>
-#include <set>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -17,6 +14,7 @@
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 #include "rt_entt_codegen/shared/util.hh"
 #include "rt_entt_codegen/shared/comps_with_caps.hh"
+#include "rt_entt_codegen/shared/sorting.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -26,6 +24,7 @@ concept system_or_action =
 	std::same_as<T, ecsact_system_id> || std::same_as<T, ecsact_action_id>;
 
 using ecsact::rt_entt_codegen::system_comps_with_caps;
+using ecsact::rt_entt_codegen::system_needs_sorted_entities;
 
 template<system_or_action T>
 static auto print_sys_exec_ctx_action(
@@ -483,58 +482,6 @@ static auto print_sys_exec_ctx_other(
 	ctx.write("return nullptr;");
 }
 
-static auto comma_delim(auto&& range) -> std::string {
-	auto result = std::string{};
-
-	for(auto str : range) {
-		result += str + ", ";
-	}
-
-	if(result.ends_with(", ")) {
-		result = result.substr(0, result.size() - 2);
-	}
-
-	return result;
-}
-
-static auto make_view( //
-	ecsact::codegen_plugin_context&                            ctx,
-	auto&&                                                     view_var_name,
-	auto&&                                                     registry_var_name,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	std::vector<std::string> additional_components = {}
-) -> void {
-	using namespace std::string_literals;
-	using ecsact::rt_entt_codegen::util::decl_cpp_ident;
-	using std::views::transform;
-
-	ctx.write("auto ", view_var_name, " = ", registry_var_name, ".view<");
-
-	ctx.write(comma_delim(
-		details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
-	));
-
-	if(!additional_components.empty()) {
-		ctx.write(", ");
-		ctx.write(comma_delim(additional_components));
-	}
-
-	ctx.write(">(");
-
-	if(!details.exclude_comps.empty()) {
-		ctx.write(
-			"::entt::exclude<",
-			comma_delim(
-				details.exclude_comps |
-				transform(decl_cpp_ident<ecsact_component_like_id>)
-			),
-			">"
-		);
-	}
-
-	ctx.write(");\n");
-}
-
 template<typename SystemLikeID>
 static auto print_apply_pendings(
 	ecsact::codegen_plugin_context&                            ctx,
@@ -634,6 +581,11 @@ static auto print_ecsact_entt_system_details(
 		options.system_name
 	);
 
+	auto system_sorting_struct_name = std::format(
+		"::ecsact::entt::detail::system_sorted<{}>",
+		options.system_name
+	);
+
 	auto additional_view_components = std::vector<std::string>{};
 
 	if(lazy_iteration_rate > 0) {
@@ -647,13 +599,22 @@ static auto print_ecsact_entt_system_details(
 		additional_view_components.push_back(pending_lazy_exec_struct);
 	}
 
-	make_view(
+	if(system_needs_sorted_entities(options.sys_like_id, details)) {
+		additional_view_components.push_back(system_sorting_struct_name);
+	}
+
+	ecsact::rt_entt_codegen::util::make_view(
 		ctx,
 		"view",
 		options.registry_var_name,
 		details,
 		additional_view_components
 	);
+
+	if(system_needs_sorted_entities(options.sys_like_id, details)) {
+		ctx.write("view.use<", system_sorting_struct_name, ">();\n");
+	}
+
 	block(ctx, "struct : ecsact_system_execution_context ", [&] {
 		ctx.write("decltype(view)* view;\n");
 
@@ -814,7 +775,21 @@ static auto print_ecsact_entt_system_details(
 		);
 		ctx.write("assert(iteration_count_ <= lazy_iteration_rate_);\n");
 		block(ctx, "if(iteration_count_ < lazy_iteration_rate_)", [&] {
-			make_view(
+			ctx.write(
+				"_recalc_sorting_hash<",
+				options.system_name,
+				">(",
+				options.registry_var_name,
+				");\n"
+			);
+			ctx.write(
+				options.registry_var_name,
+				".sort<",
+				system_sorting_struct_name,
+				">([](const auto& a, const auto& b) { return a.hash < b.hash; });\n"
+			);
+
+			ecsact::rt_entt_codegen::util::make_view(
 				ctx,
 				"view_no_pending_lazy_",
 				options.registry_var_name,
@@ -914,7 +889,12 @@ static auto print_other_contexts(
 		auto other_details =
 			ecsact_entt_system_details::from_capabilities(assoc_detail.capabilities);
 
-		make_view(ctx, view_name, "registry", other_details);
+		ecsact::rt_entt_codegen::util::make_view(
+			ctx,
+			view_name,
+			"registry",
+			other_details
+		);
 
 		block(ctx, "struct " + struct_header, [&] {
 			using namespace std::string_literals;
@@ -1011,7 +991,7 @@ static auto print_trivial_system_like(
 			.parameter("ecsact_system_execution_context*", "parent_context")
 			.return_type("void");
 
-	make_view(ctx, "view", "registry", details);
+	ecsact::rt_entt_codegen::util::make_view(ctx, "view", "registry", details);
 
 	block(ctx, "for(auto entity : view)", [&] {
 		for(auto&& [comp_id, capability] : sys_capabilities) {

@@ -56,4 +56,19 @@ auto print_entity_sorting_components( //
 	const ecsact_entt_details& details
 ) -> void;
 
+auto print_system_marker_add_fn(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
+auto print_system_marker_remove_fn(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
+auto print_entity_match_fn(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
 } // namespace ecsact::rt_entt_codegen::core
