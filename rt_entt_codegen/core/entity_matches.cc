@@ -1,16 +1,14 @@
 #include "rt_entt_codegen/core/core.hh"
 
-#include <set>
 #include <ranges>
+#include <format>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
-#include "rt_entt_codegen/shared/sorting.hh"
 #include "rt_entt_codegen/shared/util.hh"
 
 using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::cpp_codegen_plugin_util::method_printer;
-using ecsact::rt_entt_codegen::system_needs_sorted_entities;
 
 auto ecsact::rt_entt_codegen::core::print_entity_match_fn(
 	codegen_plugin_context&    ctx,

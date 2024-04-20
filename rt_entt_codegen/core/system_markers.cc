@@ -1,6 +1,7 @@
 #include "rt_entt_codegen/core/core.hh"
 
 #include <set>
+#include <format>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
