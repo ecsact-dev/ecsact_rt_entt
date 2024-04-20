@@ -5,8 +5,8 @@
 #include <typeindex>
 #include <unordered_set>
 #include <version>
-#include <ranges>
 #include <random>
+#include <ranges>
 #include "ecsact/runtime/core.hh"
 #include "ecsact/runtime/dynamic.h"
 
@@ -1021,8 +1021,6 @@ TEST(Core, LazyParentSystem) {
 		ASSERT_EQ(comp_c.num_c, test_components_c[i].num_c);
 	}
 
-	reg.execute_systems();
-
 	auto changed_index = -1;
 	auto changed_components_b = decltype(test_components_b){};
 	auto changed_components_c = decltype(test_components_c){};
@@ -1050,9 +1048,14 @@ TEST(Core, LazyParentSystem) {
 	}                                                                           \
 	static_assert(true, "macro requires ;")
 
+	reg.execute_systems();
 	CALC_CHANGED_INDEX();
 	ASSERT_NE(changed_index, -1);
 	auto initial_changed_component = test_components_c[changed_index];
+
+	for(auto i : std::views::iota(0U, test_entities.size() - 1)) {
+		reg.execute_systems();
+	}
 
 	auto rd = std::random_device{};
 	auto g = std::mt19937(rd());
@@ -1095,6 +1098,10 @@ TEST(Core, LazyParentSystem) {
 			test_components_c[changed_index].num_c
 		) << "different component was changed with same set of data\nindex="
 			<< changed_index;
+
+		for(auto _ : std::views::iota(0U, test_entities.size() - 1)) {
+			reg.execute_systems();
+		}
 	}
 
 #undef CALC_CHANGED_INDEX
