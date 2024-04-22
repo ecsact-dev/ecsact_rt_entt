@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.1 - 2024-04-22
+#### Bug Fixes
+- check for created callback nullptr (#97) - (9601a75) - Ezekiel Warren
+#### Miscellaneous Chores
+- update lock file in cog.toml - (5471f71) - Ezekiel Warren
+- update bazel lock - (a1d61d9) - Ezekiel Warren
+
+- - -
+
 ## 0.3.0 - 2024-04-20
 #### Features
 - sorted lazy systems (#95) - (1356b93) - Ezekiel Warren
