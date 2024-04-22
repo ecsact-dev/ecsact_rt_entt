@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "69761f01f40efe24c97560ea74f0a192b8ee362dde72797433bfb929aab5f4ab",
+  "moduleFileHash": "b6d552ea510c93ad6717f86924ea79e339a2dd30025c77765ad1b92f59d51355",
   "flags": {
     "cmdRegistries": [
       "https://raw.githubusercontent.com/ecsact-dev/bazel_registry/main",
@@ -20,7 +20,7 @@
   "moduleDepGraph": {
     "<root>": {
       "name": "ecsact_rt_entt",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "key": "<root>",
       "repoName": "ecsact_rt_entt",
       "executionPlatformsToRegister": [],

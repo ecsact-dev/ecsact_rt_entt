@@ -16,7 +16,7 @@
   },
   "localOverrideHashes": {
     "bazel_tools": "1ae69322ac3823527337acf02016e8ee95813d8d356f47060255b8956fa642f0",
-    "ecsact_rt_entt": "69761f01f40efe24c97560ea74f0a192b8ee362dde72797433bfb929aab5f4ab"
+    "ecsact_rt_entt": "b6d552ea510c93ad6717f86924ea79e339a2dd30025c77765ad1b92f59d51355"
   },
   "moduleDepGraph": {
     "<root>": {
@@ -612,7 +612,7 @@
     },
     "ecsact_rt_entt@_": {
       "name": "ecsact_rt_entt",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "key": "ecsact_rt_entt@_",
       "repoName": "ecsact_rt_entt",
       "executionPlatformsToRegister": [],
