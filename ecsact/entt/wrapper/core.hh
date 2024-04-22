@@ -216,6 +216,10 @@ inline auto _trigger_create_entity_events(
 ) -> void {
 	using ecsact::entt::detail::created_entity;
 
+	if(!events_collector.has_entity_created_callback()) {
+		return;
+	}
+
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	::entt::basic_view created_view{
