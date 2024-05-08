@@ -1,7 +1,42 @@
 load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
 load("@ecsact_rt_entt//runtime:index.bzl", "ecsact_entt_runtime")
+load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@rules_cc//cc:defs.bzl", "cc_test")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
+
+cc_test(
+    name = "test_build_recipe",
+    srcs = ["test_build_recipe.cc"],
+    copts = copts,
+    data = [
+        "test_recipe.yml",
+        "//:imported_pkg.ecsact",
+        "//:runtime_test.ecsact",
+        "@ecsact_cli",
+        "@ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen",
+    ],
+    env = {
+        "ECSACT_CLI": "$(rootpath @ecsact_cli)",
+        "ECSACT_RECIPE_PATH": "$(roothpath test_recipe.yml)",
+        "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
+        "ECSACT_IMPORTED_FILE_PATH": "$rootpath //:imported_pkg.ecsact)",
+        "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath @ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen",
+    },
+    deps = [
+        "@boost.process",
+        "@ecsact_cli",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+refresh_compile_commands(
+    name = "refresh_compile_commands",
+    targets = {
+        # "//:test_build_recipe": "",
+        "//:test": "",
+    },
+)
 
 ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",

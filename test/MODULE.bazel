@@ -1,8 +1,4 @@
-module(
-    name = "ecsact_rt_entt_test",
-    version = "0.1.0",
-    compatibility_level = 1,
-)
+module(name = "ecsact_rt_entt_test")
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
@@ -20,7 +16,7 @@ bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    commit = "204aa593e002cbd177d30f11f54cff3559110bb9",
+    commit = "a14ad3a64e7bf398ab48105aaa0348e032ac87f8",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
