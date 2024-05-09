@@ -1,6 +1,5 @@
 load("@ecsact_rt_entt//bazel:copts.bzl", "copts")
 load("@ecsact_rt_entt//runtime:index.bzl", "ecsact_entt_runtime")
-load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@rules_cc//cc:defs.bzl", "cc_test")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 
@@ -8,34 +7,79 @@ cc_test(
     name = "test_build_recipe",
     srcs = ["test_build_recipe.cc"],
     copts = copts,
-    data = [
-        "test_recipe.yml",
-        "//:imported_pkg.ecsact",
-        "//:runtime_test.ecsact",
-        "@ecsact_cli",
-        "@ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen",
-    ],
-    env = {
-        "ECSACT_CLI": "$(rootpath @ecsact_cli)",
-        "ECSACT_RECIPE_PATH": "$(roothpath test_recipe.yml)",
-        "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
-        "ECSACT_IMPORTED_FILE_PATH": "$rootpath //:imported_pkg.ecsact)",
-        "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath @ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen",
-    },
+    data = select({
+        "@platforms//os:windows": [
+            "//:imported_pkg.ecsact",
+            "//:runtime_test.ecsact",
+            "@ecsact_cli",
+            "@ecsact_lang_cpp//cpp_header_codegen:ecsact_cpp_header_codegen",
+            "@ecsact_rt_entt//:build_recipe.yml",
+            "@ecsact_rt_entt//:headers",
+            "@ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen",
+            "@ecsact_rt_entt//runtime:sources",
+        ],
+        "//conditions:default": [
+            "//:imported_pkg.ecsact",
+            "//:runtime_test.ecsact",
+            "@ecsact_cli",
+            "@ecsact_lang_cpp//cpp_header_codegen:ecsact_cpp_header_codegen",
+            "@ecsact_rt_entt//:build_recipe.yml",
+            "@ecsact_rt_entt//:headers",
+            "@ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen",
+            "@ecsact_rt_entt//runtime:sources",
+            "@llvm_toolchain_llvm//:bin/clang",
+        ],
+    }),
+    env = select({
+        "@platforms//os:windows": {
+            "ECSACT_CLI": "$(rootpath @ecsact_cli)",
+            "ECSACT_RECIPE_PATH": "$(rootpath @ecsact_rt_entt//:build_recipe.yml)",
+            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
+            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //:imported_pkg.ecsact)",
+            "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath @ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen)",
+        },
+        "//conditions:default": {
+            "ECSACT_CLI": "$(rootpath @ecsact_cli)",
+            "ECSACT_RECIPE_PATH": "$(rootpath @ecsact_rt_entt//:build_recipe.yml)",
+            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
+            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //:imported_pkg.ecsact)",
+            "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath @ecsact_rt_entt//rt_entt_codegen:ecsact_rt_entt_codegen)",
+            "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
+        },
+    }),
+    env_inherit = select({
+        "@platforms//os:windows": [
+            "PATH",
+            "PATHEXT",
+            "PWD",
+            "APPDATA",
+            "ProgramData",
+            "ProgramFiles",
+            "ProgramFiles(x86)",
+            "PROGRAMDATA",
+            "PROGRAMFILES",
+            "PROGRAMFILES(X86)",
+            "TEMP",
+            "OS",
+            "WINDIR",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
-        "@boost.process",
-        "@ecsact_cli",
+        ":spawn",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
 
-refresh_compile_commands(
-    name = "refresh_compile_commands",
-    targets = {
-        # "//:test_build_recipe": "",
-        "//:test": "",
-    },
+cc_library(
+    name = "spawn",
+    srcs = ["spawn.cc"],
+    hdrs = ["spawn.hh"],
+    copts = copts,
+    deps = [
+        "@boost.process",
+    ],
 )
 
 ecsact_codegen(

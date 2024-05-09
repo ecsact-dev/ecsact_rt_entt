@@ -1,14 +1,14 @@
 name: RT EnTT Recipe
 
 sources:
-  - ../test/bazel-bin/_runtime__public_hdrs/runtime_test.ecsact.hh
-  - ../test/bazel-bin/_runtime__public_hdrs/imported_pkg.ecsact.hh
-  - ../test/bazel-bin/_runtime__cc_srcs/runtime_test.ecsact.rt_entt.cc
-  - codegen: ./ecsact_rt_entt_codegen
+  - codegen:
+      - ../ecsact_lang_cpp~/cpp_header_codegen/ecsact_cpp_header_codegen
+      - ../ecsact_rt_entt~/rt_entt_codegen/ecsact_rt_entt_codegen
     outdir: _rt_entt_codegen_outdir
   # entt
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entt.hpp
     outdir: include/entt
+  # entt/graph
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/graph/adjacency_matrix.hpp
     outdir: include/entt/graph
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/graph/flow.hpp
@@ -17,23 +17,25 @@ sources:
     outdir: include/entt/graph
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/graph/fwd.hpp
     outdir: include/entt/graph
+  # entt/locator
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/locator/locator.hpp
     outdir: include/entt/locator
+  # entt/platform
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/platform/android-ndk-r17.hpp
     outdir: include/entt/platform
-  # poly
+  # entt/poly
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/poly/fwd.hpp
     outdir: include/entt/poly
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/poly/poly.hpp
     outdir: include/entt/poly
-  # process
+  # entt/process
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/process/fwd.hpp
     outdir: include/entt/process
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/process/process.hpp
     outdir: include/entt/process
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/process/scheduler.hpp
     outdir: include/entt/process
-  # resource
+  # entt/resource
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/resource/cache.hpp
     outdir: include/entt/resource
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/resource/fwd.hpp
@@ -42,7 +44,7 @@ sources:
     outdir: include/entt/resource
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/resource/resource.hpp
     outdir: include/entt/resource
-  # entity
+  # entt/entity
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/registry.hpp
     outdir: include/entt/entity
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/storage.hpp
@@ -77,7 +79,7 @@ sources:
     outdir: include/entt/entity
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/snapshot.hpp
     outdir: include/entt/entity
-  # meta
+  # entt/meta
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/meta/adl_pointer.hpp
     outdir: include/entt/meta
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/meta/container.hpp
@@ -106,7 +108,7 @@ sources:
     outdir: include/entt/meta
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/meta/utility.hpp
     outdir: include/entt/meta
-  # signal
+  # entt/signal
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/signal/sigh.hpp
     outdir: include/entt/signal
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/signal/delegate.hpp
@@ -117,21 +119,21 @@ sources:
     outdir: include/entt/signal
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/signal/fwd.hpp
     outdir: include/entt/signal
-  # config
+  # entt/config
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/config/version.h
     outdir: include/entt/config
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/config/macro.h
     outdir: include/entt/config
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/config/config.h
     outdir: include/entt/config
-  # container
+  # entt/container
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/container/dense_map.hpp
     outdir: include/entt/container
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/container/fwd.hpp
     outdir: include/entt/container
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/container/dense_set.hpp
     outdir: include/entt/container
-  # core
+  # entt/core
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/core/compressed_pair.hpp
     outdir: include/entt/core
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/core/type_traits.hpp
@@ -164,35 +166,49 @@ sources:
     outdir: include/entt/core
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/core/tuple.hpp
     outdir: include/entt/core
-  - path: ../ecsact/entt/detail/apply_pending.hh
+  # xxhash
+  - fetch: https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.2/xxhash.h
+    outdir: include/
+  - fetch: https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.2/xxhash.c
+    outdir: src/
+
+  # ecsact/entt/detail
+  - path: ./ecsact/entt/detail/execution_events_collector.hh
     outdir: include/ecsact/entt/detail
-  - path: ../ecsact/entt/detail/execution_events_collector.hh
+  - path: ./ecsact/entt/detail/apply_pending.hh
     outdir: include/ecsact/entt/detail
-  - path: ../ecsact/entt/detail/globals.hh
+  - path: ./ecsact/entt/detail/globals.hh
     outdir: include/ecsact/entt/detail
-  - path: ../ecsact/entt/detail/internal_markers.hh
+  - path: ./ecsact/entt/detail/internal_markers.hh
     outdir: include/ecsact/entt/detail
-  - path: ../ecsact/entt/detail/system_execution_context.hh
+  - path: ./ecsact/entt/detail/system_execution_context.hh
     outdir: include/ecsact/entt/detail/
-  - path: ../ecsact/entt/wrapper/core.hh
+  - path: ./ecsact/entt/detail/bytes.hh
+    outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/hash.hh
+    outdir: include/ecsact/entt/detail
+  # ecsact/entt/wrapper
+  - path: ./ecsact/entt/wrapper/core.hh
     outdir: include/ecsact/entt/wrapper
-  - path: ../ecsact/entt/wrapper/dynamic.hh
+  - path: ./ecsact/entt/wrapper/dynamic.hh
     outdir: include/ecsact/entt/wrapper
-  - path: ../ecsact/entt/entity.hh
+  # ecsact/entt
+  - path: ./ecsact/entt/entity.hh
     outdir: include/ecsact/entt
-  - path: ../ecsact/entt/error_check.hh
+  - path: ./ecsact/entt/error_check.hh
     outdir: include/ecsact/entt
-  - path: ../ecsact/entt/event_markers.hh
+  - path: ./ecsact/entt/event_markers.hh
     outdir: include/ecsact/entt
-  - path: ../ecsact/entt/execution.hh
+  - path: ./ecsact/entt/execution.hh
     outdir: include/ecsact/entt
-  - path: ../ecsact/entt/registry_util.hh
+  - path: ./ecsact/entt/registry_util.hh
     outdir: include/ecsact/entt
-  - ../runtime/ecsact_rt_entt_core.cc
-  - ../runtime/ecsact_rt_entt_dynamic.cc
+  - ./runtime/ecsact_rt_entt_core.cc
+  - ./runtime/ecsact_rt_entt_dynamic.cc
+  - ./runtime/hash.cc
 
 exports:
-  # Core
+  # core
   - ecsact_execute_systems
   - ecsact_destroy_registry
   - ecsact_clear_registry
@@ -210,7 +226,7 @@ exports:
   - ecsact_get_components
   - ecsact_update_component
   - ecsact_remove_component
-  # Dynamic
+  # dynamic
   - ecsact_system_execution_context_same
   - ecsact_system_execution_context_entity
   - ecsact_system_execution_context_generate

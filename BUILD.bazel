@@ -13,3 +13,5 @@ cc_library(
     hdrs = glob(["ecsact/**/*.hh"]),
     copts = copts,
 )
+
+exports_files(["build_recipe.yml"])

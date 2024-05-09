@@ -57,6 +57,7 @@ void ecsact_codegen_plugin(
 	ctx.write("\n");
 	inc_package_header(ctx, package_id);
 	for(auto dep : ecsact::meta::get_dependencies(package_id)) {
+		assert(package_id != dep);
 		inc_package_header(ctx, dep);
 	}
 	ctx.write("\n");

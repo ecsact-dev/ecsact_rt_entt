@@ -112,7 +112,9 @@ inline auto inc_package_header( //
 ) -> void {
 	namespace fs = std::filesystem;
 
-	auto main_ecsact_file_path = ecsact::meta::package_file_path(ctx.package_id);
+	auto main_ecsact_file_path =
+		ecsact::meta::package_file_path(ctx.package_id).lexically_normal();
+
 	if(ctx.package_id == pkg_id) {
 		main_ecsact_file_path.replace_extension(
 			main_ecsact_file_path.extension().string() + ".hh"
