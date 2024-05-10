@@ -83,7 +83,6 @@ inline auto comps_with_caps(
 	}
 
 	std::ranges::sort(found_comps);
-	auto unique_found_comps_range = std::ranges::unique(found_comps);
 	auto unique_found_comps = std::vector<ecsact_component_like_id>{};
 	unique_found_comps.reserve(found_comps.size());
 	std::ranges::copy(found_comps, std::back_inserter(unique_found_comps));
