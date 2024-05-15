@@ -1,7 +1,7 @@
 # This file is maintained by ecsact-dev/ecsact_common
 # If changes are required please make them there
 
-name: main
+name: pr
 
 on:
   pull_request:
