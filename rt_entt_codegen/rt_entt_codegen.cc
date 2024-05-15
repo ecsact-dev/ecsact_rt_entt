@@ -216,6 +216,7 @@ void ecsact_codegen_plugin(
 		core::print_trigger_ecsact_events_all(ctx, details);
 		core::print_cleanup_ecsact_component_events(ctx, details);
 		core::print_execution_options(ctx, details);
+		core::print_cleanup_system_notifies(ctx, details);
 		core::print_execute_systems(ctx, details);
 	}
 }

@@ -52,3 +52,18 @@ cc_library(
         "@ecsact_runtime//:meta",
     ],
 )
+
+cc_library(
+    name = "system_util",
+    srcs = ["system_util.cc"],
+    hdrs = ["system_util.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        ":util",
+        "@ecsact_codegen//:plugin",
+        "@ecsact_lang_cpp//:cpp_codegen_plugin_util",
+        "@ecsact_lang_cpp//:support",
+        "@ecsact_runtime//:meta",
+    ],
+)

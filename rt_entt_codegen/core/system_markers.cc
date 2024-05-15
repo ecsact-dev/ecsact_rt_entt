@@ -75,7 +75,6 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_remove_fn(
 	const ecsact_entt_details& details
 ) -> void {
 	for(auto comp : details.all_components) {
-		auto comp_like_id = ecsact_id_cast<ecsact_component_like_id>(comp);
 		auto comp_name = ecsact::meta::decl_full_name(comp);
 		auto comp_cpp_ident = cc_lang_support::cpp_identifier(comp_name);
 		auto sorting_structs_covered = std::set<ecsact_system_id>{};

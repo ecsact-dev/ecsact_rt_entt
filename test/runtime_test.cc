@@ -169,6 +169,36 @@ void runtime_test::ParentSystem::impl(context& ctx) {
 void runtime_test::ParentSystem::NestedSystem::impl(context& ctx) {
 }
 
+void runtime_test::InitNotify::impl(context& ctx) {
+	auto comp = ctx.get<NotifyComponentA>();
+	comp.val += 1;
+	ctx.update(comp);
+}
+
+void runtime_test::InitNotifySelective::impl(context& ctx) {
+	auto comp = ctx.get<NotifyComponentA>();
+	comp.val += 1;
+	ctx.update(comp);
+}
+
+void runtime_test::TriggerUpdateNotify::impl(context& ctx) {
+	auto comp = ctx.get<NotifyComponentA>();
+	comp.val += 1;
+	ctx.update(comp);
+
+	ctx.remove<TriggerTag>();
+}
+
+void runtime_test::UpdateNotify::impl(context& ctx) {
+	ctx.add<UpdateNotifyAdd>();
+}
+
+void runtime_test::RemoveNotify::impl(context& ctx) {
+	auto comp = ctx.get<NotifyComponentA>();
+	comp.val += 1;
+	ctx.update(comp);
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -1142,3 +1172,194 @@ TEST(Core, StaticSystemImpl) {
 	EXPECT_EQ(comp_get->a, comp.a);
 }
 #endif // ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
+
+TEST(Core, NotifyOnInit) {
+	using runtime_test::NotifyComponentA;
+	using runtime_test::NotifyComponentB;
+	using runtime_test::NotifyComponentC;
+
+	auto reg = ecsact::core::registry("NotifyOnInit");
+
+	auto entity = reg.create_entity();
+
+	auto notify_comp_a = NotifyComponentA{.val = 0};
+	auto notify_comp_b = NotifyComponentB{.val = 0};
+	auto notify_comp_c = NotifyComponentC{.val = 0};
+
+	auto exec_options = ecsact::core::execution_options{};
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	exec_options.add_component(entity, &notify_comp_a);
+	exec_options.add_component(entity, &notify_comp_b);
+	exec_options.add_component(entity, &notify_comp_c);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::InitNotify::id),
+		runtime_test__InitNotify
+	);
+
+	evc.set_update_callback<NotifyComponentA>(
+		[&](ecsact_entity_id, const NotifyComponentA& component) {
+			ASSERT_EQ(component.val, 1);
+		}
+	);
+
+	auto error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	reg.execute_systems(5);
+	auto updated_comp_a = reg.get_component<NotifyComponentA>(entity);
+
+	ASSERT_EQ(updated_comp_a.val, 1);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::InitNotify::id),
+		nullptr
+	);
+}
+
+TEST(Core, NotifyOnInitSelective) {
+	using runtime_test::NotifyComponentA;
+	using runtime_test::NotifyComponentB;
+	using runtime_test::NotifyComponentC;
+
+	auto reg = ecsact::core::registry("NotifyOnInitSelective");
+
+	auto entity = reg.create_entity();
+
+	auto notify_comp_a = NotifyComponentA{.val = 0};
+	auto notify_comp_b = NotifyComponentB{.val = 0};
+	auto notify_comp_c = NotifyComponentC{.val = 0};
+
+	auto exec_options = ecsact::core::execution_options{};
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	exec_options.add_component(entity, &notify_comp_a);
+	exec_options.add_component(entity, &notify_comp_b);
+	exec_options.add_component(entity, &notify_comp_c);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::InitNotifySelective::id
+		),
+		runtime_test__InitNotifySelective
+	);
+
+	auto error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	reg.execute_systems(5);
+	auto updated_comp_a = reg.get_component<NotifyComponentA>(entity);
+
+	ASSERT_EQ(updated_comp_a.val, 1);
+
+	exec_options.clear();
+	exec_options.remove_component(entity, notify_comp_b.id);
+	error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	exec_options.clear();
+	exec_options.add_component(entity, &notify_comp_b);
+	error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	reg.execute_systems(5);
+
+	updated_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(updated_comp_a.val, 2);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::InitNotifySelective::id
+		),
+		nullptr
+	);
+}
+
+TEST(Core, NotifyOnRemove) {
+	using runtime_test::NotifyComponentA;
+	using runtime_test::NotifyComponentB;
+	using runtime_test::NotifyComponentC;
+
+	auto reg = ecsact::core::registry("NotifyOnRemove");
+
+	auto entity = reg.create_entity();
+
+	auto notify_comp_a = NotifyComponentA{.val = 0};
+	auto notify_comp_b = NotifyComponentB{.val = 0};
+	auto notify_comp_c = NotifyComponentC{.val = 0};
+
+	auto exec_options = ecsact::core::execution_options{};
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	exec_options.add_component(entity, &notify_comp_a);
+	exec_options.add_component(entity, &notify_comp_b);
+	exec_options.add_component(entity, &notify_comp_c);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::RemoveNotify::id),
+		runtime_test__RemoveNotify
+	);
+
+	auto error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	reg.execute_systems(5);
+	auto updated_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(updated_comp_a.val, 0);
+
+	exec_options.clear();
+	exec_options.remove_component(entity, notify_comp_b.id);
+	error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	updated_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(updated_comp_a.val, 1);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::RemoveNotify::id),
+		nullptr
+	);
+}
+
+TEST(Core, NotifyOnSystemUpdate) {
+	using runtime_test::NotifyComponentA;
+	using runtime_test::TriggerTag;
+	using runtime_test::UpdateNotifyAdd;
+
+	auto reg = ecsact::core::registry("NotifyOnSystemUpdate");
+
+	auto entity = reg.create_entity();
+
+	auto notify_comp_a = NotifyComponentA{.val = 0};
+	auto trigger_tag = TriggerTag{};
+
+	auto exec_options = ecsact::core::execution_options{};
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	exec_options.add_component(entity, &notify_comp_a);
+	exec_options.add_component(entity, &trigger_tag);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::TriggerUpdateNotify::id
+		),
+		runtime_test__TriggerUpdateNotify
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::UpdateNotify::id),
+		runtime_test__UpdateNotify
+	);
+
+	auto event_happened = false;
+	evc.set_init_callback<UpdateNotifyAdd>(
+		[&](ecsact_entity_id entity_id, const UpdateNotifyAdd& component) {
+			event_happened = true;
+		}
+	);
+
+	auto error = reg.execute_systems(std::array{exec_options}, evc);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	notify_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(notify_comp_a.val, 1);
+
+	reg.execute_systems(5);
+	notify_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(notify_comp_a.val, 1);
+
+	EXPECT_TRUE(event_happened) << "Init event did not happen";
+}

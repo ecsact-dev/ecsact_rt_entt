@@ -15,6 +15,7 @@
 #include "rt_entt_codegen/shared/util.hh"
 #include "rt_entt_codegen/shared/comps_with_caps.hh"
 #include "rt_entt_codegen/shared/sorting.hh"
+#include "rt_entt_codegen/shared/system_util.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -560,6 +561,10 @@ static auto print_ecsact_entt_system_details(
 	using ecsact::meta::decl_full_name;
 	using ecsact::meta::get_child_system_ids;
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
+	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
+	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
+	using ecsact::rt_entt_codegen::system_util::is_notify_system;
+	using ecsact::rt_entt_codegen::system_util::print_system_notify_views;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	constexpr auto is_system_id =
@@ -601,6 +606,18 @@ static auto print_ecsact_entt_system_details(
 
 	if(system_needs_sorted_entities(options.sys_like_id, details)) {
 		additional_view_components.push_back(system_sorting_struct_name);
+	}
+
+	if(is_notify_system(options.sys_like_id)) {
+		additional_view_components.push_back(
+			std::format("ecsact::entt::detail::run_system<{}>", options.system_name)
+		);
+		print_system_notify_views(
+			ctx,
+			details,
+			options.sys_like_id,
+			options.registry_var_name
+		);
 	}
 
 	ecsact::rt_entt_codegen::util::make_view(
@@ -771,7 +788,8 @@ static auto print_ecsact_entt_system_details(
 
 	if(lazy_iteration_rate > 0) {
 		ctx.write(
-			"// If this assertion triggers that's a ecsact_rt_entt codegen failure\n"
+			"// If this assertion triggers that's a ecsact_rt_entt codegen "
+			"failure\n"
 		);
 		ctx.write("assert(iteration_count_ <= lazy_iteration_rate_);\n");
 		block(ctx, "if(iteration_count_ < lazy_iteration_rate_)", [&] {
@@ -828,31 +846,6 @@ static auto print_ecsact_entt_system_details(
 	);
 }
 
-static auto get_unique_view_name() -> std::string {
-	static int counter = 0;
-	return "view" + std::to_string(counter++);
-}
-
-template<typename ComponentLikeID>
-static auto create_context_struct_name( //
-	ComponentLikeID component_like_id
-) -> std::string {
-	using ecsact::cc_lang_support::c_identifier;
-	auto full_name =
-		c_identifier(ecsact::meta::decl_full_name(component_like_id));
-	return full_name + "Struct";
-}
-
-template<typename ComponentLikeID>
-static auto create_context_var_name( //
-	ComponentLikeID component_like_id
-) -> std::string {
-	using ecsact::cc_lang_support::c_identifier;
-	auto full_name =
-		c_identifier(ecsact::meta::decl_full_name(component_like_id));
-	return full_name + "_context";
-}
-
 template<typename SystemLikeID>
 static auto print_other_contexts(
 	ecsact::codegen_plugin_context&                              ctx,
@@ -866,6 +859,9 @@ static auto print_other_contexts(
 	using ecsact::meta::get_child_system_ids;
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 	using ecsact::rt_entt_codegen::other_key;
+	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
+	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
+	using ecsact::rt_entt_codegen::system_util::get_unique_view_name;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	std::map<other_key, std::string> other_views;
@@ -926,44 +922,6 @@ static auto print_other_contexts(
 	}
 
 	return other_views;
-}
-
-static auto is_trivial_system(ecsact_system_like_id system_id) -> bool {
-	using ecsact::meta::get_field_ids;
-	using ecsact::meta::system_capabilities;
-
-	auto sys_capabilities = system_capabilities(system_id);
-
-	auto non_trivial_capabilities = std::array{
-		ECSACT_SYS_CAP_READONLY,
-		ECSACT_SYS_CAP_READWRITE,
-		ECSACT_SYS_CAP_WRITEONLY,
-		ECSACT_SYS_CAP_OPTIONAL_READONLY,
-		ECSACT_SYS_CAP_OPTIONAL_READWRITE,
-		ECSACT_SYS_CAP_OPTIONAL_WRITEONLY,
-	};
-
-	bool has_non_tag_adds = false;
-	bool has_read_write = false;
-	for(auto&& [comp_id, sys_cap] : sys_capabilities) {
-		if((ECSACT_SYS_CAP_ADDS & sys_cap) == ECSACT_SYS_CAP_ADDS) {
-			auto field_count =
-				ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(comp_id));
-			if(field_count > 0) {
-				has_non_tag_adds = true;
-			}
-		}
-
-		for(auto non_trivial_cap : non_trivial_capabilities) {
-			if((non_trivial_cap & sys_cap) == sys_cap) {
-				has_read_write = true;
-			}
-		}
-	}
-	if(has_non_tag_adds || has_read_write) {
-		return false;
-	}
-	return true;
 }
 
 static auto print_trivial_system_like(
@@ -1027,6 +985,7 @@ static auto print_execute_system_template_specialization(
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
+	using ecsact::rt_entt_codegen::system_util::is_trivial_system;
 
 	using ecsact::rt_entt_codegen::util::method_printer;
 
@@ -1076,6 +1035,7 @@ static auto print_execute_actions_template_specialization(
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
+	using ecsact::rt_entt_codegen::system_util::is_trivial_system;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	if(is_trivial_system(ecsact_id_cast<ecsact_system_like_id>(action_id))) {
