@@ -6,7 +6,7 @@ module(
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.6.1")
-bazel_dep(name = "rules_ecsact", version = "0.5.0")
+bazel_dep(name = "rules_ecsact", version = "0.5.2")
 bazel_dep(name = "ecsact_runtime", version = "0.6.1")
 bazel_dep(name = "ecsact_lang_cpp", version = "0.4.1")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
