@@ -28,7 +28,10 @@ ecsact_entity_id ecsact_system_execution_context_entity(
 	return context->entity;
 }
 
-#ifdef ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS
+// ecsact build currently doesn't have a way to select certain features of
+// runtime. So if we're building with 'ecsact build' include all features until
+// configuration is possible.
+#if defined(ECSACT_ENTT_RUNTIME_DYNAMIC_SYSTEM_IMPLS) || defined(ECSACT_BUILD)
 bool ecsact_set_system_execution_impl(
 	ecsact_system_like_id        system_id,
 	ecsact_system_execution_impl system_exec_impl
