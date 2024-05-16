@@ -89,6 +89,7 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 			);
 		});
 		ctx.write("cleanup_component_events(registry_id);\n");
+		ctx.write("cleanup_system_notifies(registry_id);\n");
 	});
 
 	ctx.write("return ECSACT_EXEC_SYS_OK;");

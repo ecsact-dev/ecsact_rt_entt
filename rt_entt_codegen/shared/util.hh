@@ -275,7 +275,8 @@ auto make_view( //
 	auto&&                                                     view_var_name,
 	auto&&                                                     registry_var_name,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	std::vector<std::string> additional_components = {}
+	std::vector<std::string> additional_components = {},
+	std::vector<std::string> additional_exclude_components = {}
 ) -> void {
 	using namespace std::string_literals;
 	using ecsact::rt_entt_codegen::util::comma_delim;
@@ -295,13 +296,19 @@ auto make_view( //
 
 	ctx.write(">(");
 
-	if(!details.exclude_comps.empty()) {
+	auto exclude_comps = details.exclude_comps |
+		transform(decl_cpp_ident<ecsact_component_like_id>);
+
+	additional_exclude_components.insert(
+		additional_exclude_components.end(),
+		exclude_comps.begin(),
+		exclude_comps.end()
+	);
+
+	if(!additional_exclude_components.empty()) {
 		ctx.write(
 			"::entt::exclude<",
-			comma_delim(
-				details.exclude_comps |
-				transform(decl_cpp_ident<ecsact_component_like_id>)
-			),
+			comma_delim(additional_exclude_components),
 			">"
 		);
 	}

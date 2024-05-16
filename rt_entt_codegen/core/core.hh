@@ -66,6 +66,11 @@ auto print_system_marker_remove_fn(
 	const ecsact_entt_details& details
 ) -> void;
 
+auto print_cleanup_system_notifies(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
 auto print_entity_match_fn(
 	codegen_plugin_context&    ctx,
 	const ecsact_entt_details& details

@@ -81,8 +81,8 @@ auto context_remove(
 ) -> void {
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
-	using ecsact::entt::component_changed;
 	using ecsact::entt::component_removed;
+	using ecsact::entt::component_updated;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;
 
@@ -90,7 +90,7 @@ auto context_remove(
 	auto& registry = *context->registry;
 
 	registry.template remove<component_added<C>>(entity);
-	registry.template remove<component_changed<C>>(entity);
+	registry.template remove<component_updated<C>>(entity);
 	registry.template emplace_or_replace<pending_remove<C>>(entity);
 	registry.template emplace_or_replace<component_removed<C>>(entity);
 
@@ -110,13 +110,13 @@ auto component_remove_trivial(
 	::entt::registry&       registry,
 	ecsact::entt::entity_id entity_id
 ) -> void {
-	using ecsact::entt::component_changed;
 	using ecsact::entt::component_removed;
+	using ecsact::entt::component_updated;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;
 
 	registry.template remove<component_added<C>>(entity_id);
-	registry.template remove<component_changed<C>>(entity_id);
+	registry.template remove<component_updated<C>>(entity_id);
 	registry.template emplace_or_replace<pending_remove<C>>(entity_id);
 	registry.template emplace_or_replace<component_removed<C>>(entity_id);
 
@@ -150,7 +150,7 @@ auto context_update(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               in_component_data
 ) -> void {
-	using ecsact::entt::component_changed;
+	using ecsact::entt::component_updated;
 	// TODO(Kelwan): for remove, beforeremove_storage
 
 	auto  entity = context->entity;
@@ -160,7 +160,7 @@ auto context_update(
 
 	auto& current_component = registry.template get<C>(entity);
 	current_component = in_component;
-	registry.template emplace_or_replace<component_changed<C>>(entity);
+	registry.template emplace_or_replace<component_updated<C>>(entity);
 }
 
 template<typename C>

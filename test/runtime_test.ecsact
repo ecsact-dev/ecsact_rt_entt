@@ -190,3 +190,51 @@ system LazyParentSystem(lazy) {
         readwrite TestLazySystemComponentB;
     }
 }
+
+// Notify systems
+
+component NotifyComponentA {
+	i8 val;
+}
+component NotifyComponentB {
+	i8 val;
+}
+component NotifyComponentC {
+	i8 val;
+}
+
+system InitNotify {
+	readwrite NotifyComponentA;
+	readonly NotifyComponentB;
+	readonly NotifyComponentC;
+	notify oninit;
+}
+
+system InitNotifySelective {
+	readwrite NotifyComponentA;
+	readonly NotifyComponentB;
+	readonly NotifyComponentC;
+	notify oninit;
+}
+
+component TriggerTag;
+component UpdateNotifyAdd;
+
+system TriggerUpdateNotify{
+	readwrite NotifyComponentA; 
+	removes TriggerTag;
+}
+
+system UpdateNotify {
+	readwrite NotifyComponentA;
+	adds UpdateNotifyAdd;
+	notify onupdate;
+}
+
+system RemoveNotify {
+	readwrite NotifyComponentA;
+	readonly NotifyComponentC;
+	notify {
+		onremove NotifyComponentB;
+	}
+}

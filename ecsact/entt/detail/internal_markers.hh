@@ -72,6 +72,9 @@ struct system_sorted {
 template<typename S>
 struct pending_lazy_execution {};
 
+template<typename S>
+struct run_system {};
+
 template<typename>
 constexpr bool system_markers_unimplemented_by_codegen = false;
 
