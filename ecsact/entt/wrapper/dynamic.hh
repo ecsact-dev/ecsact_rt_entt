@@ -181,17 +181,9 @@ auto context_generate_add(
 	const void*                      component_data,
 	ecsact::entt::entity_id          entity
 ) -> void {
-	using ecsact::entt::detail::created_entity;
 	using ecsact::entt::detail::pending_add;
 
 	auto& registry = *context->registry;
-
-	registry.template emplace<created_entity>(
-		entity,
-		created_entity{
-			.placeholder_entity_id = ecsact_generated_entity,
-		}
-	);
 
 	const auto& component = *static_cast<const C*>(component_data);
 	registry.template emplace<pending_add<C>>(entity, component);

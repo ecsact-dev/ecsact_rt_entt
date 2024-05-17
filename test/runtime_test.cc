@@ -34,7 +34,7 @@ void runtime_test::OtherEntitySystem::impl(context& ctx) {
 }
 
 void runtime_test::MakeAnother::impl(context& ctx) {
-	ctx._ctx.generate(ctx.get<ComponentA>());
+	ctx._ctx.generate(ctx.get<ComponentA>(), ctx.get<ComponentB>());
 }
 
 void runtime_test::TestAction::impl(context& ctx) {
@@ -758,22 +758,23 @@ TEST(Core, GeneratesCreateEvent) {
 	auto test_entity = reg.create_entity();
 	auto test_action = runtime_test::MakeAnother{};
 	reg.add_component(test_entity, runtime_test::ComponentA{});
+	reg.add_component(test_entity, runtime_test::ComponentB{});
 
 	auto options = ecsact::core::execution_options{};
 	options.push_action(&test_action);
 
 	auto evc = ecsact::core::execution_events_collector<>{};
-	auto event_happened = false;
+	auto created_event_count = 0;
 	evc.set_entity_created_callback(
 		[&](ecsact_entity_id, ecsact_placeholder_entity_id placeholder) {
-			event_happened = true;
+			created_event_count += 1;
 			ASSERT_EQ(placeholder, ecsact_generated_entity);
 		}
 	);
 
 	auto exec_err = reg.execute_systems(std::array{options}, evc);
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
-	EXPECT_TRUE(event_happened);
+	EXPECT_EQ(created_event_count, 1);
 	EXPECT_EQ(2, reg.count_entities());
 }
 
