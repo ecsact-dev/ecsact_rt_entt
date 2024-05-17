@@ -216,43 +216,43 @@ inline auto _trigger_create_entity_events(
 ) -> void {
 	using ecsact::entt::detail::created_entity;
 
-	if(!events_collector.has_entity_created_callback()) {
-		return;
-	}
-
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
-	::entt::basic_view created_view{
-		reg.template storage<created_entity>(),
-	};
+	if(events_collector.has_entity_created_callback()) {
+		::entt::basic_view created_view{
+			reg.template storage<created_entity>(),
+		};
 
-	for(ecsact::entt::entity_id entity : created_view) {
-		events_collector.invoke_entity_created_callback(
-			entity,
-			created_view.template get<created_entity>(entity).placeholder_entity_id
-		);
+		for(ecsact::entt::entity_id entity : created_view) {
+			events_collector.invoke_entity_created_callback(
+				entity,
+				created_view.template get<created_entity>(entity).placeholder_entity_id
+			);
+		}
 	}
+
+	reg.clear<created_entity>();
 }
 
 inline auto _trigger_destroy_entity_events(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
-	auto& reg = ecsact::entt::get_registry(registry_id);
-
 	using ecsact::entt::detail::destroyed_entity;
 
-	if(!events_collector.has_entity_destroyed_callback()) {
-		return;
+	auto& reg = ecsact::entt::get_registry(registry_id);
+
+	if(events_collector.has_entity_destroyed_callback()) {
+		::entt::basic_view destroy_view{
+			reg.template storage<destroyed_entity>(),
+		};
+
+		for(ecsact::entt::entity_id entity : destroy_view) {
+			events_collector.invoke_entity_destroyed_callback(entity);
+		}
 	}
 
-	::entt::basic_view destroy_view{
-		reg.template storage<destroyed_entity>(),
-	};
-
-	for(ecsact::entt::entity_id entity : destroy_view) {
-		events_collector.invoke_entity_destroyed_callback(entity);
-	}
+	reg.clear<destroyed_entity>();
 }
 
 template<typename C>
