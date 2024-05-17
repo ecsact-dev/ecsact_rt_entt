@@ -20,8 +20,8 @@ auto context_add(
 ) -> void {
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
-	using ecsact::entt::detail::beforechange_storage;
 	using ecsact::entt::detail::beforeremove_storage;
+	using ecsact::entt::detail::exec_beforechange_storage;
 	using ecsact::entt::detail::pending_add;
 
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
@@ -34,7 +34,6 @@ auto context_add(
 	} else {
 		const C* component = static_cast<const C*>(component_data);
 		registry.template emplace_or_replace<pending_add<C>>(entity, *component);
-
 		registry.template remove<beforeremove_storage<C>>(entity);
 	}
 
@@ -54,8 +53,6 @@ auto component_add_trivial(
 ) -> void {
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
-	using ecsact::entt::detail::beforechange_storage;
-	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_add;
 
 	registry.template emplace_or_replace<pending_add<C>>(entity_id);
@@ -146,7 +143,7 @@ auto context_update(
 	const void*                               in_component_data
 ) -> void {
 	using ecsact::entt::component_updated;
-	using ecsact::entt::detail::beforechange_storage;
+	using ecsact::entt::detail::exec_beforechange_storage;
 	// TODO(Kelwan): for remove, beforeremove_storage
 
 	auto  entity = context->entity;
@@ -155,7 +152,8 @@ auto context_update(
 	const auto& in_component = *static_cast<const C*>(in_component_data);
 
 	auto& current_component = registry.template get<C>(entity);
-	auto& beforechange = registry.template get<beforechange_storage<C>>(entity);
+	auto& beforechange =
+		registry.template get<exec_beforechange_storage<C>>(entity);
 	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;
 		beforechange.has_update_occurred = true;

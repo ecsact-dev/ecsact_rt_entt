@@ -6,6 +6,7 @@
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 #include "rt_entt_codegen/shared/sorting.hh"
+#include "rt_entt_codegen/shared/system_util.hh"
 
 using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::cpp_codegen_plugin_util::method_printer;
@@ -91,5 +92,52 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_remove_fn(
 				.return_type("void");
 
 		ctx.write("//TODO\n");
+	}
+}
+
+auto ecsact::rt_entt_codegen::core::print_add_sys_beforestorage_fn(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void {
+	using cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
+
+	auto already_printed_ = std::set<ecsact_component_id>{};
+
+	for(auto comp_id : details.all_components) {
+		auto comp_name = cpp_identifier(decl_full_name(comp_id));
+
+		ctx.write("template<>\n");
+		auto printer =
+			method_printer{
+				ctx,
+				std::format(
+					"ecsact::entt::detail::add_exec_itr_beforechange_if_needed< {}>",
+					comp_name
+				)
+			}
+				.parameter("::entt::registry&", "reg")
+				.parameter("ecsact::entt::entity_id", "entity")
+				.return_type("void");
+
+		for(auto system_id : details.all_systems) {
+			auto notify_settings = ecsact::meta::system_notify_settings(system_id);
+
+			for(auto const [comp_id_to_compare, notify_setting] : notify_settings) {
+				if(comp_id == static_cast<ecsact_component_id>(comp_id_to_compare)) {
+					if(notify_setting == ECSACT_SYS_NOTIFY_ONCHANGE) {
+						if(already_printed_.contains(comp_id)) {
+							break;
+						}
+						already_printed_.insert(comp_id);
+						ctx.write(std::format( //
+							"reg.emplace<exec_itr_beforechange_storage<{}>>(entity);\n",
+							comp_name
+						));
+						break;
+					}
+				}
+			}
+		}
 	}
 }

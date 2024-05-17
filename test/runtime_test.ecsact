@@ -245,3 +245,24 @@ system RemoveNotify {
 		onremove NotifyComponentB;
 	}
 }
+
+system ChangeNotify {
+	readwrite NotifyComponentA;
+
+	notify onchange;
+}
+
+component Counter {
+	i32 val;
+}
+
+system MixedNotify {
+	readwrite Counter;
+	readwrite NotifyComponentA;
+	readonly NotifyComponentC;
+	notify {
+		onchange NotifyComponentA;
+		oninit NotifyComponentC;
+		onremove NotifyComponentB;
+	}
+}

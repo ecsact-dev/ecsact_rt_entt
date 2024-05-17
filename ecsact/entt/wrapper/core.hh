@@ -59,7 +59,7 @@ inline auto add_component( //
 		if constexpr(std::is_empty_v<C>) {
 			reg.emplace<C>(entity);
 		} else {
-			reg.emplace<detail::beforechange_storage<C>>(
+			reg.emplace<detail::exec_beforechange_storage<C>>(
 				entity,
 				*static_cast<const C*>(component_data),
 				false
@@ -68,6 +68,7 @@ inline auto add_component( //
 		}
 
 		ecsact::entt::detail::add_system_markers_if_needed<C>(reg, entity);
+		ecsact::entt::detail::add_exec_itr_beforechange_if_needed<C>(reg, entity);
 	}
 
 	return err;
@@ -96,7 +97,7 @@ inline auto add_component_exec_options( //
 		if constexpr(std::is_empty_v<C>) {
 			reg.emplace<C>(entity);
 		} else {
-			reg.emplace<detail::beforechange_storage<C>>(
+			reg.emplace<detail::exec_beforechange_storage<C>>(
 				entity,
 				*static_cast<const C*>(component_data)
 			);
@@ -104,6 +105,7 @@ inline auto add_component_exec_options( //
 		}
 		reg.template emplace_or_replace<component_added<C>>(entity);
 		ecsact::entt::detail::add_system_markers_if_needed<C>(reg, entity);
+		ecsact::entt::detail::add_exec_itr_beforechange_if_needed<C>(reg, entity);
 	}
 
 	return err;
@@ -172,7 +174,7 @@ auto remove_component(
 
 	reg.remove<C>(entity);
 	if constexpr(!std::is_empty_v<C>) {
-		reg.remove<detail::beforechange_storage<C>>(entity);
+		reg.remove<detail::exec_beforechange_storage<C>>(entity);
 	}
 	reg.template remove<component_added<C>>(entity);
 	reg.template remove<component_updated<C>>(entity);
@@ -205,7 +207,7 @@ auto remove_component_exec_options(
 	reg.template emplace_or_replace<component_removed<C>>(entity);
 
 	if constexpr(!std::is_empty_v<C>) {
-		reg.template remove<detail::beforechange_storage<C>>(entity);
+		reg.template remove<detail::exec_beforechange_storage<C>>(entity);
 	}
 
 	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
@@ -294,7 +296,7 @@ auto _trigger_update_component_event(
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
 	using ecsact::entt::component_updated;
-	using ecsact::entt::detail::beforechange_storage;
+	using ecsact::entt::detail::exec_beforechange_storage;
 
 	if(!events_collector.has_update_callback()) {
 		return;
@@ -304,12 +306,13 @@ auto _trigger_update_component_event(
 	if constexpr(!C::transient && !std::is_empty_v<C>) {
 		::entt::basic_view changed_view{
 			reg.template storage<C>(),
-			reg.template storage<beforechange_storage<C>>(),
+			reg.template storage<exec_beforechange_storage<C>>(),
 			reg.template storage<component_updated<C>>(),
 		};
 
 		for(ecsact::entt::entity_id entity : changed_view) {
-			auto& before = changed_view.template get<beforechange_storage<C>>(entity);
+			auto& before =
+				changed_view.template get<exec_beforechange_storage<C>>(entity);
 			auto& current = changed_view.template get<C>(entity);
 			before.has_update_occurred = false;
 
@@ -403,9 +406,33 @@ inline auto prepare_component(ecsact_registry_id registry_id) -> void {
 	reg.template storage<component_removed<C>>();
 
 	if constexpr(!std::is_empty_v<C>) {
-		reg.storage<detail::beforechange_storage<C>>();
+		reg.storage<detail::exec_beforechange_storage<C>>();
 		reg.template storage<component_updated<C>>();
 	}
+}
+
+template<typename C, typename V>
+auto has_component_changed(entt::entity_id entity, V& view) -> bool {
+	using detail::exec_itr_beforechange_storage;
+
+	const auto& current_comp = view.template get<C>(entity);
+	const auto& before_comp =
+		view.template get<exec_itr_beforechange_storage<C>>(entity);
+
+	if(before_comp.value != current_comp) {
+		return true;
+	}
+	return false;
+}
+
+template<typename C>
+auto update_exec_itr_beforechange(entt::entity_id entity, ::entt::registry& reg)
+	-> void {
+	auto  comp = reg.get<C>(entity);
+	auto& beforechange_comp =
+		reg.get<detail::exec_itr_beforechange_storage<C>>(entity);
+
+	beforechange_comp.value = comp;
 }
 
 } // namespace ecsact::entt::wrapper::core
