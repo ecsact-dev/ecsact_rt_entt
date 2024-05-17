@@ -186,6 +186,7 @@ auto context_generate_add(
 
 	const auto& component = *static_cast<const C*>(component_data);
 	registry.template emplace<pending_add<C>>(entity, component);
+	detail::add_system_markers_if_needed<C>(registry, entity);
 }
 
 } // namespace ecsact::entt::wrapper::dynamic

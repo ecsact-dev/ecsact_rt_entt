@@ -46,7 +46,7 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_add_fn(
 				continue;
 			}
 
-			if(system_needs_sorted_entities(system_id, sys_details)) {
+			if(system_needs_sorted_entities(system_id)) {
 				auto system_name = ecsact::meta::decl_full_name(system_id);
 				auto system_cpp_ident =
 					"::" + cc_lang_support::cpp_identifier(system_name);
@@ -54,18 +54,24 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_add_fn(
 				auto system_sorting_struct_name =
 					std::format("system_sorted<{}>", system_cpp_ident);
 
-				block(
-					ctx,
-					"if(::ecsact::entt::entity_matches_system<" + system_cpp_ident +
-						">(reg, entity))",
-					[&] {
-						ctx.write(
-							"reg.emplace_or_replace<",
-							system_sorting_struct_name,
-							">(entity);"
-						);
-					}
+				ctx.write(
+					"reg.emplace_or_replace<",
+					system_sorting_struct_name,
+					">(entity);"
 				);
+
+				/* block( */
+				/* 	ctx, */
+				/* 	"if(::ecsact::entt::entity_matches_system<" + system_cpp_ident + */
+				/* 		">(reg, entity))", */
+				/* 	[&] { */
+				/* 		ctx.write( */
+				/* 			"reg.emplace_or_replace<", */
+				/* 			system_sorting_struct_name, */
+				/* 			">(entity);" */
+				/* 		); */
+				/* 	} */
+				/* ); */
 			}
 		}
 	}

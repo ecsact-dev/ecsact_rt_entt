@@ -198,6 +198,10 @@ system LazyParentSystem(lazy) {
     }
 }
 
+system LazyUpdateGeneratedEntity(lazy) {
+  readwrite ComponentA;
+}
+
 // Notify systems
 
 component NotifyComponentA {
