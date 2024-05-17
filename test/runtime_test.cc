@@ -1242,7 +1242,7 @@ TEST(Core, LazyUpdateGeneratedEntity) {
 		return count;
 	};
 
-	// this sytem should increment ComponentA::a one by one
+	// this system should increment ComponentA::a one by one
 	SET_SYSTEM_IMPL(LazyUpdateGeneratedEntity);
 
 	reg.execute_systems();
