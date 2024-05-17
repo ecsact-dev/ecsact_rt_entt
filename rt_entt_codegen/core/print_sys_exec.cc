@@ -431,7 +431,12 @@ static auto print_sys_exec_ctx_generate(
 	// NOTE(Kelwan): Multiple generates blocks are allowed in Ecsact systems but
 	// currently the interpreter won't allow this. More testing required after the
 	// issue is resolved https://github.com/ecsact-dev/ecsact_interpret/issues/185
-	ctx.write("auto entity = this->registry->create();\n");
+	ctx.write("auto entity = registry->create();\n");
+
+	ctx.write(
+		"registry->template emplace<ecsact::entt::detail::created_entity>(entity, "
+		"ecsact_generated_entity);\n"
+	);
 
 	block(ctx, "for(int i = 0; i < component_count; ++i)", [&] {
 		ctx.write("const auto component_id = component_ids[i];\n");

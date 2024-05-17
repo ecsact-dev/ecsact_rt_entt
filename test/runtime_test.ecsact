@@ -6,6 +6,10 @@ component ComponentA {
 	i32 a;
 }
 
+component ComponentB {
+  i32 b;
+}
+
 component OtherEntityComponent {
 	i32 num;
 	entity target;
@@ -52,8 +56,10 @@ system AlwaysRemove {
 
 action MakeAnother {
 	readwrite ComponentA;
+	readwrite ComponentB;
 	generates {
 		required ComponentA;
+		required ComponentB;
 	}
 }
 
