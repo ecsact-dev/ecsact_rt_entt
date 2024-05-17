@@ -7,7 +7,7 @@ component ComponentA {
 }
 
 component ComponentB {
-  i32 b;
+	i32 b;
 }
 
 component OtherEntityComponent {
