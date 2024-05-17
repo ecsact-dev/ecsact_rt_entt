@@ -789,7 +789,8 @@ TEST(Core, CreateAndDestroyEntity) {
 		ecsact_placeholder_entity_id placeholder_entity_id;
 	};
 
-	auto info = callback_info{};
+	auto created_entity = ecsact_invalid_entity_id;
+	auto info = std::optional<callback_info>{};
 	auto options = ecsact::core::execution_options{};
 	auto evc = ecsact::core::execution_events_collector<>{};
 
@@ -798,15 +799,18 @@ TEST(Core, CreateAndDestroyEntity) {
 			ecsact_entity_id             entity_id,
 			ecsact_placeholder_entity_id placeholder_entity_id
 		) {
-			info.entity_created = true;
-			info.entity_id = entity_id;
-			info.placeholder_entity_id = placeholder_entity_id;
+			info = callback_info{};
+			info->entity_created = true;
+			info->entity_id = entity_id;
+			info->placeholder_entity_id = placeholder_entity_id;
+			created_entity = entity_id;
 		}
 	);
 
 	evc.set_entity_destroyed_callback([&](ecsact_entity_id entity_id) {
-		info.entity_destroyed = true;
-		info.entity_id = entity_id;
+		info = callback_info{};
+		info->entity_destroyed = true;
+		info->entity_id = entity_id;
 	});
 
 	options.create_entity(static_cast<ecsact_placeholder_entity_id>(42))
@@ -814,26 +818,36 @@ TEST(Core, CreateAndDestroyEntity) {
 	auto exec_err = reg.execute_systems(std::array{options}, evc);
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 
-	ASSERT_TRUE(info.entity_created);
-	ASSERT_FALSE(info.entity_destroyed);
+	ASSERT_TRUE(info.has_value());
+	ASSERT_TRUE(info->entity_created);
+	ASSERT_FALSE(info->entity_destroyed);
+	ASSERT_EQ(info->entity_id, created_entity);
 	ASSERT_EQ(reg.count_entities(), 1);
 
 	EXPECT_EQ(
-		info.placeholder_entity_id,
+		info->placeholder_entity_id,
 		static_cast<ecsact_placeholder_entity_id>(42)
 	);
 
-	auto comp = reg.get_component<runtime_test::EntityTesting>(info.entity_id);
+	auto comp = reg.get_component<runtime_test::EntityTesting>(info->entity_id);
 
 	ASSERT_EQ(comp.a, 6);
 
 	options.clear();
-	options.destroy_entity(info.entity_id);
+	info = std::nullopt;
 
+	// Make sure create doesn't get called again
+	exec_err = reg.execute_systems(std::array{options}, evc);
+	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
+	ASSERT_FALSE(info.has_value());
+
+	options.destroy_entity(created_entity);
+	info = std::nullopt;
 	exec_err = reg.execute_systems(std::array{options}, evc);
 	ASSERT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 	ASSERT_EQ(reg.count_entities(), 0);
-	ASSERT_TRUE(info.entity_destroyed);
+	ASSERT_TRUE(info.has_value());
+	ASSERT_TRUE(info->entity_destroyed);
 }
 
 TEST(Core, MultiPkgUpdate) {
