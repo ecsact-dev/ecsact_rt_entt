@@ -61,7 +61,8 @@ inline auto add_component( //
 		} else {
 			reg.emplace<detail::beforechange_storage<C>>(
 				entity,
-				*static_cast<const C*>(component_data)
+				*static_cast<const C*>(component_data),
+				false
 			);
 			reg.emplace<C>(entity, *static_cast<const C*>(component_data));
 		}
@@ -310,6 +311,7 @@ auto _trigger_update_component_event(
 		for(ecsact::entt::entity_id entity : changed_view) {
 			auto& before = changed_view.template get<beforechange_storage<C>>(entity);
 			auto& current = changed_view.template get<C>(entity);
+			before.has_update_occured = false;
 
 			if(before.value != current) {
 				events_collector.invoke_update_callback<C>(entity, current);

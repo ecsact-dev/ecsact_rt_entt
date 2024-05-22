@@ -151,6 +151,7 @@ auto context_update(
 	const void*                               in_component_data
 ) -> void {
 	using ecsact::entt::component_updated;
+	using ecsact::entt::detail::beforechange_storage;
 	// TODO(Kelwan): for remove, beforeremove_storage
 
 	auto  entity = context->entity;
@@ -159,8 +160,13 @@ auto context_update(
 	const auto& in_component = *static_cast<const C*>(in_component_data);
 
 	auto& current_component = registry.template get<C>(entity);
+	auto& beforechange = registry.template get<beforechange_storage<C>>(entity);
+	if(!beforechange.has_update_occured) {
+		beforechange.value = current_component;
+		beforechange.has_update_occured = true;
+		registry.template emplace_or_replace<component_updated<C>>(entity);
+	}
 	current_component = in_component;
-	registry.template emplace_or_replace<component_updated<C>>(entity);
 }
 
 template<typename C>

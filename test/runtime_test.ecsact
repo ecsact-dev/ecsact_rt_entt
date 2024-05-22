@@ -119,6 +119,7 @@ component EntityTesting {
 
 system SimpleIncrementImportedComp {
 	readwrite imported.test_pkg.ImportedComponent;
+	readonly imported.test_pkg.Incrementer;
 }
 
 system AddsAutoRemovedTag {
