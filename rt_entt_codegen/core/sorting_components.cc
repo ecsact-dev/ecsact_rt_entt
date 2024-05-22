@@ -118,7 +118,7 @@ auto ecsact::rt_entt_codegen::core::print_entity_sorting_components(
 		auto sys_details =
 			ecsact_entt_system_details::from_system_like(sys_like_id);
 
-		if(system_needs_sorted_entities(sys_id, sys_details)) {
+		if(system_needs_sorted_entities(sys_id)) {
 			auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
 			auto sys_details =
 				ecsact_entt_system_details::from_system_like(sys_like_id);

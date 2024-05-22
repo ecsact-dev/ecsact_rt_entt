@@ -144,6 +144,12 @@ void runtime_test::LazyParentSystem::LazyParentNestedSystem::impl( //
 	ctx.update(comp);
 }
 
+auto runtime_test::LazyUpdateGeneratedEntity::impl(context& ctx) -> void {
+	auto comp = ctx.get<ComponentA>();
+	comp.a += 1;
+	ctx.update(comp);
+}
+
 static std::atomic_bool AddAssocTest_ran = false;
 
 void runtime_test::AddAssocTest::impl(context& ctx) {
@@ -324,8 +330,8 @@ TEST(Core, AddComponentError) {
 	// invalid entity error.
 	EXPECT_EQ(add_err, ECSACT_ADD_ERR_ENTITY_INVALID);
 
-	// When we receive an error when adding a component our component will not be
-	// added to the registry.
+	// When we receive an error when adding a component our component will not
+	// be added to the registry.
 	EXPECT_FALSE(reg.has_component<OtherEntityComponent>(entity));
 }
 
@@ -773,10 +779,7 @@ TEST(Core, DynamicSystemImpl) {
 }
 
 TEST(Core, GeneratesCreateEvent) {
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::MakeAnother::id),
-		&runtime_test__MakeAnother
-	);
+	SET_SYSTEM_IMPL(MakeAnother);
 
 	auto reg = ecsact::core::registry("GeneratesCreateEvent");
 
@@ -1196,6 +1199,67 @@ TEST(Core, LazyParentSystem) {
 #undef CALC_CHANGED_INDEX
 }
 
+TEST(Core, LazyUpdateGeneratedEntity) {
+	using runtime_test::ComponentA;
+	using runtime_test::ComponentB;
+	using runtime_test::MakeAnother;
+
+	// these systems mess with ComponentA
+	CLEAR_SYSTEM_IMPL(AddsAutoRemovedTag);
+	CLEAR_SYSTEM_IMPL(SimpleSystem);
+	CLEAR_SYSTEM_IMPL(OtherEntitySystem);
+	CLEAR_SYSTEM_IMPL(AssocTestAction);
+	CLEAR_SYSTEM_IMPL(TestAction);
+
+	auto reg = ecsact::core::registry{"Core_LazyUpdateGeneratedEntity"};
+
+	auto test_entity = reg.create_entity();
+	reg.add_component(test_entity, ComponentA{});
+	reg.add_component(test_entity, ComponentB{});
+
+	auto exec_opts = ecsact::core::execution_options{};
+	auto make_another_action = MakeAnother{};
+	exec_opts.push_action(&make_another_action);
+
+	// generate 7 more entities from MakeAnother system impl
+	SET_SYSTEM_IMPL(MakeAnother);
+	auto err = reg.execute_systems(std::array{exec_opts, exec_opts, exec_opts});
+	ASSERT_EQ(err, ECSACT_EXEC_SYS_OK);
+	ASSERT_EQ(reg.count_entities(), 8);
+	CLEAR_SYSTEM_IMPL(MakeAnother);
+
+	auto count_entities_with_value = [&](int num) -> int {
+		auto count = 0;
+		for(auto entity : reg.get_entities()) {
+			auto comp = reg.get_component<ComponentA>(entity);
+
+			if(comp.a == num) {
+				count += 1;
+			}
+		}
+
+		return count;
+	};
+
+	// this system should increment ComponentA::a one by one
+	SET_SYSTEM_IMPL(LazyUpdateGeneratedEntity);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 1);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 2);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 3);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 4);
+
+	reg.execute_systems();
+	EXPECT_EQ(count_entities_with_value(1), 5);
+}
+
 #ifdef ECSACT_ENTT_TEST_STATIC_SYSTEM_IMPL
 TEST(Core, StaticSystemImpl) {
 	auto reg_id = ecsact_create_registry("StaticSystemImpl");
@@ -1212,7 +1276,8 @@ TEST(Core, StaticSystemImpl) {
 	// Sanity check
 	ASSERT_EQ(comp_get->a, comp.a);
 
-	// Clear any system impls that may already be set so we can use the static one
+	// Clear any system impls that may already be set so we can use the static
+	// one
 	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
 		nullptr

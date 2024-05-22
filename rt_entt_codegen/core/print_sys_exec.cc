@@ -392,6 +392,8 @@ static auto print_sys_exec_ctx_generate(
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
+	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
+	using ecsact::rt_entt_codegen::get_all_sorted_systems;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	auto printer = //
@@ -543,6 +545,9 @@ static auto print_apply_pendings(
 }
 
 template<typename SystemLikeID>
+	requires(!std::is_same_v<
+					 ecsact_system_like_id,
+					 std::remove_cvref_t<SystemLikeID>>)
 struct print_ecsact_entt_system_details_options {
 	SystemLikeID sys_like_id;
 	std::string  system_name;
@@ -609,8 +614,14 @@ static auto print_ecsact_entt_system_details(
 		additional_view_components.push_back(pending_lazy_exec_struct);
 	}
 
-	if(system_needs_sorted_entities(options.sys_like_id, details)) {
-		additional_view_components.push_back(system_sorting_struct_name);
+	constexpr auto is_system = std::is_same_v<
+		std::remove_cvref_t<decltype(options.sys_like_id)>,
+		ecsact_system_id>;
+
+	if constexpr(is_system) {
+		if(system_needs_sorted_entities(options.sys_like_id)) {
+			additional_view_components.push_back(system_sorting_struct_name);
+		}
 	}
 
 	if(is_notify_system(options.sys_like_id)) {
@@ -633,8 +644,10 @@ static auto print_ecsact_entt_system_details(
 		additional_view_components
 	);
 
-	if(system_needs_sorted_entities(options.sys_like_id, details)) {
-		ctx.write("view.use<", system_sorting_struct_name, ">();\n");
+	if constexpr(is_system) {
+		if(system_needs_sorted_entities(options.sys_like_id)) {
+			ctx.write("view.use<", system_sorting_struct_name, ">();\n");
+		}
 	}
 
 	block(ctx, "struct : ecsact_system_execution_context ", [&] {
@@ -825,6 +838,18 @@ static auto print_ecsact_entt_system_details(
 				ctx,
 				"for(ecsact::entt::entity_id entity : view_no_pending_lazy_)",
 				[&] {
+					ctx.write(
+						"// If this assertion triggers this is an indicator of a codegen "
+						"failure.\n"
+						"// Please report to https://github.com/ecsact-dev/ecsact_rt_entt\n"
+					);
+					ctx.write(
+						"assert(",
+						options.registry_var_name,
+						".all_of<",
+						system_sorting_struct_name,
+						">(entity));\n"
+					);
 					ctx.write("view_no_pending_lazy_count_ += 1;\n");
 					ctx.write(
 						options.registry_var_name,
