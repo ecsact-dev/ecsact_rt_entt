@@ -16,6 +16,17 @@
 using runtime_test::ComponentA;
 using runtime_test::OtherEntityComponent;
 
+#define SET_SYSTEM_IMPL(SystemName)                                      \
+	ASSERT_TRUE(ecsact_set_system_execution_impl(                          \
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SystemName::id), \
+		&runtime_test__##SystemName                                          \
+	))
+#define CLEAR_SYSTEM_IMPL(SystemName)                                    \
+	ASSERT_TRUE(ecsact_set_system_execution_impl(                          \
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SystemName::id), \
+		nullptr                                                              \
+	))
+
 void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
 	comp.a += 2;
