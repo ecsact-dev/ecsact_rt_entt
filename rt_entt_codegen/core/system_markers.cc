@@ -59,19 +59,6 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_add_fn(
 					system_sorting_struct_name,
 					">(entity);"
 				);
-
-				/* block( */
-				/* 	ctx, */
-				/* 	"if(::ecsact::entt::entity_matches_system<" + system_cpp_ident + */
-				/* 		">(reg, entity))", */
-				/* 	[&] { */
-				/* 		ctx.write( */
-				/* 			"reg.emplace_or_replace<", */
-				/* 			system_sorting_struct_name, */
-				/* 			">(entity);" */
-				/* 		); */
-				/* 	} */
-				/* ); */
 			}
 		}
 	}

@@ -45,7 +45,6 @@ void runtime_test::OtherEntitySystem::impl(context& ctx) {
 }
 
 void runtime_test::MakeAnother::impl(context& ctx) {
-	std::cout << "MakeAnotherImpl\n";
 	ctx._ctx.generate(ctx.get<ComponentA>(), ctx.get<ComponentB>());
 }
 

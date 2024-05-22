@@ -449,20 +449,6 @@ static auto print_sys_exec_ctx_generate(
 			"component_data, entity);\n"
 		);
 	});
-
-	for(auto sys_id : get_all_sorted_systems()) {
-		auto sys_details = ecsact_entt_system_details::from_system_like(sys_id);
-		auto system_sorting_struct_name = std::format(
-			"::ecsact::entt::detail::system_sorted<{}>",
-			cpp_identifier(decl_full_name(sys_id))
-		);
-
-		/* for(const auto& components : details.generate_comps) { */
-		/*     auto matches = 0; */
-		/* 	for(const auto& [comp_id, requirements] : components) { */
-		/* 	} */
-		/* } */
-	}
 }
 
 static auto print_sys_exec_ctx_parent( //
