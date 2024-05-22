@@ -69,13 +69,15 @@ void runtime_test::TrivialRemove::impl(context& ctx) {
 
 void runtime_test::SimpleIncrementImportedComp::impl(context& ctx) {
 	auto comp = ctx.get<imported::test_pkg::ImportedComponent>();
-	comp.num += 1;
+	auto incrementer = ctx.get<imported::test_pkg::Incrementer>();
+	comp.num += incrementer.increment_value;
 	ctx.update(comp);
 }
 
 void imported::test_pkg::ImportedSystem::impl(context& ctx) {
 	auto comp = ctx.get<SomeLocalComponent>();
-	comp.local_num += 1;
+	auto incrementer = ctx.get<Incrementer>();
+	comp.local_num += incrementer.increment_value;
 	ctx.update(comp);
 }
 
@@ -864,6 +866,7 @@ TEST(Core, CreateAndDestroyEntity) {
 
 TEST(Core, MultiPkgUpdate) {
 	using imported::test_pkg::ImportedComponent;
+	using imported::test_pkg::Incrementer;
 	using imported::test_pkg::SomeLocalComponent;
 
 	ASSERT_TRUE(ecsact_set_system_execution_impl(
@@ -883,8 +886,10 @@ TEST(Core, MultiPkgUpdate) {
 	auto test_entity = reg.create_entity();
 	reg.add_component(test_entity, ImportedComponent{});
 	reg.add_component(test_entity, SomeLocalComponent{});
+	reg.add_component(test_entity, Incrementer{});
 
 	for(int i = 0; 10 > i; ++i) {
+		reg.update_component(test_entity, Incrementer{1});
 		auto event_happened = std::set<std::type_index>{};
 		auto evc = ecsact::core::execution_events_collector<>{};
 		evc.set_update_callback<ImportedComponent>([&](auto entity, auto comp) {
@@ -907,6 +912,22 @@ TEST(Core, MultiPkgUpdate) {
 			auto c = reg.get_component<SomeLocalComponent>(test_entity);
 			EXPECT_EQ(c.local_num, i + 1);
 			EXPECT_TRUE(event_happened.contains(typeid(SomeLocalComponent)));
+		}
+
+		event_happened.clear();
+
+		reg.update_component(test_entity, Incrementer{0});
+		reg.execute_systems(1, evc);
+		{
+			auto c = reg.get_component<ImportedComponent>(test_entity);
+			EXPECT_EQ(c.num, i + 1);
+			EXPECT_FALSE(event_happened.contains(typeid(ImportedComponent)));
+		}
+
+		{
+			auto c = reg.get_component<SomeLocalComponent>(test_entity);
+			EXPECT_EQ(c.local_num, i + 1);
+			EXPECT_FALSE(event_happened.contains(typeid(SomeLocalComponent)));
 		}
 	}
 }

@@ -38,7 +38,8 @@ struct beforeremove_storage<C> {
 template<typename C>
 	requires(!std::is_empty_v<C>)
 struct beforechange_storage {
-	C value;
+	C    value;
+	bool has_update_occurred = false;
 };
 
 template<typename C>

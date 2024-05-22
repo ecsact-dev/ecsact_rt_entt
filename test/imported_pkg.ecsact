@@ -8,7 +8,12 @@ component SomeLocalComponent {
 	i32 local_num;
 }
 
+component Incrementer {
+  i32 increment_value;
+}
+
 system ImportedSystem {
 	readwrite SomeLocalComponent;
+  readonly Incrementer;
 }
 
