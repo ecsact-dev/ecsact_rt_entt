@@ -35,11 +35,6 @@ auto context_add(
 		const C* component = static_cast<const C*>(component_data);
 		registry.template emplace_or_replace<pending_add<C>>(entity, *component);
 
-		auto& before_change =
-			registry.template emplace_or_replace<beforechange_storage<C>>(entity);
-
-		before_change.value = *component;
-
 		registry.template remove<beforeremove_storage<C>>(entity);
 	}
 
