@@ -161,9 +161,9 @@ auto context_update(
 
 	auto& current_component = registry.template get<C>(entity);
 	auto& beforechange = registry.template get<beforechange_storage<C>>(entity);
-	if(!beforechange.has_update_occured) {
+	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;
-		beforechange.has_update_occured = true;
+		beforechange.has_update_occurred = true;
 		registry.template emplace_or_replace<component_updated<C>>(entity);
 	}
 	current_component = in_component;

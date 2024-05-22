@@ -39,7 +39,7 @@ template<typename C>
 	requires(!std::is_empty_v<C>)
 struct beforechange_storage {
 	C    value;
-	bool has_update_occured = false;
+	bool has_update_occurred = false;
 };
 
 template<typename C>
