@@ -207,6 +207,7 @@ void ecsact_codegen_plugin(
 		core::print_entity_match_fn(ctx, details);
 		core::print_system_marker_add_fn(ctx, details);
 		core::print_system_marker_remove_fn(ctx, details);
+		core::print_add_sys_beforestorage_fn(ctx, details);
 		core::print_entity_sorting_components(ctx, details);
 		core::print_check_error_template_specializations(ctx, details);
 		core::print_execute_system_like_template_specializations(ctx, details);
@@ -217,6 +218,7 @@ void ecsact_codegen_plugin(
 		core::print_cleanup_ecsact_component_events(ctx, details);
 		core::print_execution_options(ctx, details);
 		core::print_cleanup_system_notifies(ctx, details);
+		core::print_update_all_beforechange_storage(ctx, details);
 		core::print_execute_systems(ctx, details);
 	}
 }

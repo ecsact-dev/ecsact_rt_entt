@@ -2,6 +2,9 @@
 
 #include <array>
 #include <format>
+#include <algorithm>
+
+#include "ecsact/runtime/common.h"
 #include "rt_entt_codegen/shared/util.hh"
 
 auto ecsact::rt_entt_codegen::system_util::detail::is_notify_system(
@@ -34,21 +37,38 @@ auto ecsact::rt_entt_codegen::system_util::detail::print_system_notify_views(
 	using ecsact::cc_lang_support::c_identifier;
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
-	using ecsact::meta::component_name;
 	using ecsact::meta::decl_full_name;
 
 	auto notify_settings = ecsact::meta::system_notify_settings(system_id);
 
+	using notify_settings_pair_t =
+		std::pair<ecsact_component_like_id, ecsact_system_notify_setting>;
+
+	auto notify_settings_vec = std::vector<notify_settings_pair_t>(
+		notify_settings.begin(),
+		notify_settings.end()
+	);
+
+	std::sort(
+		notify_settings_vec.begin(),
+		notify_settings_vec.end(),
+		[](const notify_settings_pair_t a, notify_settings_pair_t b) -> bool {
+			if(a.second != ECSACT_SYS_NOTIFY_ONCHANGE) {
+				return true;
+			}
+			return false;
+		}
+	);
+
 	auto system_name = cpp_identifier(decl_full_name(system_id));
 
-	for(auto const [comp_id, notify_setting] : notify_settings) {
+	for(auto const& [comp_id, notify_setting] : notify_settings_vec) {
 		if(notify_setting == ECSACT_SYS_NOTIFY_ALWAYS ||
 			 notify_setting == ECSACT_SYS_NOTIFY_NONE) {
 			break;
 		}
 		auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-		auto comp_name =
-			c_identifier(component_name(static_cast<ecsact_component_id>(comp_id)));
+		auto comp_name = c_identifier(decl_full_name((comp_id)));
 
 		auto run_system_comp =
 			std::format("ecsact::entt::detail::run_system<{}>", system_name);
@@ -120,8 +140,37 @@ auto ecsact::rt_entt_codegen::system_util::detail::print_system_notify_views(
 		}
 
 		if(notify_setting == ECSACT_SYS_NOTIFY_ONCHANGE) {
-			// TODO: Implement a component to be checked and added in another PR
-			// Added when component fields have changed during execution
+			auto exec_itr_onchange_str = std::format(
+				"ecsact::entt::detail::exec_itr_beforechange_storage<{}>",
+				cpp_comp_name
+			);
+
+			auto view_name = std::format("{}_change_view", comp_name);
+
+			ecsact::rt_entt_codegen::util::make_view(
+				ctx,
+				view_name,
+				registry_name,
+				details,
+				std::vector{exec_itr_onchange_str},
+				std::vector{run_system_comp}
+			);
+
+			block(ctx, std::format("for(auto entity: {})", view_name), [&]() {
+				block(
+					ctx,
+					std::format(
+						"if(!ecsact::entt::wrapper::core::has_component_changed<{}>(entity,"
+						" registry))",
+						cpp_comp_name
+					),
+					[&] { ctx.write("continue;\n"); }
+				);
+
+				ctx.write(
+					std::format("registry.emplace<{}>(entity);\n", run_system_comp)
+				);
+			});
 		}
 	}
 }

@@ -67,6 +67,9 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 		}
 	}
 
+	ctx.write("\nupdate_all_beforechange_storage(registry_id);\n");
+	ctx.write("cleanup_system_notifies(registry_id);\n");
+
 	ctx.indentation -= 1;
 	ctx.write("\n}\n\n");
 
@@ -88,9 +91,9 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 				"trigger_component_events_all(registry_id, events_collector);\n\n"
 			);
 		});
-		ctx.write("cleanup_component_events(registry_id);\n");
-		ctx.write("cleanup_system_notifies(registry_id);\n");
 	});
+
+	ctx.write("cleanup_component_events(registry_id);\n");
 
 	ctx.write("return ECSACT_EXEC_SYS_OK;");
 }

@@ -212,6 +212,18 @@ void runtime_test::RemoveNotify::impl(context& ctx) {
 	ctx.update(comp);
 }
 
+void runtime_test::ChangeNotify::impl(context& ctx) {
+	auto comp = ctx.get<NotifyComponentA>();
+	comp.val += 1;
+	ctx.update(comp);
+}
+
+void runtime_test::MixedNotify::impl(context& ctx) {
+	auto comp = ctx.get<Counter>();
+	comp.val += 1;
+	ctx.update(comp);
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -1409,4 +1421,150 @@ TEST(Core, NotifyOnSystemUpdate) {
 	ASSERT_EQ(notify_comp_a.val, 1);
 
 	EXPECT_TRUE(event_happened) << "Init event did not happen";
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::TriggerUpdateNotify::id
+		),
+		nullptr
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::UpdateNotify::id),
+		nullptr
+	);
+}
+
+TEST(Core, NotifyOnChange) {
+	using runtime_test::NotifyComponentA;
+
+	auto reg = ecsact::core::registry("NotifyOnSystemUpdate");
+
+	auto entity = reg.create_entity();
+
+	auto notify_comp_a = NotifyComponentA{.val = 0};
+
+	auto exec_options = ecsact::core::execution_options{};
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::ChangeNotify::id),
+		runtime_test__ChangeNotify
+	);
+
+	exec_options.add_component(entity, &notify_comp_a);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	notify_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(notify_comp_a.val, 0);
+
+	exec_options.clear();
+	exec_options.update_component(entity, &notify_comp_a);
+
+	error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	// Should not call on change
+	notify_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(notify_comp_a.val, 0);
+
+	notify_comp_a.val = 5;
+
+	exec_options.clear();
+	exec_options.update_component(entity, &notify_comp_a);
+
+	// System should update, increasing value by 1 to 6
+	error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	notify_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(notify_comp_a.val, 6);
+
+	exec_options.clear();
+	exec_options.update_component(entity, &notify_comp_a);
+
+	error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	notify_comp_a = reg.get_component<NotifyComponentA>(entity);
+	ASSERT_EQ(notify_comp_a.val, 6);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::ChangeNotify::id),
+		nullptr
+	);
+}
+
+TEST(Core, NotifyMixed) {
+	using runtime_test::Counter;
+	using runtime_test::NotifyComponentA;
+	using runtime_test::NotifyComponentB;
+	using runtime_test::NotifyComponentC;
+
+	auto reg = ecsact::core::registry("NotifyMixed");
+
+	auto entity = reg.create_entity();
+
+	auto notify_comp_a = NotifyComponentA{.val = 0};
+	auto notify_comp_b = NotifyComponentB{.val = 0};
+	auto notify_comp_c = NotifyComponentC{.val = 0};
+	auto counter = Counter{.val = 0};
+
+	auto exec_options = ecsact::core::execution_options{};
+
+	exec_options.add_component(entity, &notify_comp_a);
+	exec_options.add_component(entity, &notify_comp_b);
+	exec_options.add_component(entity, &notify_comp_c);
+	exec_options.add_component(entity, &counter);
+
+	auto evc = ecsact::core::execution_events_collector<>{};
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::MixedNotify::id),
+		runtime_test__MixedNotify
+	);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	counter = reg.get_component<Counter>(entity);
+	ASSERT_EQ(counter.val, 1);
+
+	reg.execute_systems(1);
+
+	counter = reg.get_component<Counter>(entity);
+	ASSERT_EQ(counter.val, 1);
+
+	exec_options.clear();
+
+	notify_comp_a.val = 100;
+
+	exec_options.update_component(entity, &notify_comp_a);
+
+	error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	counter = reg.get_component<Counter>(entity);
+	ASSERT_EQ(counter.val, 2);
+
+	reg.execute_systems(1);
+
+	counter = reg.get_component<Counter>(entity);
+	ASSERT_EQ(counter.val, 2);
+
+	exec_options.clear();
+	exec_options.remove_component<NotifyComponentB>(entity);
+
+	error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	counter = reg.get_component<Counter>(entity);
+	ASSERT_EQ(counter.val, 3);
+
+	reg.execute_systems(1);
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+
+	counter = reg.get_component<Counter>(entity);
+	ASSERT_EQ(counter.val, 3);
 }
