@@ -11,12 +11,14 @@ auto apply_pending_add(::entt::registry& registry) -> void {
 	if constexpr(std::is_empty_v<C>) {
 		registry.view<pending_add<C>>().each([&](auto entity) {
 			registry.emplace<C>(entity);
+			add_system_markers_if_needed<C>(registry, entity);
 		});
 	} else {
 		registry.view<pending_add<C>>().each(
 			[&](auto entity, const pending_add<C>& comp) {
 				registry.emplace<C>(entity, comp.value);
 				registry.emplace<beforechange_storage<C>>(entity, comp.value, false);
+				add_system_markers_if_needed<C>(registry, entity);
 			}
 		);
 	}
