@@ -155,9 +155,8 @@ auto context_update(
 
 	const auto& in_component = *static_cast<const C*>(in_component_data);
 
-	auto& current_component = registry.template get<C>(entity);
-	auto& beforechange =
-		registry.template get<exec_beforechange_storage<C>>(entity);
+	auto& current_component = view.template get<C>(entity);
+	auto& beforechange = view.template get<exec_beforechange_storage<C>>(entity);
 
 	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;

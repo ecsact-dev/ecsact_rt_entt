@@ -133,7 +133,7 @@ static auto print_sys_exec_ctx_remove(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	capability_t                                               sys_caps,
-	const std::string&                                         view_name
+	const std::string&                                         view_type_name
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -179,7 +179,7 @@ static auto print_sys_exec_ctx_remove(
 	ctx.write(std::format(
 		"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
 		"ecsact_component_like_id, {}_t&);\n",
-		view_name
+		view_type_name
 	));
 
 	ctx.write("static const auto remove_fns = []()\n");
@@ -187,7 +187,7 @@ static auto print_sys_exec_ctx_remove(
 	block(ctx, "", [&] {
 		ctx.write(
 			"auto result = std::unordered_map<ecsact_component_like_id, "
-			"get_fn_t>{};\n"
+			"remove_fn_t>{};\n"
 		);
 		for(const auto comp_id : details.removable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
@@ -208,7 +208,7 @@ static auto print_sys_exec_ctx_remove(
 static auto print_sys_exec_ctx_get(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	const std::string&                                         view_name
+	const std::string&                                         view_type_name
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -262,7 +262,7 @@ static auto print_sys_exec_ctx_get(
 	ctx.write(std::format(
 		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
 		"ecsact_component_like_id, void *, {}_t&);\n",
-		view_name
+		view_type_name
 	));
 
 	ctx.write("static const auto get_fns = []()\n");
@@ -295,7 +295,7 @@ static auto print_sys_exec_ctx_get(
 static auto print_sys_exec_ctx_update(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	const std::string&                                         view_name
+	const std::string&                                         view_type_name
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -329,7 +329,7 @@ static auto print_sys_exec_ctx_update(
 	ctx.write(std::format(
 		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
 		"ecsact_component_like_id, const void *, {}_t&);\n",
-		view_name
+		view_type_name
 	));
 
 	ctx.write("static const auto update_fns = []()\n");
