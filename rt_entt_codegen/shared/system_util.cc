@@ -3,6 +3,8 @@
 #include <array>
 #include <format>
 #include <algorithm>
+#include <map>
+#include <unordered_map>
 
 #include "ecsact/runtime/common.h"
 #include "rt_entt_codegen/shared/util.hh"
@@ -49,14 +51,25 @@ auto ecsact::rt_entt_codegen::system_util::detail::print_system_notify_views(
 		notify_settings.end()
 	);
 
+	const auto notify_settings_ranking =
+		std::map<ecsact_system_notify_setting, int>{
+			{ECSACT_SYS_NOTIFY_ALWAYS, 99}, // unused
+			{ECSACT_SYS_NOTIFY_NONE, 99}, // unused
+
+			// We prioritize everything except onchange due to onchange having the
+			// most overhead.
+			{ECSACT_SYS_NOTIFY_ONINIT, 10},
+			{ECSACT_SYS_NOTIFY_ONREMOVE, 9},
+			{ECSACT_SYS_NOTIFY_ONUPDATE, 8},
+			{ECSACT_SYS_NOTIFY_ONCHANGE, 0},
+		};
+
 	std::sort(
 		notify_settings_vec.begin(),
 		notify_settings_vec.end(),
-		[](const notify_settings_pair_t a, notify_settings_pair_t b) -> bool {
-			if(a.second != ECSACT_SYS_NOTIFY_ONCHANGE) {
-				return true;
-			}
-			return false;
+		[&](notify_settings_pair_t a, notify_settings_pair_t b) -> bool {
+			return notify_settings_ranking.at(a.second) >
+				notify_settings_ranking.at(b.second);
 		}
 	);
 
