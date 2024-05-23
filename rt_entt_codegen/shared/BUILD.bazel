@@ -19,8 +19,8 @@ cc_library(
 
 cc_library(
     name = "sorting",
-    hdrs = ["sorting.hh"],
     srcs = ["sorting.cc"],
+    hdrs = ["sorting.hh"],
     copts = copts,
     deps = [
         ":ecsact_entt_details",
@@ -66,5 +66,16 @@ cc_library(
         "@ecsact_lang_cpp//:cpp_codegen_plugin_util",
         "@ecsact_lang_cpp//:support",
         "@ecsact_runtime//:meta",
+    ],
+)
+
+cc_library(
+    name = "parallel",
+    srcs = ["parallel.cc"],
+    hdrs = ["parallel.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        "@ecsact_lang_cpp//:cpp_codegen_plugin_util",
     ],
 )

@@ -54,6 +54,8 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/wrapper/core.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/dynamic.hh");
 	inc_header(ctx, "ecsact/entt/error_check.hh");
+	ctx.write("#include <execution>\n");
+
 	ctx.write("\n");
 	inc_package_header(ctx, package_id);
 	for(auto dep : ecsact::meta::get_dependencies(package_id)) {
@@ -61,6 +63,12 @@ void ecsact_codegen_plugin(
 		inc_package_header(ctx, dep);
 	}
 	ctx.write("\n");
+
+	ctx.write("// test1234\n");
+	ctx.write(
+		"using exec_entry_t = std::pair<ecsact::entt::execute_fn_t, const "
+		"ecsact::entt::actions_map&>;\n\n"
+	);
 
 	init_global(ctx, "registries");
 	init_global(ctx, "last_registry_id");
@@ -209,6 +217,7 @@ void ecsact_codegen_plugin(
 		core::print_system_marker_remove_fn(ctx, details);
 		core::print_add_sys_beforestorage_fn(ctx, details);
 		core::print_entity_sorting_components(ctx, details);
+		core::print_parallel_system_execute(ctx, details);
 		core::print_check_error_template_specializations(ctx, details);
 		core::print_execute_system_like_template_specializations(ctx, details);
 		core::print_init_registry_storage(ctx, details);
