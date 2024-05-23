@@ -132,7 +132,8 @@ static auto print_sys_exec_ctx_add(
 static auto print_sys_exec_ctx_remove(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	capability_t                                               sys_caps
+	capability_t                                               sys_caps,
+	const std::string&                                         view_name
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -171,35 +172,43 @@ static auto print_sys_exec_ctx_remove(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id));\n"
+			"::id), *view);\n"
 		);
 		return;
 	}
-	block(
-		ctx,
-		"static const auto remove_fns = "
-		"std::unordered_map<ecsact_component_like_id, "
-		"decltype(&ecsact_system_execution_context_remove)>",
-		[&] {
-			for(int i = 0; i < remove_comps.size(); ++i) {
-				const auto comp_id = remove_comps[i];
-				auto       type_name = cpp_identifier(decl_full_name(comp_id));
-				ctx.write(
-					"{ecsact_id_cast<ecsact_component_like_id>(",
-					type_name,
-					"::id), &wrapper::dynamic::context_remove<",
-					type_name,
-					"> },"
-				);
-			}
+	ctx.write(std::format(
+		"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
+		"ecsact_component_like_id, {}_t&);\n",
+		view_name
+	));
+
+	ctx.write("static const auto remove_fns = []()\n");
+
+	block(ctx, "", [&] {
+		ctx.write(
+			"auto result = std::unordered_map<ecsact_component_like_id, "
+			"get_fn_t>{};\n"
+		);
+		for(const auto comp_id : details.removable_comps) {
+			auto type_name = cpp_identifier(decl_full_name(comp_id));
+			ctx.write(
+				"result[ecsact_id_cast<ecsact_component_like_id>(",
+				type_name,
+				"::id)] = &wrapper::dynamic::context_remove<",
+				type_name,
+				">;\n"
+			);
 		}
-	);
-	ctx.write(";\n");
+
+		ctx.write("return result;\n");
+	});
+	ctx.write("();\n");
 }
 
 static auto print_sys_exec_ctx_get(
 	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	const std::string&                                         view_name
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -249,34 +258,44 @@ static auto print_sys_exec_ctx_get(
 		);
 		return;
 	}
-	block(
-		ctx,
-		"static const auto get_fns = "
-		"std::unordered_map<ecsact_component_like_id, "
-		"decltype(&ecsact_system_execution_context_get)>",
-		[&] {
-			for(const auto comp_id : details.readable_comps) {
-				auto type_name = cpp_identifier(decl_full_name(comp_id));
-				ctx.write(
-					"{ecsact_id_cast<ecsact_component_like_id>(",
-					type_name,
-					"::id), &wrapper::dynamic::context_get<",
-					type_name,
-					"> },"
-				);
-			}
+
+	ctx.write(std::format(
+		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
+		"ecsact_component_like_id, void *, {}_t&);\n",
+		view_name
+	));
+
+	ctx.write("static const auto get_fns = []()\n");
+
+	block(ctx, "", [&] {
+		ctx.write(
+			"auto result = std::unordered_map<ecsact_component_like_id, "
+			"get_fn_t>{};\n"
+		);
+		for(const auto comp_id : details.readable_comps) {
+			auto type_name = cpp_identifier(decl_full_name(comp_id));
+			ctx.write(
+				"result[ecsact_id_cast<ecsact_component_like_id>(",
+				type_name,
+				"::id)] = &wrapper::dynamic::context_get<",
+				type_name,
+				">;\n"
+			);
 		}
-	);
-	ctx.write(";\n");
+
+		ctx.write("return result;\n");
+	});
+	ctx.write("();\n");
 
 	ctx.write(
-		"get_fns.at(component_id)(this, component_id, out_component_data);\n"
+		"get_fns.at(component_id)(this, component_id, out_component_data, *view);\n"
 	);
 }
 
 static auto print_sys_exec_ctx_update(
 	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	const std::string&                                         view_name
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -302,31 +321,42 @@ static auto print_sys_exec_ctx_update(
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
 			"::id),",
-			"component_data); \n"
+			"component_data, *view); \n"
 		);
 		return;
 	}
-	block(
-		ctx,
-		"static const auto update_fns = "
-		"std::unordered_map<ecsact_component_like_id, "
-		"decltype(&ecsact_system_execution_context_update)>",
-		[&] {
-			for(const auto comp_id : details.readable_comps) {
-				auto type_name = cpp_identifier(decl_full_name(comp_id));
-				ctx.write(
-					"{ecsact_id_cast<ecsact_component_like_id>(",
-					type_name,
-					"::id), &wrapper::dynamic::context_update<",
-					type_name,
-					"> },"
-				);
-			}
-		}
-	);
-	ctx.write(";\n");
 
-	ctx.write("update_fns.at(component_id)(this, component_id, component_data);\n"
+	ctx.write(std::format(
+		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
+		"ecsact_component_like_id, const void *, {}_t&);\n",
+		view_name
+	));
+
+	ctx.write("static const auto update_fns = []()\n");
+
+	block(ctx, "", [&] {
+		ctx.write(
+			"auto result = std::unordered_map<ecsact_component_like_id, "
+			"update_fn_t>{};\n"
+		);
+		for(const auto comp_id : details.writable_comps) {
+			auto type_name = cpp_identifier(decl_full_name(comp_id));
+			ctx.write(
+				"result[ecsact_id_cast<ecsact_component_like_id>(",
+				type_name,
+				"::id)] = &wrapper::dynamic::context_update<",
+				type_name,
+				">;\n"
+			);
+		}
+
+		ctx.write("return result;\n");
+	});
+	ctx.write("();\n");
+
+	ctx.write(
+		"update_fns.at(component_id)(this, component_id, component_data, "
+		"*view);\n"
 	);
 }
 
@@ -644,6 +674,8 @@ static auto print_ecsact_entt_system_details(
 		additional_view_components
 	);
 
+	ctx.write("using view_t = decltype(view);\n");
+
 	if constexpr(is_system) {
 		if(system_needs_sorted_entities(options.sys_like_id)) {
 			ctx.write("view.use<", system_sorting_struct_name, ">();\n");
@@ -651,7 +683,7 @@ static auto print_ecsact_entt_system_details(
 	}
 
 	block(ctx, "struct : ecsact_system_execution_context ", [&] {
-		ctx.write("decltype(view)* view;\n");
+		ctx.write("view_t* view;\n");
 
 		ctx.write(
 			"std::unordered_map<ecsact_entity_id,ecsact_system_execution_"
@@ -666,9 +698,9 @@ static auto print_ecsact_entt_system_details(
 		ctx.write("\n");
 		print_sys_exec_ctx_action(ctx, details, options.sys_like_id);
 		print_sys_exec_ctx_add(ctx, details, sys_caps);
-		print_sys_exec_ctx_remove(ctx, details, sys_caps);
-		print_sys_exec_ctx_get(ctx, details);
-		print_sys_exec_ctx_update(ctx, details);
+		print_sys_exec_ctx_remove(ctx, details, sys_caps, "view");
+		print_sys_exec_ctx_get(ctx, details, "view");
+		print_sys_exec_ctx_update(ctx, details, "view");
 		print_sys_exec_ctx_has(ctx, details);
 		print_sys_exec_ctx_generate(ctx, details);
 		print_sys_exec_ctx_parent(ctx);
@@ -841,7 +873,8 @@ static auto print_ecsact_entt_system_details(
 					ctx.write(
 						"// If this assertion triggers this is an indicator of a codegen "
 						"failure.\n"
-						"// Please report to https://github.com/ecsact-dev/ecsact_rt_entt\n"
+						"// Please report to "
+						"https://github.com/ecsact-dev/ecsact_rt_entt\n"
 					);
 					ctx.write(
 						"assert(",
@@ -922,18 +955,26 @@ static auto print_other_contexts(
 			other_details
 		);
 
+		ctx.write(std::format("using {}_t = decltype({});\n", view_name, view_name)
+		);
+
 		block(ctx, "struct " + struct_header, [&] {
 			using namespace std::string_literals;
 			using ecsact::rt_entt_codegen::util::decl_cpp_ident;
 			using std::views::transform;
 
-			ctx.write("decltype(", view_name, ")* view;\n");
+			ctx.write(std::format("{}_t* view;\n", view_name));
 			ctx.write("\n");
 			print_sys_exec_ctx_action(ctx, other_details, options.sys_like_id);
 			print_sys_exec_ctx_add(ctx, other_details, assoc_detail.capabilities);
-			print_sys_exec_ctx_remove(ctx, other_details, assoc_detail.capabilities);
-			print_sys_exec_ctx_get(ctx, other_details);
-			print_sys_exec_ctx_update(ctx, other_details);
+			print_sys_exec_ctx_remove(
+				ctx,
+				other_details,
+				assoc_detail.capabilities,
+				view_name
+			);
+			print_sys_exec_ctx_get(ctx, other_details, view_name);
+			print_sys_exec_ctx_update(ctx, other_details, view_name);
 			print_sys_exec_ctx_has(ctx, other_details);
 			print_sys_exec_ctx_generate(ctx, other_details);
 			print_sys_exec_ctx_parent(ctx);
@@ -998,7 +1039,7 @@ static auto print_trivial_system_like(
 					"ecsact::entt::wrapper::dynamic::component_remove_trivial<",
 					type_name,
 					">(registry, "
-					"ecsact::entt::entity_id(entity));\n"
+					"ecsact::entt::entity_id(entity), view);\n"
 				);
 			}
 		}

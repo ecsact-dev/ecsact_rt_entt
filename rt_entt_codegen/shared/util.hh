@@ -289,6 +289,15 @@ auto make_view( //
 		details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
 	));
 
+	for(auto comp_id : details.writable_comps) {
+		auto comp_name = decl_cpp_ident(comp_id);
+
+		additional_components.push_back(std::format(
+			"ecsact::entt::detail::exec_beforechange_storage<{}>",
+			comp_name
+		));
+	}
+
 	if(!additional_components.empty()) {
 		ctx.write(", ");
 		ctx.write(comma_delim(additional_components));
