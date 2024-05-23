@@ -82,6 +82,9 @@ struct pending_lazy_execution {};
 template<typename S>
 struct run_system {};
 
+template<typename C, size_t Index, size_t... FieldOffsets>
+struct fields_index {};
+
 template<typename>
 constexpr bool system_markers_unimplemented_by_codegen = false;
 

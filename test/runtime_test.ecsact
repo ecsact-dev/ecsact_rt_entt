@@ -270,3 +270,17 @@ system MixedNotify {
 		onremove NotifyComponentB;
 	}
 }
+
+component IndexContainer {
+  i32 x;
+  i32 y;
+  f32 non_indexed_field;
+}
+
+component IndexedComponent {
+  IndexContainer.x indexed_x;
+  IndexContainer.y indexed_y;
+
+  f32 some_random_field;
+  i8 some_other_random_field;
+}
