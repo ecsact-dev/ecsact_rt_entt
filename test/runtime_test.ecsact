@@ -284,3 +284,9 @@ component IndexedComponent {
   f32 some_random_field;
   i8 some_other_random_field;
 }
+
+system TestIndexSystem {
+  readwrite Indexedcomponent with (indexed_x, indexed_y) {
+    readwrite ComponentA;
+  }
+}
