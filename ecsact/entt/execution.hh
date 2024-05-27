@@ -68,7 +68,7 @@ struct actions_map {
 	}
 
 	template<typename Action>
-	auto as_action_span() -> std::span<const Action*> {
+	auto as_action_span() const -> const std::span<const Action* const> {
 		ecsact_action_id action_id = Action::id;
 
 		if(!raw_value.contains(action_id)) {
@@ -78,8 +78,8 @@ struct actions_map {
 		auto& action_data_list = raw_value.at(action_id);
 		auto  action_list_data_ptr = action_data_list.data();
 
-		return std::span<const Action*>{
-			reinterpret_cast<const Action**>(action_list_data_ptr),
+		return std::span<const Action* const>{
+			reinterpret_cast<const Action* const*>(action_list_data_ptr),
 			action_data_list.size(),
 		};
 	}
@@ -94,7 +94,8 @@ struct actions_map {
 template<typename System>
 auto execute_system( //
 	::entt::registry&                registry,
-	ecsact_system_execution_context* parent
+	ecsact_system_execution_context* parent,
+	const ecsact::entt::actions_map& actions_map
 ) -> void {
 	static_assert(detail::unimplemented_by_codegen<System>, R"(
  -----------------------------------------------------------------------------
@@ -114,8 +115,9 @@ auto execute_system( //
  */
 template<typename Action>
 auto execute_actions( //
-	::entt::registry&        registry,
-	std::span<Action const*> action_range
+	::entt::registry&                registry,
+	ecsact_system_execution_context* parent,
+	const ecsact::entt::actions_map& actions_map
 ) -> void {
 	static_assert(detail::unimplemented_by_codegen<Action>, R"(
  -----------------------------------------------------------------------------
@@ -125,6 +127,12 @@ auto execute_actions( //
  -----------------------------------------------------------------------------
 )");
 }
+
+using execute_fn_t = void (*)(
+	::entt::registry&                registry,
+	ecsact_system_execution_context* parent,
+	const ecsact::entt::actions_map& actions_map
+);
 
 /**
  * Allocates EnTT groups and storage if necessary for the system or action.

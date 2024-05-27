@@ -411,6 +411,15 @@ inline auto prepare_component(ecsact_registry_id registry_id) -> void {
 	}
 }
 
+template<typename S>
+inline auto prepare_system(ecsact_registry_id registry_id) -> void {
+	using namespace ecsact::entt::detail;
+	auto& reg = ecsact::entt::get_registry(registry_id);
+
+	reg.template storage<system_sorted<S>>();
+	reg.template storage<pending_lazy_execution<S>>();
+}
+
 template<typename C, typename V>
 auto has_component_changed(entt::entity_id entity, V& view) -> bool {
 	using detail::exec_itr_beforechange_storage;
