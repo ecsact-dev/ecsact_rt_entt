@@ -3,8 +3,6 @@
 #include "rt_entt_codegen/shared/util.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 
-static auto exec_start_label_name = std::string{};
-
 auto ecsact::rt_entt_codegen::core::print_child_systems(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_details&        details,
