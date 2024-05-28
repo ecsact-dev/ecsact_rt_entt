@@ -714,10 +714,6 @@ static auto print_execute_systems(
 		additional_view_components.push_back(pending_lazy_exec_struct);
 	}
 
-	constexpr auto is_system = std::is_same_v<
-		std::remove_cvref_t<decltype(options.get_sys_like_id())>,
-		ecsact_system_id>;
-
 	if(options.is_system()) {
 		if(system_needs_sorted_entities(options.as_system())) {
 			additional_view_components.push_back(system_sorting_struct_name);
