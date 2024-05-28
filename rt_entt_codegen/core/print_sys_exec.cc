@@ -7,16 +7,19 @@
 #include <map>
 #include <array>
 #include <format>
+#include <variant>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
+#include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 #include "rt_entt_codegen/shared/util.hh"
 #include "rt_entt_codegen/shared/comps_with_caps.hh"
 #include "rt_entt_codegen/shared/sorting.hh"
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "rt_entt_codegen/shared/parallel.hh"
+#include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -28,11 +31,10 @@ concept system_or_action =
 using ecsact::rt_entt_codegen::system_comps_with_caps;
 using ecsact::rt_entt_codegen::system_needs_sorted_entities;
 
-template<system_or_action T>
 static auto print_sys_exec_ctx_action(
-	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	T                                                          system_id
+	ecsact::codegen_plugin_context&                                    ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&         details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::decl_full_name;
@@ -43,8 +45,9 @@ static auto print_sys_exec_ctx_action(
 			.parameter("void*", "out_action_data")
 			.return_type("void final");
 
-	if constexpr(std::is_same_v<T, ecsact_action_id>) {
-		auto action_name = cpp_identifier(decl_full_name(system_id));
+	if(options.is_action()) {
+		auto action_name =
+			cpp_identifier(decl_full_name(options.get_sys_like_id()));
 
 		ctx.write(
 			"*static_cast<",
@@ -575,33 +578,100 @@ static auto print_apply_pendings(
 	}
 }
 
-template<typename SystemLikeID>
-	requires(!std::is_same_v<
-					 ecsact_system_like_id,
-					 std::remove_cvref_t<SystemLikeID>>)
-struct print_ecsact_entt_system_details_options {
-	SystemLikeID sys_like_id;
-	std::string  system_name;
-	std::string  registry_var_name;
-	std::string  parent_context_var_name;
-	/// only set if system is an action
-	std::optional<std::string> action_var_name;
-};
+static auto print_other_contexts(
+	ecsact::codegen_plugin_context&                                    ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&         details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
+) -> std::map<ecsact::rt_entt_codegen::other_key, std::string> {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::cpp_codegen_plugin_util::block;
+	using ecsact::meta::component_name;
+	using ecsact::meta::decl_full_name;
+	using ecsact::meta::get_child_system_ids;
+	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
+	using ecsact::rt_entt_codegen::other_key;
+	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
+	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
+	using ecsact::rt_entt_codegen::system_util::get_unique_view_name;
+	using ecsact::rt_entt_codegen::util::method_printer;
 
-template<typename SystemLikeID>
-	requires(!std::is_same_v<
-						ecsact_system_like_id,
-						std::remove_cvref_t<SystemLikeID>>)
-static auto print_ecsact_entt_system_details(
-	ecsact::codegen_plugin_context&                              ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_details&          details,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&   sys_details,
-	const print_ecsact_entt_system_details_options<SystemLikeID> options
+	std::map<other_key, std::string> other_views;
+
+	for(auto& assoc_detail : details.association_details) {
+		auto struct_name = create_context_struct_name(assoc_detail.component_id);
+		auto struct_header = struct_name + " : ecsact_system_execution_context ";
+
+		auto view_name = get_unique_view_name();
+		other_views.insert(
+			other_views.end(),
+			std::pair(
+				other_key{
+					.component_like_id = assoc_detail.component_id,
+					.field_id = assoc_detail.field_id //
+				},
+				view_name
+			)
+		);
+
+		auto other_details =
+			ecsact_entt_system_details::from_capabilities(assoc_detail.capabilities);
+
+		ecsact::rt_entt_codegen::util::make_view(
+			ctx,
+			view_name,
+			"registry",
+			other_details
+		);
+
+		ctx.write(std::format("using {}_t = decltype({});\n", view_name, view_name)
+		);
+
+		block(ctx, "struct " + struct_header, [&] {
+			using namespace std::string_literals;
+			using ecsact::rt_entt_codegen::util::decl_cpp_ident;
+			using std::views::transform;
+
+			ctx.write(std::format("{}_t* view;\n", view_name));
+			ctx.write("\n");
+			print_sys_exec_ctx_action(ctx, other_details, options);
+			print_sys_exec_ctx_add(ctx, other_details, assoc_detail.capabilities);
+			print_sys_exec_ctx_remove(
+				ctx,
+				other_details,
+				assoc_detail.capabilities,
+				view_name
+			);
+			print_sys_exec_ctx_get(ctx, other_details, view_name);
+			print_sys_exec_ctx_update(ctx, other_details, view_name);
+			print_sys_exec_ctx_has(ctx, other_details);
+			print_sys_exec_ctx_generate(ctx, other_details);
+			print_sys_exec_ctx_parent(ctx);
+			print_sys_exec_ctx_other(ctx, other_details);
+		});
+		ctx.write(";\n\n");
+
+		auto type_name = cpp_identifier(decl_full_name(assoc_detail.component_id));
+		auto context_name = create_context_var_name(assoc_detail.component_id);
+
+		ctx.write(struct_name, " ", context_name, ";\n\n");
+
+		ctx.write(context_name, ".view = &", view_name, ";\n");
+		ctx.write(context_name, ".parent_ctx = nullptr;\n\n");
+		ctx.write(context_name, ".registry = &", options.registry_var_name, ";\n");
+	}
+
+	return other_views;
+}
+
+static auto print_execute_systems(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_details&        details,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& sys_details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
-	using ecsact::meta::get_child_system_ids;
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
 	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
@@ -609,19 +679,11 @@ static auto print_ecsact_entt_system_details(
 	using ecsact::rt_entt_codegen::system_util::print_system_notify_views;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
-	constexpr auto is_system_id =
-		std::is_same_v<ecsact_system_id, std::remove_cvref_t<SystemLikeID>>;
-
-	auto sys_caps = ecsact::meta::system_capabilities(options.sys_like_id);
+	auto sys_caps = ecsact::meta::system_capabilities(options.get_sys_like_id());
 	auto lazy_iteration_rate = 0;
 
-	if constexpr(is_system_id) {
-		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(options.sys_like_id)
-		);
-	}
 	auto exec_start_label_name =
-		std::format("exec_start_{}_", static_cast<int>(options.sys_like_id));
+		std::format("exec_start_{}_", static_cast<int>(options.get_sys_like_id()));
 
 	auto pending_lazy_exec_struct = std::format(
 		"::ecsact::entt::detail::pending_lazy_execution<::{}>",
@@ -635,6 +697,12 @@ static auto print_ecsact_entt_system_details(
 
 	auto additional_view_components = std::vector<std::string>{};
 
+	if(options.is_system()) {
+		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
+			static_cast<ecsact_system_id>(options.get_sys_like_id())
+		);
+	}
+
 	if(lazy_iteration_rate > 0) {
 		ctx.write(
 			"constexpr auto lazy_iteration_rate_ = ",
@@ -647,23 +715,23 @@ static auto print_ecsact_entt_system_details(
 	}
 
 	constexpr auto is_system = std::is_same_v<
-		std::remove_cvref_t<decltype(options.sys_like_id)>,
+		std::remove_cvref_t<decltype(options.get_sys_like_id())>,
 		ecsact_system_id>;
 
-	if constexpr(is_system) {
-		if(system_needs_sorted_entities(options.sys_like_id)) {
+	if(options.is_system()) {
+		if(system_needs_sorted_entities(options.as_system())) {
 			additional_view_components.push_back(system_sorting_struct_name);
 		}
 	}
 
-	if(is_notify_system(options.sys_like_id)) {
+	if(is_notify_system(options.get_sys_like_id())) {
 		additional_view_components.push_back(
 			std::format("ecsact::entt::detail::run_system<{}>", options.system_name)
 		);
 		print_system_notify_views(
 			ctx,
 			sys_details,
-			options.sys_like_id,
+			options.get_sys_like_id(),
 			options.registry_var_name
 		);
 	}
@@ -678,8 +746,8 @@ static auto print_ecsact_entt_system_details(
 
 	ctx.write("using view_t = decltype(view);\n");
 
-	if constexpr(is_system) {
-		if(system_needs_sorted_entities(options.sys_like_id)) {
+	if(options.is_system()) {
+		if(system_needs_sorted_entities(options.as_system())) {
 			ctx.write("view.use<", system_sorting_struct_name, ">();\n");
 		}
 	}
@@ -698,7 +766,7 @@ static auto print_ecsact_entt_system_details(
 		}
 
 		ctx.write("\n");
-		print_sys_exec_ctx_action(ctx, sys_details, options.sys_like_id);
+		print_sys_exec_ctx_action(ctx, sys_details, options);
 		print_sys_exec_ctx_add(ctx, sys_details, sys_caps);
 		print_sys_exec_ctx_remove(ctx, sys_details, sys_caps, "view");
 		print_sys_exec_ctx_get(ctx, sys_details, "view");
@@ -760,104 +828,12 @@ static auto print_ecsact_entt_system_details(
 
 		ctx.write("context.entity = entity;\n");
 
-		auto child_system_ids = get_child_system_ids(options.sys_like_id);
-
-		std::vector<ecsact_system_like_id> child_system_like_ids{};
-
-		child_system_like_ids.resize(child_system_ids.size());
-
-		std::transform(
-			child_system_ids.begin(),
-			child_system_ids.end(),
-			child_system_like_ids.begin(),
-			[](auto system_id) {
-				return ecsact_id_cast<ecsact_system_like_id>(system_id);
-			}
+		ecsact::rt_entt_codegen::core::print_child_systems(
+			ctx,
+			details,
+			sys_details,
+			options
 		);
-
-		if(!child_system_like_ids.empty()) {
-			if(child_system_ids.size() == 1) {
-				// TODO(Kelwan): Make use case system agnostic when we support
-				// nested Action systems
-				// Issue: https://github.com/ecsact-dev/ecsact_parse/issues/154
-				for(auto child_sys_id : get_child_system_ids(options.sys_like_id)) {
-					auto child_details = ecsact_entt_system_details::from_system_like(
-						ecsact_id_cast<ecsact_system_like_id>(child_sys_id)
-					);
-
-					auto child_system_name = cpp_identifier(decl_full_name(child_sys_id));
-
-					ctx.write(
-						"ecsact::entt::execute_system<::" + child_system_name + ">(",
-						options.registry_var_name,
-						", &context, {});\n"
-					);
-				}
-			} else {
-				auto parallel_system_cluster =
-					ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
-						ctx,
-						details,
-						child_system_like_ids
-					);
-
-				for(const auto& systems_to_parallel : parallel_system_cluster) {
-					if(systems_to_parallel.size() == 1) {
-						auto sync_sys_id = systems_to_parallel[0];
-
-						auto sync_sys_name =
-							cpp_identifier(ecsact::meta::decl_full_name(sync_sys_id));
-
-						if(details.is_action(sync_sys_id)) {
-							ctx.write(std::format(
-								"ecsact::entt::execute_actions<{}>(registry, {}, "
-								"actions_map);\n",
-								sync_sys_name,
-								"parent_context"
-							));
-						}
-						if(details.is_system(sync_sys_id)) {
-							ctx.write(std::format(
-								"ecsact::entt::execute_system<{}>(registry, {}, "
-								"actions_map);\n",
-								sync_sys_name,
-								"parent_context"
-							));
-						}
-						continue;
-					}
-
-					ctx.write("execute_parallel_cluster(registry, parent_context, ");
-					ctx.write(std::format(
-						"std::array<exec_entry_t, {}> {{\n",
-						systems_to_parallel.size()
-					));
-					for(const auto system_like_id : systems_to_parallel) {
-						auto cpp_decl_name =
-							cpp_identifier(ecsact::meta::decl_full_name(system_like_id));
-
-						if(details.is_action(system_like_id)) {
-							ctx.write(
-								"\texec_entry_t{&ecsact::entt::execute_actions<",
-								cpp_decl_name,
-								">, actions_map},\n"
-							);
-						} else if(details.is_system(system_like_id)) {
-							ctx.write(
-								"\texec_entry_t{&ecsact::entt::execute_system<",
-								cpp_decl_name,
-								">, actions_map},\n"
-							);
-						} else {
-							ctx.write("// ??? unhandled ??? ", cpp_decl_name, "\n");
-						}
-					}
-					ctx.write("});\n");
-				}
-			}
-		}
-
-		ctx.write("\n");
 
 		if(!other_view_names.empty()) {
 			ctx.write("auto found_assoc_entities = 0;\n");
@@ -990,95 +966,9 @@ static auto print_ecsact_entt_system_details(
 	print_apply_pendings(
 		ctx,
 		sys_details,
-		options.sys_like_id,
+		options.get_sys_like_id(),
 		options.registry_var_name
 	);
-}
-
-template<typename SystemLikeID>
-static auto print_other_contexts(
-	ecsact::codegen_plugin_context&                              ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&   details,
-	const print_ecsact_entt_system_details_options<SystemLikeID> options
-) -> std::map<ecsact::rt_entt_codegen::other_key, std::string> {
-	using ecsact::cc_lang_support::cpp_identifier;
-	using ecsact::cpp_codegen_plugin_util::block;
-	using ecsact::meta::component_name;
-	using ecsact::meta::decl_full_name;
-	using ecsact::meta::get_child_system_ids;
-	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
-	using ecsact::rt_entt_codegen::other_key;
-	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
-	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
-	using ecsact::rt_entt_codegen::system_util::get_unique_view_name;
-	using ecsact::rt_entt_codegen::util::method_printer;
-
-	std::map<other_key, std::string> other_views;
-
-	for(auto& assoc_detail : details.association_details) {
-		auto struct_name = create_context_struct_name(assoc_detail.component_id);
-		auto struct_header = struct_name + " : ecsact_system_execution_context ";
-
-		auto view_name = get_unique_view_name();
-		other_views.insert(
-			other_views.end(),
-			std::pair(
-				other_key{
-					.component_like_id = assoc_detail.component_id,
-					.field_id = assoc_detail.field_id //
-				},
-				view_name
-			)
-		);
-
-		auto other_details =
-			ecsact_entt_system_details::from_capabilities(assoc_detail.capabilities);
-
-		ecsact::rt_entt_codegen::util::make_view(
-			ctx,
-			view_name,
-			"registry",
-			other_details
-		);
-
-		ctx.write(std::format("using {}_t = decltype({});\n", view_name, view_name)
-		);
-
-		block(ctx, "struct " + struct_header, [&] {
-			using namespace std::string_literals;
-			using ecsact::rt_entt_codegen::util::decl_cpp_ident;
-			using std::views::transform;
-
-			ctx.write(std::format("{}_t* view;\n", view_name));
-			ctx.write("\n");
-			print_sys_exec_ctx_action(ctx, other_details, options.sys_like_id);
-			print_sys_exec_ctx_add(ctx, other_details, assoc_detail.capabilities);
-			print_sys_exec_ctx_remove(
-				ctx,
-				other_details,
-				assoc_detail.capabilities,
-				view_name
-			);
-			print_sys_exec_ctx_get(ctx, other_details, view_name);
-			print_sys_exec_ctx_update(ctx, other_details, view_name);
-			print_sys_exec_ctx_has(ctx, other_details);
-			print_sys_exec_ctx_generate(ctx, other_details);
-			print_sys_exec_ctx_parent(ctx);
-			print_sys_exec_ctx_other(ctx, other_details);
-		});
-		ctx.write(";\n\n");
-
-		auto type_name = cpp_identifier(decl_full_name(assoc_detail.component_id));
-		auto context_name = create_context_var_name(assoc_detail.component_id);
-
-		ctx.write(struct_name, " ", context_name, ";\n\n");
-
-		ctx.write(context_name, ".view = &", view_name, ";\n");
-		ctx.write(context_name, ".parent_ctx = nullptr;\n\n");
-		ctx.write(context_name, ".registry = &", options.registry_var_name, ";\n");
-	}
-
-	return other_views;
 }
 
 static auto print_trivial_system_like(
@@ -1144,6 +1034,7 @@ static auto print_execute_system_template_specialization(
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
+	using ecsact::rt_entt_codegen::core::system_like_id_variant_t;
 	using ecsact::rt_entt_codegen::system_util::is_trivial_system;
 
 	using ecsact::rt_entt_codegen::util::method_printer;
@@ -1174,7 +1065,7 @@ static auto print_execute_system_template_specialization(
 
 	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
 
-	print_ecsact_entt_system_details<ecsact_system_id>(
+	print_execute_systems(
 		ctx,
 		details,
 		sys_details,
@@ -1237,7 +1128,7 @@ static auto print_execute_actions_template_specialization(
 	);
 
 	block(ctx, "for(auto action : actions)", [&] {
-		print_ecsact_entt_system_details<ecsact_action_id>(
+		print_execute_systems(
 			ctx,
 			details,
 			sys_details,

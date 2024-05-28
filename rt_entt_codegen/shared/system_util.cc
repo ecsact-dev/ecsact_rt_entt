@@ -9,7 +9,7 @@
 #include "ecsact/runtime/common.h"
 #include "rt_entt_codegen/shared/util.hh"
 
-auto ecsact::rt_entt_codegen::system_util::detail::is_notify_system(
+auto ecsact::rt_entt_codegen::system_util::is_notify_system(
 	ecsact_system_like_id system_id
 ) -> bool {
 	auto count = ecsact::meta::system_notify_settings_count(system_id);
@@ -30,7 +30,7 @@ auto ecsact::rt_entt_codegen::system_util::detail::is_notify_system(
 	return true;
 }
 
-auto ecsact::rt_entt_codegen::system_util::detail::print_system_notify_views(
+auto ecsact::rt_entt_codegen::system_util::print_system_notify_views(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	ecsact_system_like_id                                      system_id,

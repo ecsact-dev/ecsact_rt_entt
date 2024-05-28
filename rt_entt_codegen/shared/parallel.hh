@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ecsact/codegen/plugin.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 

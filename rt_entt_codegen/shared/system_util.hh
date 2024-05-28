@@ -8,7 +8,13 @@
 
 namespace ecsact::rt_entt_codegen::system_util {
 
-namespace detail {
+// template<typename SystemLikeID>
+// auto is_notify_system(SystemLikeID system_id) -> bool {
+// 	return detail::is_notify_system(
+// 		ecsact_id_cast<ecsact_system_like_id>(system_id)
+// 	);
+// }
+
 /*
  * Checks if a system uses notify and should implement the run_system<S>
  * component in its execution
@@ -24,29 +30,6 @@ auto print_system_notify_views(
 	ecsact_system_like_id                                      system_id,
 	std::string                                                registry_name
 ) -> void;
-} // namespace detail
-
-template<typename SystemLikeID>
-auto is_notify_system(SystemLikeID system_id) -> bool {
-	return detail::is_notify_system(
-		ecsact_id_cast<ecsact_system_like_id>(system_id)
-	);
-}
-
-template<typename SystemLikeID>
-auto print_system_notify_views(
-	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	SystemLikeID                                               system_id,
-	std::string                                                registry_name
-) -> void {
-	detail::print_system_notify_views(
-		ctx,
-		details,
-		ecsact_id_cast<ecsact_system_like_id>(system_id),
-		registry_name
-	);
-}
 
 auto is_trivial_system(ecsact_system_like_id system_id) -> bool;
 
