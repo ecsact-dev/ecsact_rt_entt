@@ -18,7 +18,9 @@ auto ecsact::rt_entt_codegen::core::print_cleanup_system_notifies(
 			.return_type("void");
 
 	for(auto system_id : details.all_systems) {
-		if(!system_util::is_notify_system(system_id)) {
+		if(!system_util::is_notify_system(
+				 ecsact_id_cast<ecsact_system_like_id>(system_id)
+			 )) {
 			continue;
 		}
 
