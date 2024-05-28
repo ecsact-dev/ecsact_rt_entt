@@ -8,13 +8,6 @@
 
 namespace ecsact::rt_entt_codegen::system_util {
 
-// template<typename SystemLikeID>
-// auto is_notify_system(SystemLikeID system_id) -> bool {
-// 	return detail::is_notify_system(
-// 		ecsact_id_cast<ecsact_system_like_id>(system_id)
-// 	);
-// }
-
 /*
  * Checks if a system uses notify and should implement the run_system<S>
  * component in its execution
