@@ -14,39 +14,41 @@
 
 namespace ecsact::rt_entt_codegen::core {
 
-using system_like_id_variant_t =
-	std::variant<ecsact_system_id, ecsact_action_id>;
-
-struct print_execute_systems_options {
-	system_like_id_variant_t sys_like_id;
-	std::string              system_name;
-	std::string              registry_var_name;
-	std::string              parent_context_var_name;
-	/// only set if system is an action
-	std::optional<std::string> action_var_name;
+struct system_like_id_variant
+	: std::variant<ecsact_system_id, ecsact_action_id> {
+	using variant::variant;
 
 	auto as_system() const -> ecsact_system_id {
-		return std::get<ecsact_system_id>(sys_like_id);
+		return std::get<ecsact_system_id>(*this);
 	}
 
 	auto as_action() const -> ecsact_action_id {
-		return std::get<ecsact_action_id>(sys_like_id);
+		return std::get<ecsact_action_id>(*this);
 	}
 
 	auto is_system() const -> bool {
-		return std::holds_alternative<ecsact_system_id>(sys_like_id);
+		return std::holds_alternative<ecsact_system_id>(*this);
 	}
 
 	auto is_action() const -> bool {
-		return std::holds_alternative<ecsact_action_id>(sys_like_id);
+		return std::holds_alternative<ecsact_action_id>(*this);
 	}
 
 	auto get_sys_like_id() const -> ecsact_system_like_id {
 		return std::visit(
 			[](auto&& arg) { return static_cast<ecsact_system_like_id>(arg); },
-			sys_like_id
+			*this
 		);
 	}
+};
+
+struct print_execute_systems_options {
+	system_like_id_variant sys_like_id_variant;
+	std::string            system_name;
+	std::string            registry_var_name;
+	std::string            parent_context_var_name;
+	/// only set if system is an action
+	std::optional<std::string> action_var_name;
 };
 
 auto print_child_systems(

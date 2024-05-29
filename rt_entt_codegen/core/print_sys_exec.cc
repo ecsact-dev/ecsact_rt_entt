@@ -20,6 +20,9 @@
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "rt_entt_codegen/shared/parallel.hh"
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
+#include "rt_entt_codegen/core/system_provider/lazy/lazy.hh"
+#include "system_provider/lazy/lazy.hh"
+#include "system_provider/system_provider.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -45,9 +48,10 @@ static auto print_sys_exec_ctx_action(
 			.parameter("void*", "out_action_data")
 			.return_type("void final");
 
-	if(options.is_action()) {
-		auto action_name =
-			cpp_identifier(decl_full_name(options.get_sys_like_id()));
+	if(options.sys_like_id_variant.is_action()) {
+		auto action_name = cpp_identifier(
+			decl_full_name(options.sys_like_id_variant.get_sys_like_id())
+		);
 
 		ctx.write(
 			"*static_cast<",
@@ -673,17 +677,29 @@ static auto print_execute_systems(
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
+	using ecsact::rt_entt_codegen::core::provider::lazy;
 	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
 	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
 	using ecsact::rt_entt_codegen::system_util::is_notify_system;
 	using ecsact::rt_entt_codegen::system_util::print_system_notify_views;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
-	auto sys_caps = ecsact::meta::system_capabilities(options.get_sys_like_id());
+	auto lazy_provider = lazy{
+		ctx,
+		sys_details,
+		options.sys_like_id_variant,
+		options.registry_var_name
+	};
+
+	auto sys_caps = ecsact::meta::system_capabilities(
+		options.sys_like_id_variant.get_sys_like_id()
+	);
 	auto lazy_iteration_rate = 0;
 
-	auto exec_start_label_name =
-		std::format("exec_start_{}_", static_cast<int>(options.get_sys_like_id()));
+	auto exec_start_label_name = std::format(
+		"exec_start_{}_",
+		static_cast<int>(options.sys_like_id_variant.get_sys_like_id())
+	);
 
 	auto pending_lazy_exec_struct = std::format(
 		"::ecsact::entt::detail::pending_lazy_execution<::{}>",
@@ -697,37 +713,23 @@ static auto print_execute_systems(
 
 	auto additional_view_components = std::vector<std::string>{};
 
-	if(options.is_system()) {
-		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(options.get_sys_like_id())
-		);
+	if(options.sys_like_id_variant.is_system()) {
+		lazy_iteration_rate =
+			ecsact_meta_get_lazy_iteration_rate(static_cast<ecsact_system_id>(
+				options.sys_like_id_variant.get_sys_like_id()
+			));
 	}
 
-	if(lazy_iteration_rate > 0) {
-		ctx.write(
-			"constexpr auto lazy_iteration_rate_ = ",
-			lazy_iteration_rate,
-			";\n\n"
-		);
-		ctx.write("auto iteration_count_ = 0;\n\n");
-		ctx.write(exec_start_label_name, ":\n");
-		additional_view_components.push_back(pending_lazy_exec_struct);
-	}
+	lazy_provider.before_make_view_or_group(additional_view_components);
 
-	if(options.is_system()) {
-		if(system_needs_sorted_entities(options.as_system())) {
-			additional_view_components.push_back(system_sorting_struct_name);
-		}
-	}
-
-	if(is_notify_system(options.get_sys_like_id())) {
+	if(is_notify_system(options.sys_like_id_variant.get_sys_like_id())) {
 		additional_view_components.push_back(
 			std::format("ecsact::entt::detail::run_system<{}>", options.system_name)
 		);
 		print_system_notify_views(
 			ctx,
 			sys_details,
-			options.get_sys_like_id(),
+			options.sys_like_id_variant.get_sys_like_id(),
 			options.registry_var_name
 		);
 	}
@@ -742,8 +744,8 @@ static auto print_execute_systems(
 
 	ctx.write("using view_t = decltype(view);\n");
 
-	if(options.is_system()) {
-		if(system_needs_sorted_entities(options.as_system())) {
+	if(options.sys_like_id_variant.is_system()) {
+		if(system_needs_sorted_entities(options.sys_like_id_variant.as_system())) {
 			ctx.write("view.use<", system_sorting_struct_name, ">();\n");
 		}
 	}
@@ -790,19 +792,7 @@ static auto print_execute_systems(
 	auto other_view_names = print_other_contexts(ctx, sys_details, options);
 
 	block(ctx, "for(ecsact::entt::entity_id entity : view)", [&] {
-		if(lazy_iteration_rate > 0) {
-			block(ctx, "if(iteration_count_ == lazy_iteration_rate_)", [&] {
-				ctx.write("break;\n");
-			});
-
-			ctx.write("++iteration_count_;\n");
-			ctx.write(
-				options.registry_var_name,
-				".erase<",
-				pending_lazy_exec_struct,
-				">(entity);\n"
-			);
-		}
+		lazy_provider.pre_exec_system_impl();
 
 		// value = comp var name
 		auto components_with_entity_fields =
@@ -894,75 +884,12 @@ static auto print_execute_systems(
 		ctx.write("\n");
 	});
 
-	if(lazy_iteration_rate > 0) {
-		ctx.write(
-			"// If this assertion triggers that's a ecsact_rt_entt codegen "
-			"failure\n"
-		);
-		ctx.write("assert(iteration_count_ <= lazy_iteration_rate_);\n");
-		block(ctx, "if(iteration_count_ < lazy_iteration_rate_)", [&] {
-			ctx.write(
-				"_recalc_sorting_hash<",
-				options.system_name,
-				">(",
-				options.registry_var_name,
-				");\n"
-			);
-			ctx.write(
-				options.registry_var_name,
-				".sort<",
-				system_sorting_struct_name,
-				">([](const auto& a, const auto& b) { return a.hash < b.hash; });\n"
-			);
-
-			ecsact::rt_entt_codegen::util::make_view(
-				ctx,
-				"view_no_pending_lazy_",
-				options.registry_var_name,
-				sys_details
-			);
-
-			ctx.write("auto view_no_pending_lazy_count_ = 0;\n");
-
-			block(
-				ctx,
-				"for(ecsact::entt::entity_id entity : view_no_pending_lazy_)",
-				[&] {
-					ctx.write(
-						"// If this assertion triggers this is an indicator of a codegen "
-						"failure.\n"
-						"// Please report to "
-						"https://github.com/ecsact-dev/ecsact_rt_entt\n"
-					);
-					ctx.write(
-						"assert(",
-						options.registry_var_name,
-						".all_of<",
-						system_sorting_struct_name,
-						">(entity));\n"
-					);
-					ctx.write("view_no_pending_lazy_count_ += 1;\n");
-					ctx.write(
-						options.registry_var_name,
-						".emplace<",
-						pending_lazy_exec_struct,
-						">(entity);\n"
-					);
-				}
-			);
-
-			block(
-				ctx,
-				"if(view_no_pending_lazy_count_ >= lazy_iteration_rate_)",
-				[&] { ctx.write("goto ", exec_start_label_name, ";\n"); }
-			);
-		});
-	}
+	lazy_provider.post_exec_system_impl();
 
 	print_apply_pendings(
 		ctx,
 		sys_details,
-		options.get_sys_like_id(),
+		options.sys_like_id_variant.get_sys_like_id(),
 		options.registry_var_name
 	);
 }
@@ -1030,7 +957,7 @@ static auto print_execute_system_template_specialization(
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
-	using ecsact::rt_entt_codegen::core::system_like_id_variant_t;
+	using ecsact::rt_entt_codegen::core::system_like_id_variant;
 	using ecsact::rt_entt_codegen::system_util::is_trivial_system;
 
 	using ecsact::rt_entt_codegen::util::method_printer;
@@ -1066,7 +993,7 @@ static auto print_execute_system_template_specialization(
 		details,
 		sys_details,
 		{
-			.sys_like_id = system_id,
+			.sys_like_id_variant = system_id,
 			.system_name = system_name,
 			.registry_var_name = "registry",
 			.parent_context_var_name = "parent_context",
@@ -1129,7 +1056,7 @@ static auto print_execute_actions_template_specialization(
 			details,
 			sys_details,
 			{
-				.sys_like_id = action_id,
+				.sys_like_id_variant = action_id,
 				.system_name = cpp_system_name,
 				.registry_var_name = "registry",
 				.parent_context_var_name = "nullptr",

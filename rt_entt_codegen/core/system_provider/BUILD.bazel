@@ -1,0 +1,54 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+cc_library(
+    name = "system_provider",
+    hdrs = ["system_provider.hh"],
+    copts = copts,
+    deps = [
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+    ],
+)
+
+cc_library(
+    name = "association",
+    srcs = ["association/association.cc"],
+    hdrs = ["association/association.hh"],
+    copts = copts,
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_util",
+    ],
+)
+
+cc_library(
+    name = "basic",
+    hdrs = ["basic/basic.hh"],
+    copts = copts,
+)
+
+cc_library(
+    name = "notify",
+    hdrs = ["notify/notify.hh"],
+    copts = copts,
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+    ],
+)
+
+cc_library(
+    name = "lazy",
+    srcs = ["lazy/lazy.cc"],
+    hdrs = ["lazy/lazy.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:sorting",
+    ],
+)
