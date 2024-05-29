@@ -1,7 +1,9 @@
 #include "sys_exec.hh"
 
-#include "rt_entt_codegen/shared/util.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
+#include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/runtime/meta.hh"
+#include "rt_entt_codegen/shared/parallel.hh"
 
 auto ecsact::rt_entt_codegen::core::print_child_systems(
 	ecsact::codegen_plugin_context&                            ctx,

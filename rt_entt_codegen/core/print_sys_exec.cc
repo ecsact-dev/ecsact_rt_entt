@@ -1,13 +1,8 @@
 #include "core.hh"
 
-#include <ranges>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
-#include <map>
-#include <array>
 #include <format>
-#include <variant>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -22,7 +17,8 @@
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/core/system_provider/lazy/lazy.hh"
 #include "system_provider/lazy/lazy.hh"
-#include "system_provider/system_provider.hh"
+#include "system_provider/association/association.hh"
+#include "system_provider/notify/notify.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -34,7 +30,7 @@ concept system_or_action =
 using ecsact::rt_entt_codegen::system_comps_with_caps;
 using ecsact::rt_entt_codegen::system_needs_sorted_entities;
 
-static auto print_sys_exec_ctx_action(
+auto print_sys_exec_ctx_action(
 	ecsact::codegen_plugin_context&                                    ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details&         details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
@@ -66,7 +62,7 @@ static auto print_sys_exec_ctx_action(
 	}
 }
 
-static auto print_sys_exec_ctx_add(
+auto print_sys_exec_ctx_add(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	capability_t                                               sys_caps
@@ -137,7 +133,7 @@ static auto print_sys_exec_ctx_add(
 	ctx.write("add_fns.at(component_id)(this, component_id, component_data);\n");
 }
 
-static auto print_sys_exec_ctx_remove(
+auto print_sys_exec_ctx_remove(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	capability_t                                               sys_caps,
@@ -213,7 +209,7 @@ static auto print_sys_exec_ctx_remove(
 	ctx.write("();\n");
 }
 
-static auto print_sys_exec_ctx_get(
+auto print_sys_exec_ctx_get(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
@@ -300,7 +296,7 @@ static auto print_sys_exec_ctx_get(
 	);
 }
 
-static auto print_sys_exec_ctx_update(
+auto print_sys_exec_ctx_update(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
@@ -368,7 +364,7 @@ static auto print_sys_exec_ctx_update(
 	);
 }
 
-static auto print_sys_exec_ctx_has(
+auto print_sys_exec_ctx_has(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
@@ -423,7 +419,7 @@ static auto print_sys_exec_ctx_has(
 	ctx.write("return has_fns.at(component_id)(this, component_id);\n");
 }
 
-static auto print_sys_exec_ctx_generate(
+auto print_sys_exec_ctx_generate(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
@@ -489,7 +485,7 @@ static auto print_sys_exec_ctx_generate(
 	});
 }
 
-static auto print_sys_exec_ctx_parent( //
+auto print_sys_exec_ctx_parent( //
 	ecsact::codegen_plugin_context& ctx
 ) -> void {
 	using ecsact::rt_entt_codegen::util::method_printer;
@@ -501,7 +497,7 @@ static auto print_sys_exec_ctx_parent( //
 	ctx.write("return this->parent_ctx;\n");
 }
 
-static auto print_sys_exec_ctx_other(
+auto print_sys_exec_ctx_other(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
@@ -582,91 +578,6 @@ static auto print_apply_pendings(
 	}
 }
 
-static auto print_other_contexts(
-	ecsact::codegen_plugin_context&                                    ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&         details,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
-) -> std::map<ecsact::rt_entt_codegen::other_key, std::string> {
-	using ecsact::cc_lang_support::cpp_identifier;
-	using ecsact::cpp_codegen_plugin_util::block;
-	using ecsact::meta::component_name;
-	using ecsact::meta::decl_full_name;
-	using ecsact::meta::get_child_system_ids;
-	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
-	using ecsact::rt_entt_codegen::other_key;
-	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
-	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
-	using ecsact::rt_entt_codegen::system_util::get_unique_view_name;
-	using ecsact::rt_entt_codegen::util::method_printer;
-
-	std::map<other_key, std::string> other_views;
-
-	for(auto& assoc_detail : details.association_details) {
-		auto struct_name = create_context_struct_name(assoc_detail.component_id);
-		auto struct_header = struct_name + " : ecsact_system_execution_context ";
-
-		auto view_name = get_unique_view_name();
-		other_views.insert(
-			other_views.end(),
-			std::pair(
-				other_key{
-					.component_like_id = assoc_detail.component_id,
-					.field_id = assoc_detail.field_id //
-				},
-				view_name
-			)
-		);
-
-		auto other_details =
-			ecsact_entt_system_details::from_capabilities(assoc_detail.capabilities);
-
-		ecsact::rt_entt_codegen::util::make_view(
-			ctx,
-			view_name,
-			"registry",
-			other_details
-		);
-
-		ctx.write(std::format("using {}_t = decltype({});\n", view_name, view_name)
-		);
-
-		block(ctx, "struct " + struct_header, [&] {
-			using namespace std::string_literals;
-			using ecsact::rt_entt_codegen::util::decl_cpp_ident;
-			using std::views::transform;
-
-			ctx.write(std::format("{}_t* view;\n", view_name));
-			ctx.write("\n");
-			print_sys_exec_ctx_action(ctx, other_details, options);
-			print_sys_exec_ctx_add(ctx, other_details, assoc_detail.capabilities);
-			print_sys_exec_ctx_remove(
-				ctx,
-				other_details,
-				assoc_detail.capabilities,
-				view_name
-			);
-			print_sys_exec_ctx_get(ctx, other_details, view_name);
-			print_sys_exec_ctx_update(ctx, other_details, view_name);
-			print_sys_exec_ctx_has(ctx, other_details);
-			print_sys_exec_ctx_generate(ctx, other_details);
-			print_sys_exec_ctx_parent(ctx);
-			print_sys_exec_ctx_other(ctx, other_details);
-		});
-		ctx.write(";\n\n");
-
-		auto type_name = cpp_identifier(decl_full_name(assoc_detail.component_id));
-		auto context_name = create_context_var_name(assoc_detail.component_id);
-
-		ctx.write(struct_name, " ", context_name, ";\n\n");
-
-		ctx.write(context_name, ".view = &", view_name, ";\n");
-		ctx.write(context_name, ".parent_ctx = nullptr;\n\n");
-		ctx.write(context_name, ".registry = &", options.registry_var_name, ";\n");
-	}
-
-	return other_views;
-}
-
 static auto print_execute_systems(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_details&        details,
@@ -677,11 +588,11 @@ static auto print_execute_systems(
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::decl_full_name;
 	using ecsact::rt_entt_codegen::ecsact_entt_system_details;
+	using ecsact::rt_entt_codegen::core::provider::association;
 	using ecsact::rt_entt_codegen::core::provider::lazy;
+	using ecsact::rt_entt_codegen::core::provider::notify;
 	using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
 	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
-	using ecsact::rt_entt_codegen::system_util::is_notify_system;
-	using ecsact::rt_entt_codegen::system_util::print_system_notify_views;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	auto lazy_provider = lazy{
@@ -690,6 +601,9 @@ static auto print_execute_systems(
 		options.sys_like_id_variant,
 		options.registry_var_name
 	};
+
+	auto association_provider = association{ctx, sys_details, options};
+	auto notify_provider = notify{ctx, sys_details, options};
 
 	auto sys_caps = ecsact::meta::system_capabilities(
 		options.sys_like_id_variant.get_sys_like_id()
@@ -721,18 +635,8 @@ static auto print_execute_systems(
 	}
 
 	lazy_provider.before_make_view_or_group(additional_view_components);
-
-	if(is_notify_system(options.sys_like_id_variant.get_sys_like_id())) {
-		additional_view_components.push_back(
-			std::format("ecsact::entt::detail::run_system<{}>", options.system_name)
-		);
-		print_system_notify_views(
-			ctx,
-			sys_details,
-			options.sys_like_id_variant.get_sys_like_id(),
-			options.registry_var_name
-		);
-	}
+	association_provider.before_make_view_or_group(additional_view_components);
+	notify_provider.before_make_view_or_group(additional_view_components);
 
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,
@@ -789,97 +693,14 @@ static auto print_execute_systems(
 	ctx.write("context.parent_ctx = ", options.parent_context_var_name, ";\n");
 	ctx.write("context.view = &view;\n\n");
 
-	auto other_view_names = print_other_contexts(ctx, sys_details, options);
+	association_provider.after_system_context();
 
 	block(ctx, "for(ecsact::entt::entity_id entity : view)", [&] {
-		lazy_provider.pre_exec_system_impl();
-
-		// value = comp var name
-		auto components_with_entity_fields =
-			std::map<ecsact_component_like_id, std::string>{};
-
-		int comp_iter = 0;
-
-		for(auto [ids, view_name] : other_view_names) {
-			if(!components_with_entity_fields.contains(ids.component_like_id)) {
-				components_with_entity_fields[ids.component_like_id] =
-					"assoc_comp_" + std::to_string(comp_iter++);
-			}
-		}
-
-		for(auto&& [comp_like_id, comp_var] : components_with_entity_fields) {
-			auto comp_name = cpp_identifier(decl_full_name(comp_like_id));
-			ctx.write("auto ", comp_var, " = view.get<", comp_name, ">(entity);\n");
-		}
-
 		ctx.write("context.entity = entity;\n");
+		lazy_provider.pre_exec_system_impl();
+		association_provider.pre_exec_system_impl();
 
-		ecsact::rt_entt_codegen::core::print_child_systems(
-			ctx,
-			details,
-			sys_details,
-			options
-		);
-
-		if(!other_view_names.empty()) {
-			ctx.write("auto found_assoc_entities = 0;\n");
-		}
-
-		for(auto [ids, view_name] : other_view_names) {
-			auto field_name = ecsact_meta_field_name(
-				ecsact_id_cast<ecsact_composite_id>(ids.component_like_id),
-				ids.field_id
-			);
-
-			auto entity_field_access =
-				components_with_entity_fields.at(ids.component_like_id) + "." +
-				field_name;
-
-			auto view_itr_name = view_name + "_itr";
-			ctx.write(
-				"auto ",
-				view_itr_name,
-				" = ",
-				view_name,
-				".find(ecsact::entt::entity_id{",
-				entity_field_access,
-				"});\n"
-			);
-
-			ctx.write(
-				"if(",
-				view_itr_name,
-				" == ",
-				view_name,
-				".end()) { continue; }\n"
-			);
-
-			ctx.write("found_assoc_entities += 1;\n");
-
-			auto context_name = create_context_var_name(ids.component_like_id);
-			ctx.write(context_name, ".entity = ", entity_field_access, ";\n");
-
-			ctx.write(
-				"context.other_contexts.insert(context.other_contexts.end(), "
-				"std::pair(",
-				context_name,
-				".entity, &",
-				context_name,
-				"));\n"
-			);
-		}
-
-		if(other_view_names.empty()) {
-			ctx.write("system_impl(&context);\n");
-		} else {
-			// we need to check if we found any invalid associations
-			block(
-				ctx,
-				"if(found_assoc_entities == " +
-					std::to_string(other_view_names.size()) + ")",
-				[&] { ctx.write("system_impl(&context);\n"); }
-			);
-		}
+		association_provider.system_impl();
 
 		ctx.write("\n");
 	});

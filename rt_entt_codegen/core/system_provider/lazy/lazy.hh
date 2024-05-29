@@ -25,7 +25,7 @@ public:
 		std::vector<std::string>& additional_view_components
 	) -> void final;
 
-	auto after_make_view_or_gorup() -> void {
+	auto after_make_view_or_group() -> void {
 	}
 
 	auto context_function_add() -> void {
@@ -41,6 +41,9 @@ public:
 	}
 
 	auto context_function_has() -> void {
+	}
+
+	auto after_system_context() -> void {
 	}
 
 	auto entity_iteration() -> void {

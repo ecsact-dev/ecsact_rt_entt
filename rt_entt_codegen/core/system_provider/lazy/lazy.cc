@@ -6,6 +6,7 @@
 #include "rt_entt_codegen/shared/sorting.hh"
 #include "rt_entt_codegen/shared/util.hh"
 #include "ecsact/runtime/meta.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 
 ecsact::rt_entt_codegen::core::provider::lazy::lazy(
 	ecsact::codegen_plugin_context&                              ctx,

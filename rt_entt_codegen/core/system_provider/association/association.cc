@@ -7,14 +7,165 @@
 #include "rt_entt_codegen/shared/util.hh"
 #include "ecsact/runtime/meta.hh"
 
-ecsact::rt_entt_codegen::core::provider::association::association() {
-}
+using capability_t =
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
-static auto print_other_contexts(
+auto print_sys_exec_ctx_action(
 	ecsact::codegen_plugin_context&                                    ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details&         details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
-) -> std::map<ecsact::rt_entt_codegen::other_key, std::string> {
+) -> void;
+
+auto print_sys_exec_ctx_add(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	capability_t                                               sys_caps
+) -> void;
+
+auto print_sys_exec_ctx_remove(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	capability_t                                               sys_caps,
+	const std::string&                                         view_type_name
+) -> void;
+
+auto print_sys_exec_ctx_get(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	const std::string&                                         view_type_name
+) -> void;
+
+auto print_sys_exec_ctx_update(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	const std::string&                                         view_type_name
+) -> void;
+
+auto print_sys_exec_ctx_has(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+) -> void;
+
+auto print_sys_exec_ctx_generate(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+) -> void;
+
+auto print_sys_exec_ctx_other(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+) -> void;
+
+auto print_sys_exec_ctx_parent( //
+	ecsact::codegen_plugin_context& ctx
+) -> void;
+
+ecsact::rt_entt_codegen::core::provider::association::association(
+	ecsact::codegen_plugin_context&                                     ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&          details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_options& options
+)
+	: ctx(ctx), details(details), options(options) {
+}
+
+auto ecsact::rt_entt_codegen::core::provider::association::
+	after_make_view_or_group() -> void {
+}
+
+auto ecsact::rt_entt_codegen::core::provider::association::after_system_context(
+) -> void {
+	print_other_contexts();
+}
+
+auto ecsact::rt_entt_codegen::core::provider::association::pre_exec_system_impl(
+) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
+	using ecsact::rt_entt_codegen::system_util::create_context_var_name;
+
+	int comp_iter = 0;
+
+	for(auto [ids, view_name] : other_view_names) {
+		if(!components_with_entity_fields.contains(ids.component_like_id)) {
+			components_with_entity_fields[ids.component_like_id] =
+				"assoc_comp_" + std::to_string(comp_iter++);
+		}
+	}
+
+	for(auto&& [comp_like_id, comp_var] : components_with_entity_fields) {
+		auto comp_name = cpp_identifier(decl_full_name(comp_like_id));
+		ctx.write("auto ", comp_var, " = view.get<", comp_name, ">(entity);\n");
+	}
+
+	if(!other_view_names.empty()) {
+		ctx.write("auto found_assoc_entities = 0;\n");
+	}
+
+	for(auto [ids, view_name] : other_view_names) {
+		auto field_name = ecsact_meta_field_name(
+			ecsact_id_cast<ecsact_composite_id>(ids.component_like_id),
+			ids.field_id
+		);
+
+		auto entity_field_access =
+			components_with_entity_fields.at(ids.component_like_id) + "." +
+			field_name;
+
+		auto view_itr_name = view_name + "_itr";
+		ctx.write(
+			"auto ",
+			view_itr_name,
+			" = ",
+			view_name,
+			".find(ecsact::entt::entity_id{",
+			entity_field_access,
+			"});\n"
+		);
+
+		ctx.write(
+			"if(",
+			view_itr_name,
+			" == ",
+			view_name,
+			".end()) { continue; }\n"
+		);
+
+		ctx.write("found_assoc_entities += 1;\n");
+
+		auto context_name = create_context_var_name(ids.component_like_id);
+		ctx.write(context_name, ".entity = ", entity_field_access, ";\n");
+
+		ctx.write(
+			"context.other_contexts.insert(context.other_contexts.end(), "
+			"std::pair(",
+			context_name,
+			".entity, &",
+			context_name,
+			"));\n"
+		);
+	}
+}
+
+auto ecsact::rt_entt_codegen::core::provider::association::system_impl()
+	-> void {
+	using ecsact::cpp_codegen_plugin_util::block;
+
+	// NOTE(Kelwan): It's weird for association to exclusively handle system_impl
+	if(other_view_names.empty()) {
+		ctx.write("system_impl(&context);\n");
+	} else {
+		// we need to check if we found any invalid associations
+		block(
+			ctx,
+			"if(found_assoc_entities == " + std::to_string(other_view_names.size()) +
+				")",
+			[&] { ctx.write("system_impl(&context);\n"); }
+		);
+	}
+}
+
+auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
+) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::meta::component_name;
@@ -92,5 +243,5 @@ static auto print_other_contexts(
 		ctx.write(context_name, ".registry = &", options.registry_var_name, ";\n");
 	}
 
-	return other_views;
+	other_view_names = other_views;
 }

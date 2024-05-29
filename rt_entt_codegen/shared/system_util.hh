@@ -14,16 +14,6 @@ namespace ecsact::rt_entt_codegen::system_util {
  */
 auto is_notify_system(ecsact_system_like_id system_id) -> bool;
 
-/*
- * Prints the specialized views for ecsact_system_notify_settings components
- */
-auto print_system_notify_views(
-	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	ecsact_system_like_id                                      system_id,
-	std::string                                                registry_name
-) -> void;
-
 auto is_trivial_system(ecsact_system_like_id system_id) -> bool;
 
 auto get_unique_view_name() -> std::string;

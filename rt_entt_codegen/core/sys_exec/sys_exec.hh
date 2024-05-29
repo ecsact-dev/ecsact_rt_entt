@@ -2,15 +2,10 @@
 
 #include <string>
 #include <optional>
-#include <format>
 #include <variant>
 
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
-#include "ecsact/lang-support/lang-cc.hh"
-#include "rt_entt_codegen/shared/parallel.hh"
-#include "ecsact/cpp_codegen_plugin_util.hh"
 #include "ecsact/codegen/plugin.hh"
-#include "ecsact/runtime/meta.hh"
 
 namespace ecsact::rt_entt_codegen::core {
 
