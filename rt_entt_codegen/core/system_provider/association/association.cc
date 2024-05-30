@@ -6,14 +6,15 @@
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "rt_entt_codegen/shared/util.hh"
 #include "ecsact/runtime/meta.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
 auto print_sys_exec_ctx_action(
-	ecsact::codegen_plugin_context&                                    ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&         details,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_options options
+	ecsact::codegen_plugin_context&                                      ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&           details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names
 ) -> void;
 
 auto print_sys_exec_ctx_add(
@@ -60,24 +61,60 @@ auto print_sys_exec_ctx_parent( //
 	ecsact::codegen_plugin_context& ctx
 ) -> void;
 
-ecsact::rt_entt_codegen::core::provider::association::association(
-	ecsact::codegen_plugin_context&                                     ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&          details,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_options& options
-)
-	: ctx(ctx), details(details), options(options) {
+auto ecsact::rt_entt_codegen::core::provider::association::
+	context_function_header(
+		ecsact::codegen_plugin_context&                            ctx,
+		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	) -> void {
+	ctx.write(
+		"std::unordered_map<ecsact_entity_id,ecsact_system_execution_"
+		"context*> "
+		"other_contexts;\n\n"
+	);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::association::
-	after_make_view_or_group() -> void {
+	after_make_view_or_group(
+		ecsact::codegen_plugin_context&                            ctx,
+		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	) -> void {
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::after_system_context(
+auto ecsact::rt_entt_codegen::core::provider::association::
+	context_function_other(
+		ecsact::codegen_plugin_context&                            ctx,
+		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	) -> handle_exclusive_provide {
+	if(details.association_details.size() == 0) {
+		// TODO(Kelwan): Handle undefined behaviour
+		// Attempt to access other without association
+
+		ctx.write("return nullptr;");
+		return HANDLED;
+	}
+
+	ctx.write(
+		"if(other_contexts.contains(entity)) {\n",
+		"return other_contexts.at(entity);\n}\n"
+	);
+	return HANDLED;
+}
+
+auto ecsact::rt_entt_codegen::core::provider::association::pre_entity_iteration(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
-	print_other_contexts();
+	print_other_contexts(ctx, details, names);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::association::pre_exec_system_impl(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::decl_full_name;
@@ -146,8 +183,11 @@ auto ecsact::rt_entt_codegen::core::provider::association::pre_exec_system_impl(
 	}
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::system_impl()
-	-> void {
+auto ecsact::rt_entt_codegen::core::provider::association::system_impl(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+) -> handle_exclusive_provide {
 	using ecsact::cpp_codegen_plugin_util::block;
 
 	// NOTE(Kelwan): It's weird for association to exclusively handle system_impl
@@ -162,9 +202,14 @@ auto ecsact::rt_entt_codegen::core::provider::association::system_impl()
 			[&] { ctx.write("system_impl(&context);\n"); }
 		);
 	}
+
+	return HANDLED;
 }
 
 auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -182,6 +227,8 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
 
 	for(auto& assoc_detail : details.association_details) {
 		auto struct_name = create_context_struct_name(assoc_detail.component_id);
+		auto context_name = create_context_var_name(assoc_detail.component_id);
+
 		auto struct_header = struct_name + " : ecsact_system_execution_context ";
 
 		auto view_name = get_unique_view_name();
@@ -216,7 +263,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
 
 			ctx.write(std::format("{}_t* view;\n", view_name));
 			ctx.write("\n");
-			print_sys_exec_ctx_action(ctx, other_details, options);
+			print_sys_exec_ctx_action(ctx, other_details, names);
 			print_sys_exec_ctx_add(ctx, other_details, assoc_detail.capabilities);
 			print_sys_exec_ctx_remove(
 				ctx,
@@ -233,14 +280,11 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
 		});
 		ctx.write(";\n\n");
 
-		auto type_name = cpp_identifier(decl_full_name(assoc_detail.component_id));
-		auto context_name = create_context_var_name(assoc_detail.component_id);
-
 		ctx.write(struct_name, " ", context_name, ";\n\n");
 
 		ctx.write(context_name, ".view = &", view_name, ";\n");
 		ctx.write(context_name, ".parent_ctx = nullptr;\n\n");
-		ctx.write(context_name, ".registry = &", options.registry_var_name, ";\n");
+		ctx.write(context_name, ".registry = &", names.registry_var_name, ";\n");
 	}
 
 	other_view_names = other_views;

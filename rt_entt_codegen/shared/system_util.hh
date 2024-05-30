@@ -1,12 +1,12 @@
 #pragma once
 
 #include "ecsact/runtime/meta.hh"
-#include "ecsact/cpp_codegen_plugin_util.hh"
 #include "ecsact/lang-support/lang-cc.hh"
-#include "rt_entt_codegen/shared/util.hh"
-#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 
 namespace ecsact::rt_entt_codegen::system_util {
+
+using capability_t =
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
 /*
  * Checks if a system uses notify and should implement the run_system<S>

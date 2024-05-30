@@ -1,13 +1,12 @@
 #include "system_util.hh"
 
 #include <array>
-#include <format>
-#include <algorithm>
-#include <map>
 #include <unordered_map>
 
 #include "ecsact/runtime/common.h"
-#include "rt_entt_codegen/shared/util.hh"
+
+using capability_t =
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
 auto ecsact::rt_entt_codegen::system_util::is_notify_system(
 	ecsact_system_like_id system_id

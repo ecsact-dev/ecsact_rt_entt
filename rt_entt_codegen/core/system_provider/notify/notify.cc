@@ -7,16 +7,12 @@
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
-
-ecsact::rt_entt_codegen::core::provider::notify::notify(
-	ecsact::codegen_plugin_context&                                     ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&          details,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_options& options
-)
-	: ctx(ctx), details(details), options(options) {
-}
+#include "rt_entt_codegen/shared//ecsact_entt_details.hh"
 
 auto ecsact::rt_entt_codegen::core::provider::notify::before_make_view_or_group(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
 	std::vector<std::string>& additional_view_components
 ) -> void {
 	using ecsact::rt_entt_codegen::system_util::is_notify_system;

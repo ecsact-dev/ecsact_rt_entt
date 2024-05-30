@@ -3,9 +3,12 @@ load("//bazel:copts.bzl", "copts")
 
 cc_library(
     name = "system_provider",
+    srcs = ["system_provider.cc"],
     hdrs = ["system_provider.hh"],
     copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
     deps = [
+        "//rt_entt_codegen/core/sys_exec",
         "//rt_entt_codegen/shared:ecsact_entt_details",
     ],
 )
@@ -26,8 +29,16 @@ cc_library(
 
 cc_library(
     name = "basic",
+    srcs = ["basic/basic.cc"],
     hdrs = ["basic/basic.hh"],
     copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:util",
+    ],
 )
 
 cc_library(
