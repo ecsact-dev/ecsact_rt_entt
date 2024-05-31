@@ -399,7 +399,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 		// TODO(Kelwan): Handle undefined behaviour
 		// Attempt to access other without association
 
-		ctx.write("return nullptr;");
+		ctx.write("return nullptr;\n");
 		return;
 	}
 
@@ -407,4 +407,6 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 		"if(other_contexts.contains(entity)) {\n",
 		"return other_contexts.at(entity);\n}\n"
 	);
+
+	ctx.write("return nullptr;\n");
 }

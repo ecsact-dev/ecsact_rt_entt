@@ -123,7 +123,7 @@ auto ecsact_entt_system_details::fill_system_details(
 		}
 	}
 
-	for(auto&& [comp_id, _] : caps) {
+	for([[maybe_unused]] auto&& [comp_id, _] : caps) {
 		// Sanity check to make sure we've not missing any system comp IDs
 		assert(
 			out_details.get_comps.contains(comp_id) ||

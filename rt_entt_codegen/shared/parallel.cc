@@ -3,11 +3,12 @@
 #include <set>
 #include <vector>
 #include <type_traits>
+#include <format>
 
 #include "ecsact/lang-support/lang-cc.hh"
-#include "ecsact/cpp_codegen_plugin_util.hh"
 #include "rt_entt_codegen/shared/system_variant.hh"
 #include "system_variant.hh"
+#include "ecsact/runtime/meta.hh"
 
 using ecsact::rt_entt_codegen::system_like_id_variant;
 

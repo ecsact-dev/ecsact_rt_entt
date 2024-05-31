@@ -138,6 +138,10 @@ static auto print_sys_exec_ctx_update(
 		return provider->context_function_update(ctx, names) ==
 			handle_exclusive_provide::HANDLED;
 	});
+
+	if(result == system_providers.end()) {
+		throw std::logic_error("print context update was not handled by providers");
+	}
 }
 
 static auto print_sys_exec_ctx_has(
