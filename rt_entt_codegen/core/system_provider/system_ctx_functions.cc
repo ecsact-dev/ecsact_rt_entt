@@ -15,8 +15,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 	const system_like_id_variant&   sys_like_id
 ) -> void {
 	if(sys_like_id.is_action()) {
-		auto action_name =
-			cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
+		auto action_name = cpp_identifier(decl_full_name(sys_like_id));
 
 		ctx.write(
 			"*static_cast<",

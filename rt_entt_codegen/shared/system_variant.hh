@@ -9,7 +9,7 @@ struct system_like_id_variant
 	: std::variant<ecsact_system_id, ecsact_action_id> {
 	using variant::variant;
 
-	operator ecsact_system_like_id() {
+	operator ecsact_system_like_id() const {
 		return get_sys_like_id();
 	}
 
@@ -39,3 +39,20 @@ struct system_like_id_variant
 	}
 };
 } // namespace ecsact::rt_entt_codegen
+
+template<>
+ECSACT_ALWAYS_INLINE ecsact_system_like_id ecsact_id_cast<
+	ecsact_system_like_id,
+	ecsact::rt_entt_codegen::system_like_id_variant>(
+	ecsact::rt_entt_codegen::system_like_id_variant v
+) {
+	return v.get_sys_like_id();
+}
+
+template<>
+ECSACT_ALWAYS_INLINE ecsact_decl_id
+ecsact_id_cast<ecsact_decl_id, ecsact::rt_entt_codegen::system_like_id_variant>(
+	ecsact::rt_entt_codegen::system_like_id_variant v
+) {
+	return ecsact_id_cast<ecsact_decl_id>(v.get_sys_like_id());
+}

@@ -336,18 +336,16 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 
 	std::vector<std::shared_ptr<system_provider>> system_providers{};
 
-	auto sys_details =
-		ecsact_entt_system_details::from_system_like(sys_like_id.get_sys_like_id());
+	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
 	int lazy_iteration_rate = 0;
 
 	if(sys_like_id.is_system()) {
-		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(sys_like_id.get_sys_like_id())
-		);
+		lazy_iteration_rate =
+			ecsact_meta_get_lazy_iteration_rate(sys_like_id.as_system());
 	}
 
-	if(is_notify_system(sys_like_id.get_sys_like_id())) {
+	if(is_notify_system(sys_like_id)) {
 		system_providers.push_back(notify_provider);
 	}
 
@@ -369,8 +367,7 @@ static auto print_execute_systems(
 	system_like_id_variant                           sys_like_id,
 	const ecsact::rt_entt_codegen::core::common_vars names
 ) -> void {
-	auto sys_caps =
-		ecsact::meta::system_capabilities(sys_like_id.get_sys_like_id());
+	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 
 	auto additional_view_components = std::vector<std::string>{};
 
@@ -384,8 +381,7 @@ static auto print_execute_systems(
 		provider->before_make_view_or_group(ctx, names, additional_view_components);
 	}
 
-	auto sys_details =
-		ecsact_entt_system_details::from_system_like(sys_like_id.get_sys_like_id());
+	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,
@@ -436,12 +432,7 @@ static auto print_execute_systems(
 		provider->post_iteration(ctx, names);
 	}
 
-	print_apply_pendings(
-		ctx,
-		sys_details,
-		sys_like_id.get_sys_like_id(),
-		names.registry_var_name
-	);
+	print_apply_pendings(ctx, sys_details, sys_like_id, names.registry_var_name);
 }
 
 static auto print_trivial_system_like(

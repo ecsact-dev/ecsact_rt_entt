@@ -51,11 +51,8 @@ static auto loop_iterator(
 
 	for(auto iterator = begin; iterator != system_list.end(); iterator++) {
 		auto sys_like_id = *iterator;
-		auto capabilities =
-			ecsact::meta::system_capabilities(sys_like_id.get_sys_like_id());
-
-		auto generate_ids =
-			ecsact::meta::get_system_generates_ids(sys_like_id.get_sys_like_id());
+		auto capabilities = ecsact::meta::system_capabilities(sys_like_id);
+		auto generate_ids = ecsact::meta::get_system_generates_ids(sys_like_id);
 
 		if(!generate_ids.empty()) {
 			if(!parallel_system_list.empty()) {
@@ -75,8 +72,7 @@ static auto loop_iterator(
 
 		std::set<ecsact_component_like_id> child_unsafe_comps{};
 
-		auto child_systems =
-			ecsact::meta::get_child_system_ids(sys_like_id.get_sys_like_id());
+		auto child_systems = ecsact::meta::get_child_system_ids(sys_like_id);
 
 		for(auto child_sys_id : child_systems) {
 			auto cpp_system_name = decl_full_name(child_sys_id);
@@ -125,14 +121,12 @@ static auto loop_iterator(
 				}
 			}
 
-			auto other_fields = ecsact::meta::system_association_fields(
-				sys_like_id.get_sys_like_id(),
-				comp_id
-			);
+			auto other_fields =
+				ecsact::meta::system_association_fields(sys_like_id, comp_id);
 
 			for(auto field_id : other_fields) {
 				auto other_capabilities = ecsact::meta::system_association_capabilities(
-					sys_like_id.get_sys_like_id(),
+					sys_like_id,
 					comp_id,
 					field_id
 				);
@@ -203,9 +197,8 @@ auto ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(
 			systems_to_parallel.size()
 		));
 		for(const auto system_like_id_variant : systems_to_parallel) {
-			auto cpp_decl_name = cpp_identifier(
-				ecsact::meta::decl_full_name(system_like_id_variant.get_sys_like_id())
-			);
+			auto cpp_decl_name =
+				cpp_identifier(ecsact::meta::decl_full_name(system_like_id_variant));
 
 			if(system_like_id_variant.is_action()) {
 				ctx.write(

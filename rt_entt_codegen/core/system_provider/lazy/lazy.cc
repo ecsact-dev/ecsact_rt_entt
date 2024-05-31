@@ -17,13 +17,11 @@ auto provider::lazy::initialization(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> void {
-	auto system_name =
-		cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
+	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
 	if(sys_like_id.is_system()) {
-		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(sys_like_id.get_sys_like_id())
-		);
+		lazy_iteration_rate =
+			ecsact_meta_get_lazy_iteration_rate(sys_like_id.as_system());
 	}
 
 	exec_start_label_name = std::format(
@@ -97,8 +95,7 @@ auto provider::lazy::post_iteration(
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
 
-	auto system_name =
-		cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
+	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
 	ctx.write(
 		"// If this assertion triggers that's a ecsact_rt_entt codegen "

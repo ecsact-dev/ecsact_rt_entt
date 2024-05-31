@@ -9,7 +9,7 @@ auto provider::basic::initialization(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> void {
-	sys_caps = ecsact::meta::system_capabilities(sys_like_id.get_sys_like_id());
+	sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 
 	view_type_name = "view";
 }
@@ -35,8 +35,7 @@ auto provider::basic::context_function_add(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> handle_exclusive_provide {
-	auto sys_caps =
-		ecsact::meta::system_capabilities(sys_like_id.get_sys_like_id());
+	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 
 	context_add_impl(ctx, sys_caps);
 	return HANDLED;
@@ -46,8 +45,7 @@ auto provider::basic::context_function_remove(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> handle_exclusive_provide {
-	auto sys_caps =
-		ecsact::meta::system_capabilities(sys_like_id.get_sys_like_id());
+	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 
 	context_remove_impl(ctx, sys_caps, system_details, view_type_name);
 	return HANDLED;
