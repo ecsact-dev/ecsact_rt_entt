@@ -8,10 +8,12 @@
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 
-auto ecsact::rt_entt_codegen::core::provider::notify::before_make_view_or_group(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
-	std::vector<std::string>& additional_view_components
+using namespace ecsact::rt_entt_codegen::core;
+
+auto provider::notify::before_make_view_or_group(
+	ecsact::codegen_plugin_context&        ctx,
+	const print_execute_systems_var_names& names,
+	std::vector<std::string>&              additional_view_components
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::decl_full_name;
@@ -32,7 +34,7 @@ auto ecsact::rt_entt_codegen::core::provider::notify::before_make_view_or_group(
 	}
 }
 
-auto ecsact::rt_entt_codegen::core::provider::notify::print_system_notify_views(
+auto provider::notify::print_system_notify_views(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_system_like_id           system_id,
 	std::string                     registry_name

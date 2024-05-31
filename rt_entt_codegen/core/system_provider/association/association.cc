@@ -11,11 +11,12 @@
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	context_function_header(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void {
+using namespace ecsact::rt_entt_codegen::core;
+
+auto provider::association::context_function_header(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+) -> void {
 	ctx.write(
 		"std::unordered_map<ecsact_entity_id,ecsact_system_execution_"
 		"context*> "
@@ -23,30 +24,28 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 	);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	after_make_view_or_group(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void {
+auto provider::association::after_make_view_or_group(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+) -> void {
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	context_function_other(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide {
+auto provider::association::context_function_other(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+) -> handle_exclusive_provide {
 	context_other_impl(ctx, sys_like_id_variant, system_details);
 	return HANDLED;
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::pre_entity_iteration(
+auto provider::association::pre_entity_iteration(
 	ecsact::codegen_plugin_context&                                       ctx,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	print_other_contexts(ctx, names);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::pre_exec_system_impl(
+auto provider::association::pre_exec_system_impl(
 	ecsact::codegen_plugin_context&                                       ctx,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
@@ -115,7 +114,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::pre_exec_system_impl(
 	}
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::system_impl(
+auto provider::association::system_impl(
 	ecsact::codegen_plugin_context&                                       ctx,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> handle_exclusive_provide {
@@ -131,7 +130,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::system_impl(
 	return HANDLED;
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
+auto provider::association::print_other_contexts(
 	ecsact::codegen_plugin_context&                                       ctx,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
@@ -215,8 +214,9 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
 
 using ecsact::rt_entt_codegen::util::method_printer;
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	print_other_ctx_action(ecsact::codegen_plugin_context& ctx) -> void {
+auto provider::association::print_other_ctx_action(
+	ecsact::codegen_plugin_context& ctx
+) -> void {
 	auto printer = //
 		method_printer{ctx, "action"}
 			.parameter("void*", "out_action_data")
@@ -225,7 +225,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 	context_action_impl(ctx, sys_like_id_variant);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_add(
+auto provider::association::print_other_ctx_add(
 	ecsact::codegen_plugin_context&                            ctx,
 	const capability_t&                                        other_caps,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
@@ -239,13 +239,12 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_add(
 	context_add_impl(ctx, other_caps);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	print_other_ctx_remove(
-		ecsact::codegen_plugin_context&                            ctx,
-		const capability_t&                                        other_caps,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const std::string&                                         view_type_name
-	) -> void {
+auto provider::association::print_other_ctx_remove(
+	ecsact::codegen_plugin_context&                            ctx,
+	const capability_t&                                        other_caps,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	const std::string&                                         view_type_name
+) -> void {
 	auto printer = //
 		method_printer{ctx, "remove"}
 			.parameter("ecsact_component_like_id", "component_id")
@@ -254,7 +253,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 	context_remove_impl(ctx, other_caps, details, view_type_name);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_get(
+auto provider::association::print_other_ctx_get(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
@@ -268,12 +267,11 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_get(
 	context_get_impl(ctx, sys_like_id_variant, details, view_type_name);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	print_other_ctx_update(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const std::string&                                         view_type_name
-	) -> void {
+auto provider::association::print_other_ctx_update(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	const std::string&                                         view_type_name
+) -> void {
 	auto printer = //
 		method_printer{ctx, "update"}
 			.parameter("ecsact_component_like_id", "component_id")
@@ -283,7 +281,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 	context_update_impl(ctx, sys_like_id_variant, details, view_type_name);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_has(
+auto provider::association::print_other_ctx_has(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
@@ -295,11 +293,10 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_has(
 	context_has_impl(ctx, sys_like_id_variant, details);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	print_other_ctx_generate(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
-	) -> void {
+auto provider::association::print_other_ctx_generate(
+	ecsact::codegen_plugin_context&                            ctx,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+) -> void {
 	auto printer = //
 		method_printer{ctx, "generate"}
 			.parameter("int", "component_count")
@@ -310,11 +307,10 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 	context_generate_impl(ctx, sys_like_id_variant, details);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::
-	print_other_ctx_parent(
-		ecsact::codegen_plugin_context&                        ctx,
-		const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id_variant
-	) -> void {
+auto provider::association::print_other_ctx_parent(
+	ecsact::codegen_plugin_context&                        ctx,
+	const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id_variant
+) -> void {
 	auto printer = //
 		method_printer{ctx, "parent"} //
 			.return_type("const ecsact_system_execution_context* final");
@@ -322,7 +318,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 	context_parent_impl(ctx, sys_like_id_variant);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_other(
+auto provider::association::print_other_ctx_other(
 	ecsact::codegen_plugin_context&                            ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {

@@ -11,9 +11,11 @@
 using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::meta::decl_full_name;
 
-auto ecsact::rt_entt_codegen::core::provider::lazy::initialization(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+using namespace ecsact::rt_entt_codegen::core;
+
+auto provider::lazy::initialization(
+	ecsact::codegen_plugin_context&        ctx,
+	const print_execute_systems_var_names& names
 ) -> void {
 	auto system_name =
 		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
@@ -38,10 +40,10 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::initialization(
 		std::format("::ecsact::entt::detail::system_sorted<{}>", system_name);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::lazy::before_make_view_or_group(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
-	std::vector<std::string>& additional_view_components
+auto provider::lazy::before_make_view_or_group(
+	ecsact::codegen_plugin_context&        ctx,
+	const print_execute_systems_var_names& names,
+	std::vector<std::string>&              additional_view_components
 ) -> void {
 	ctx.write(
 		"constexpr auto lazy_iteration_rate_ = ",
@@ -59,9 +61,9 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::before_make_view_or_group(
 	}
 }
 
-auto ecsact::rt_entt_codegen::core::provider::lazy::after_make_view_or_group(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+auto provider::lazy::after_make_view_or_group(
+	ecsact::codegen_plugin_context&        ctx,
+	const print_execute_systems_var_names& names
 ) -> void {
 	if(sys_like_id_variant.is_system()) {
 		if(system_needs_sorted_entities(sys_like_id_variant.as_system())) {
@@ -70,9 +72,9 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::after_make_view_or_group(
 	}
 }
 
-auto ecsact::rt_entt_codegen::core::provider::lazy::pre_exec_system_impl(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+auto provider::lazy::pre_exec_system_impl(
+	ecsact::codegen_plugin_context&        ctx,
+	const print_execute_systems_var_names& names
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
 
@@ -89,9 +91,9 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::pre_exec_system_impl(
 	);
 }
 
-auto ecsact::rt_entt_codegen::core::provider::lazy::post_iteration(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+auto provider::lazy::post_iteration(
+	ecsact::codegen_plugin_context&        ctx,
+	const print_execute_systems_var_names& names
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
 
