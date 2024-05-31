@@ -6,8 +6,8 @@
 #include "rt_entt_codegen/shared/parallel.hh"
 
 auto ecsact::rt_entt_codegen::core::print_child_systems(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
+	ecsact::codegen_plugin_context&                        ctx,
+	const ecsact::rt_entt_codegen::core::common_vars&      names,
 	const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id_variant
 
 ) -> void {

@@ -14,8 +14,8 @@ using capability_t =
 using namespace ecsact::rt_entt_codegen::core;
 
 auto provider::association::context_function_header(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> void {
 	ctx.write(
 		"std::unordered_map<ecsact_entity_id,ecsact_system_execution_"
@@ -25,29 +25,29 @@ auto provider::association::context_function_header(
 }
 
 auto provider::association::after_make_view_or_group(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> void {
 }
 
 auto provider::association::context_function_other(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> handle_exclusive_provide {
 	context_other_impl(ctx, sys_like_id_variant, system_details);
 	return HANDLED;
 }
 
 auto provider::association::pre_entity_iteration(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> void {
 	print_other_contexts(ctx, names);
 }
 
 auto provider::association::pre_exec_system_impl(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::decl_full_name;
@@ -115,8 +115,8 @@ auto provider::association::pre_exec_system_impl(
 }
 
 auto provider::association::system_impl(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> handle_exclusive_provide {
 	using ecsact::cpp_codegen_plugin_util::block;
 
@@ -131,8 +131,8 @@ auto provider::association::system_impl(
 }
 
 auto provider::association::print_other_contexts(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::cpp_codegen_plugin_util::block;

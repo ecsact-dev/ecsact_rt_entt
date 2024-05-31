@@ -42,9 +42,9 @@ using ecsact::rt_entt_codegen::system_util::is_trivial_system;
 using ecsact::rt_entt_codegen::util::method_printer;
 
 static auto print_sys_exec_ctx_action(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "action"}
@@ -62,9 +62,9 @@ static auto print_sys_exec_ctx_action(
 }
 
 static auto print_sys_exec_ctx_add(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "add"}
@@ -83,9 +83,9 @@ static auto print_sys_exec_ctx_add(
 }
 
 static auto print_sys_exec_ctx_remove(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "remove"}
@@ -103,9 +103,9 @@ static auto print_sys_exec_ctx_remove(
 }
 
 static auto print_sys_exec_ctx_get(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "get"}
@@ -124,9 +124,9 @@ static auto print_sys_exec_ctx_get(
 }
 
 static auto print_sys_exec_ctx_update(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "update"}
@@ -145,9 +145,9 @@ static auto print_sys_exec_ctx_update(
 }
 
 static auto print_sys_exec_ctx_has(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "has"}
@@ -165,9 +165,9 @@ static auto print_sys_exec_ctx_has(
 }
 
 static auto print_sys_exec_ctx_generate(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "generate"}
@@ -188,9 +188,9 @@ static auto print_sys_exec_ctx_generate(
 }
 
 static auto print_sys_exec_ctx_parent( //
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "parent"} //
@@ -207,9 +207,9 @@ static auto print_sys_exec_ctx_parent( //
 }
 
 auto print_sys_exec_ctx_other(
-	ecsact::codegen_plugin_context&                                      ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "other"}
@@ -278,10 +278,10 @@ static auto print_apply_pendings(
 }
 
 static auto print_system_execution_context(
-	ecsact::codegen_plugin_context& ctx,
-	system_like_id_variant          sys_like_id_variant,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names,
-	std::vector<std::shared_ptr<system_provider>> system_providers
+	ecsact::codegen_plugin_context&                  ctx,
+	system_like_id_variant                           sys_like_id_variant,
+	const ecsact::rt_entt_codegen::core::common_vars names,
+	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
 	auto system_name =
 		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
@@ -368,9 +368,9 @@ static auto setup_system_providers(system_like_id_variant sys_like_id_variant
 }
 
 static auto print_execute_systems(
-	ecsact::codegen_plugin_context& ctx,
-	system_like_id_variant          sys_like_id_variant,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names
+	ecsact::codegen_plugin_context&                  ctx,
+	system_like_id_variant                           sys_like_id_variant,
+	const ecsact::rt_entt_codegen::core::common_vars names
 ) -> void {
 	auto sys_caps =
 		ecsact::meta::system_capabilities(sys_like_id_variant.get_sys_like_id());

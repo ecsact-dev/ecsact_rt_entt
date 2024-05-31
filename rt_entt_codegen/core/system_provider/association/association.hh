@@ -12,33 +12,33 @@ public:
 	using system_provider::system_provider;
 
 	auto after_make_view_or_group(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> void final;
 
 	auto context_function_header(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> void final;
 
 	auto context_function_other(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> handle_exclusive_provide final;
 
 	auto pre_entity_iteration(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> void final;
 
 	auto pre_exec_system_impl(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> void final;
 
 	auto system_impl(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> handle_exclusive_provide final;
 
 private:
@@ -47,8 +47,8 @@ private:
 	std::map<ecsact_component_like_id, std::string> components_with_entity_fields;
 
 	auto print_other_contexts(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> void;
 
 	auto print_other_ctx_action(ecsact::codegen_plugin_context& ctx) -> void;

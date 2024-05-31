@@ -14,8 +14,8 @@ using ecsact::meta::decl_full_name;
 using namespace ecsact::rt_entt_codegen::core;
 
 auto provider::lazy::initialization(
-	ecsact::codegen_plugin_context&        ctx,
-	const print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars&              names
 ) -> void {
 	auto system_name =
 		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
@@ -41,9 +41,9 @@ auto provider::lazy::initialization(
 }
 
 auto provider::lazy::before_make_view_or_group(
-	ecsact::codegen_plugin_context&        ctx,
-	const print_execute_systems_var_names& names,
-	std::vector<std::string>&              additional_view_components
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars&              names,
+	std::vector<std::string>&       additional_view_components
 ) -> void {
 	ctx.write(
 		"constexpr auto lazy_iteration_rate_ = ",
@@ -62,8 +62,8 @@ auto provider::lazy::before_make_view_or_group(
 }
 
 auto provider::lazy::after_make_view_or_group(
-	ecsact::codegen_plugin_context&        ctx,
-	const print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars&              names
 ) -> void {
 	if(sys_like_id_variant.is_system()) {
 		if(system_needs_sorted_entities(sys_like_id_variant.as_system())) {
@@ -73,8 +73,8 @@ auto provider::lazy::after_make_view_or_group(
 }
 
 auto provider::lazy::pre_exec_system_impl(
-	ecsact::codegen_plugin_context&        ctx,
-	const print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars&              names
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
 
@@ -92,8 +92,8 @@ auto provider::lazy::pre_exec_system_impl(
 }
 
 auto provider::lazy::post_iteration(
-	ecsact::codegen_plugin_context&        ctx,
-	const print_execute_systems_var_names& names
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars&              names
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
 

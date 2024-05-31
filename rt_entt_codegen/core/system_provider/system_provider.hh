@@ -20,81 +20,81 @@ public:
 	virtual ~system_provider();
 
 	virtual auto initialization(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 
 	virtual auto before_make_view_or_group(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
-		std::vector<std::string>& additional_view_components
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::vector<std::string>&                         additional_view_components
 	) -> void;
 
 	virtual auto after_make_view_or_group(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 
 	virtual auto context_function_header(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 	[[nodiscard]] virtual auto context_function_action(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_add(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_remove(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_get(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_update(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_has(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_generate(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_parent(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	[[nodiscard]] virtual auto context_function_other(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 
 	virtual auto pre_entity_iteration(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 	virtual auto pre_exec_system_impl(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 	virtual auto system_impl(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
 	virtual auto post_exec_system_impl(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 	virtual auto post_iteration(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
 
 protected:

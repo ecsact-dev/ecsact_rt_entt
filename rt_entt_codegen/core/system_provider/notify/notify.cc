@@ -11,9 +11,9 @@
 using namespace ecsact::rt_entt_codegen::core;
 
 auto provider::notify::before_make_view_or_group(
-	ecsact::codegen_plugin_context&        ctx,
-	const print_execute_systems_var_names& names,
-	std::vector<std::string>&              additional_view_components
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars&              names,
+	std::vector<std::string>&       additional_view_components
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
 	using ecsact::meta::decl_full_name;

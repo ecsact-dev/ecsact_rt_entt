@@ -8,7 +8,7 @@
 
 namespace ecsact::rt_entt_codegen::core {
 
-struct print_execute_systems_var_names {
+struct common_vars {
 	std::string registry_var_name;
 	std::string parent_context_var_name;
 	/// only set if system is an action
@@ -16,8 +16,8 @@ struct print_execute_systems_var_names {
 };
 
 auto print_child_systems(
-	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
-	const system_like_id_variant& sys_like_id_variant
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names,
+	const system_like_id_variant&                     sys_like_id_variant
 ) -> void;
 } // namespace ecsact::rt_entt_codegen::core

@@ -4,20 +4,20 @@
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 
 namespace ecsact::rt_entt_codegen::core::provider {
-class notify : public system_provider {
+class notify final : public system_provider {
 public:
 	using system_provider::system_provider;
 
 	auto initialization(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names
 	) -> void {
 	}
 
 	auto before_make_view_or_group(
-		ecsact::codegen_plugin_context&        ctx,
-		const print_execute_systems_var_names& names,
-		std::vector<std::string>&              additional_view_components
+		ecsact::codegen_plugin_context& ctx,
+		const common_vars&              names,
+		std::vector<std::string>&       additional_view_components
 	) -> void final;
 
 private:
