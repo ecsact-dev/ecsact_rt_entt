@@ -4,7 +4,6 @@
 #include <string>
 
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
-#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 #include "rt_entt_codegen/core/system_provider/system_provider.hh"
 
 namespace ecsact::rt_entt_codegen::core::provider {
@@ -104,12 +103,6 @@ public:
 	) -> void {
 	}
 
-	auto entity_iteration(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void {
-	}
-
 	auto pre_exec_system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
@@ -125,13 +118,13 @@ public:
 	auto post_exec_system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void final;
+	) -> void {
+	}
 
 	auto post_iteration(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void {
-	}
+	) -> void final;
 
 private:
 	std::string exec_start_label_name;

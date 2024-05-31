@@ -67,21 +67,12 @@ public:
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide final;
-
 	auto context_function_other(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide {
-		return NOT_HANDLED;
-	}
+	) -> handle_exclusive_provide final;
 
 	auto pre_entity_iteration(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void {
-	}
-
-	auto entity_iteration(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void {
@@ -96,9 +87,7 @@ public:
 	auto system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide {
-		return NOT_HANDLED;
-	}
+	) -> handle_exclusive_provide final;
 
 	auto post_exec_system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,

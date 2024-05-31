@@ -1,19 +1,7 @@
 #include "basic.hh"
 
 #include "ecsact/runtime/meta.hh"
-#include "ecsact/lang-support/lang-cc.hh"
-#include "rt_entt_codegen/shared/util.hh"
-#include "ecsact/cpp_codegen_plugin_util.hh"
 #include "rt_entt_codegen/core/system_provider/system_ctx_functions.hh"
-
-using ecsact::rt_entt_codegen::core::provider::context_action_impl;
-using ecsact::rt_entt_codegen::core::provider::context_add_impl;
-using ecsact::rt_entt_codegen::core::provider::context_generate_impl;
-using ecsact::rt_entt_codegen::core::provider::context_get_impl;
-using ecsact::rt_entt_codegen::core::provider::context_has_impl;
-using ecsact::rt_entt_codegen::core::provider::context_parent_impl;
-using ecsact::rt_entt_codegen::core::provider::context_remove_impl;
-using ecsact::rt_entt_codegen::core::provider::context_update_impl;
 
 auto ecsact::rt_entt_codegen::core::provider::basic::initialization(
 	ecsact::codegen_plugin_context&                                       ctx,
@@ -101,5 +89,21 @@ auto ecsact::rt_entt_codegen::core::provider::basic::context_function_parent(
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> handle_exclusive_provide {
 	context_parent_impl(ctx, sys_like_id_variant);
+	return HANDLED;
+}
+
+auto ecsact::rt_entt_codegen::core::provider::basic::context_function_other(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+) -> handle_exclusive_provide {
+	ctx.write("return nullptr;");
+	return HANDLED;
+}
+
+auto ecsact::rt_entt_codegen::core::provider::basic::system_impl(
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
+) -> handle_exclusive_provide {
+	ctx.write("system_impl(&context);\n");
 	return HANDLED;
 }

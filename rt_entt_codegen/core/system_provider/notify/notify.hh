@@ -101,12 +101,6 @@ public:
 	) -> void {
 	}
 
-	auto entity_iteration(
-		ecsact::codegen_plugin_context&                                       ctx,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void {
-	}
-
 	auto pre_exec_system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
