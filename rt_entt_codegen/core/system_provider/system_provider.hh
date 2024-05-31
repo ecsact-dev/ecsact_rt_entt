@@ -98,7 +98,7 @@ public:
 	) -> void;
 
 protected:
-	system_like_id_variant     sys_like_id;
-	ecsact_entt_system_details system_details;
+	const system_like_id_variant     sys_like_id;
+	const ecsact_entt_system_details system_details;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider

@@ -40,11 +40,14 @@ using ecsact::rt_entt_codegen::core::provider::handle_exclusive_provide;
 using ecsact::rt_entt_codegen::core::provider::system_provider;
 using ecsact::rt_entt_codegen::system_util::is_trivial_system;
 using ecsact::rt_entt_codegen::util::method_printer;
+using namespace ecsact::rt_entt_codegen::core;
+
+using system_provider_t = std::vector<std::shared_ptr<system_provider>>;
 
 static auto print_sys_exec_ctx_action(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "action"}
@@ -62,9 +65,9 @@ static auto print_sys_exec_ctx_action(
 }
 
 static auto print_sys_exec_ctx_add(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "add"}
@@ -83,9 +86,9 @@ static auto print_sys_exec_ctx_add(
 }
 
 static auto print_sys_exec_ctx_remove(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "remove"}
@@ -103,9 +106,9 @@ static auto print_sys_exec_ctx_remove(
 }
 
 static auto print_sys_exec_ctx_get(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "get"}
@@ -124,9 +127,9 @@ static auto print_sys_exec_ctx_get(
 }
 
 static auto print_sys_exec_ctx_update(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "update"}
@@ -145,9 +148,9 @@ static auto print_sys_exec_ctx_update(
 }
 
 static auto print_sys_exec_ctx_has(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "has"}
@@ -165,9 +168,9 @@ static auto print_sys_exec_ctx_has(
 }
 
 static auto print_sys_exec_ctx_generate(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "generate"}
@@ -188,9 +191,9 @@ static auto print_sys_exec_ctx_generate(
 }
 
 static auto print_sys_exec_ctx_parent( //
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "parent"} //
@@ -207,9 +210,9 @@ static auto print_sys_exec_ctx_parent( //
 }
 
 auto print_sys_exec_ctx_other(
-	ecsact::codegen_plugin_context&                  ctx,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "other"}
@@ -278,10 +281,10 @@ static auto print_apply_pendings(
 }
 
 static auto print_system_execution_context(
-	ecsact::codegen_plugin_context&                  ctx,
-	system_like_id_variant                           sys_like_id,
-	const ecsact::rt_entt_codegen::core::common_vars names,
-	std::vector<std::shared_ptr<system_provider>>    system_providers
+	ecsact::codegen_plugin_context& ctx,
+	system_like_id_variant          sys_like_id,
+	const common_vars               names,
+	system_provider_t               system_providers
 ) -> void {
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
@@ -320,7 +323,7 @@ static auto print_system_execution_context(
 }
 
 static auto setup_system_providers(system_like_id_variant sys_like_id
-) -> std::vector<std::shared_ptr<system_provider>> {
+) -> system_provider_t {
 	using ecsact::rt_entt_codegen::core::provider::association;
 	using ecsact::rt_entt_codegen::core::provider::basic;
 	using ecsact::rt_entt_codegen::core::provider::lazy;
@@ -329,12 +332,7 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 
 	assert(sys_like_id != system_like_id_variant{});
 
-	auto lazy_provider = std::make_shared<lazy>(sys_like_id);
-	auto association_provider = std::make_shared<association>(sys_like_id);
-	auto notify_provider = std::make_shared<notify>(sys_like_id);
-	auto basic_provider = std::make_shared<basic>(sys_like_id);
-
-	std::vector<std::shared_ptr<system_provider>> system_providers{};
+	system_provider_t system_providers{};
 
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
@@ -346,37 +344,35 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 	}
 
 	if(is_notify_system(sys_like_id)) {
-		system_providers.push_back(notify_provider);
+		system_providers.push_back(std::make_shared<notify>(sys_like_id));
 	}
 
 	if(lazy_iteration_rate > 0) {
-		system_providers.push_back(lazy_provider);
+		system_providers.push_back(std::make_shared<lazy>(sys_like_id));
 	}
 
 	if(!sys_details.association_details.empty()) {
-		system_providers.push_back(association_provider);
+		system_providers.push_back(std::make_shared<association>(sys_like_id));
 	}
 
-	system_providers.push_back(basic_provider);
+	system_providers.push_back(std::make_shared<basic>(sys_like_id));
 
 	return system_providers;
 }
 
 static auto print_execute_systems(
-	ecsact::codegen_plugin_context&                  ctx,
-	system_like_id_variant                           sys_like_id,
-	const ecsact::rt_entt_codegen::core::common_vars names
+	ecsact::codegen_plugin_context& ctx,
+	system_like_id_variant          sys_like_id,
+	const common_vars               names
 ) -> void {
 	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
-
-	auto additional_view_components = std::vector<std::string>{};
-
 	auto system_providers = setup_system_providers(sys_like_id);
 
 	for(const auto& provider : system_providers) {
 		provider->initialization(ctx, names);
 	}
 
+	auto additional_view_components = std::vector<std::string>{};
 	for(const auto& provider : system_providers) {
 		provider->before_make_view_or_group(ctx, names, additional_view_components);
 	}
@@ -444,7 +440,6 @@ static auto print_trivial_system_like(
 	using ecsact::meta::system_capabilities;
 
 	auto system_name = cpp_identifier(decl_full_name(system_like_id));
-
 	auto sys_capabilities = system_capabilities(system_like_id);
 
 	ctx.write("template<>\n");

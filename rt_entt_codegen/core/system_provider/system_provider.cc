@@ -2,9 +2,9 @@
 
 using namespace ecsact::rt_entt_codegen::core::provider;
 
-system_provider::system_provider(system_like_id_variant id) : sys_like_id(id) {
-	system_details = ecsact_entt_system_details::from_system_like(sys_like_id);
-
+system_provider::system_provider(system_like_id_variant id)
+	: sys_like_id(id)
+	, system_details(ecsact_entt_system_details::from_system_like(sys_like_id)) {
 	assert(sys_like_id != system_like_id_variant{});
 }
 
