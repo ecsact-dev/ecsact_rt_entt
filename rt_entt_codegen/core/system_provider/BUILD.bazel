@@ -10,6 +10,7 @@ cc_library(
     deps = [
         "//rt_entt_codegen/core/sys_exec",
         "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_variant",
     ],
 )
 
@@ -20,6 +21,7 @@ cc_library(
     copts = copts,
     visibility = ["//rt_entt_codegen/core:__pkg__"],
     deps = [
+        ":system_ctx_functions",
         ":system_provider",
         "//rt_entt_codegen/core/sys_exec",
         "//rt_entt_codegen/shared:ecsact_entt_details",
@@ -34,6 +36,7 @@ cc_library(
     copts = copts,
     visibility = ["//rt_entt_codegen/core:__pkg__"],
     deps = [
+        ":system_ctx_functions",
         ":system_provider",
         "//rt_entt_codegen/core/sys_exec",
         "//rt_entt_codegen/shared:ecsact_entt_details",
@@ -50,7 +53,6 @@ cc_library(
     deps = [
         ":system_provider",
         "//rt_entt_codegen/core/sys_exec",
-        "//rt_entt_codegen/shared:ecsact_entt_details",
         "//rt_entt_codegen/shared:system_util",
     ],
 )
@@ -66,5 +68,18 @@ cc_library(
         "//rt_entt_codegen/core/sys_exec",
         "//rt_entt_codegen/shared:ecsact_entt_details",
         "//rt_entt_codegen/shared:sorting",
+    ],
+)
+
+cc_library(
+    name = "system_ctx_functions",
+    srcs = ["system_ctx_functions.cc"],
+    hdrs = ["system_ctx_functions.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_variant",
     ],
 )

@@ -2,9 +2,8 @@
 
 #include <string>
 #include <optional>
-#include <variant>
 
-#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
+#include "rt_entt_codegen/shared/system_variant.hh"
 #include "ecsact/codegen/plugin.hh"
 
 namespace ecsact::rt_entt_codegen::core {
@@ -17,9 +16,8 @@ struct print_execute_systems_var_names {
 };
 
 auto print_child_systems(
-	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_details&        details,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& sys_details,
-	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names names
+	ecsact::codegen_plugin_context&                                       ctx,
+	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
+	const system_like_id_variant& sys_like_id_variant
 ) -> void;
 } // namespace ecsact::rt_entt_codegen::core

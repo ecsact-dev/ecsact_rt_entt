@@ -13,7 +13,6 @@ using ecsact::meta::decl_full_name;
 
 auto ecsact::rt_entt_codegen::core::provider::lazy::initialization(
 	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	auto system_name =
@@ -43,7 +42,6 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::initialization(
 
 auto ecsact::rt_entt_codegen::core::provider::lazy::before_make_view_or_group(
 	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
 	std::vector<std::string>& additional_view_components
 ) -> void {
@@ -67,7 +65,6 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::before_make_view_or_group(
 
 auto ecsact::rt_entt_codegen::core::provider::lazy::after_make_view_or_group(
 	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	if(sys_like_id_variant.is_system()) {
@@ -79,7 +76,6 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::after_make_view_or_group(
 
 auto ecsact::rt_entt_codegen::core::provider::lazy::pre_exec_system_impl(
 	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -101,7 +97,6 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::pre_exec_system_impl(
 
 auto ecsact::rt_entt_codegen::core::provider::lazy::post_exec_system_impl(
 	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 ) -> void {
 	using ecsact::cpp_codegen_plugin_util::block;
@@ -134,7 +129,7 @@ auto ecsact::rt_entt_codegen::core::provider::lazy::post_exec_system_impl(
 				ctx,
 				"view_no_pending_lazy_",
 				names.registry_var_name,
-				details
+				system_details
 			);
 
 			ctx.write("auto view_no_pending_lazy_count_ = 0;\n");

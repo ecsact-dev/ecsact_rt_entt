@@ -4,178 +4,136 @@
 #include <string>
 
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
+#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 #include "rt_entt_codegen/core/system_provider/system_provider.hh"
 
 namespace ecsact::rt_entt_codegen::core::provider {
 
-class lazy : system_provider {
+class lazy : public system_provider {
+public:
 	using system_provider::system_provider;
 
-public:
-	lazy(system_like_id_variant sys_like_id_variant);
-	// Default init to 0 lazy_it_rate
-
 	auto initialization(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void final;
 
 	auto before_make_view_or_group(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-															options,
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
 		std::vector<std::string>& additional_view_components
 	) -> void final;
 
 	auto after_make_view_or_group(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void final;
 
 	auto context_function_header(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void {
 	}
 
 	auto context_function_action(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_add(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_remove(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_get(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_update(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_has(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_generate(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_parent(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto context_function_other(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto pre_entity_iteration(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void {
 	}
 
 	auto entity_iteration(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void {
 	}
 
 	auto pre_exec_system_impl(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void final;
 
 	auto system_impl(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> handle_exclusive_provide {
 		return NOT_HANDLED;
 	}
 
 	auto post_exec_system_impl(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void final;
 
 	auto post_iteration(
-		ecsact::codegen_plugin_context&                            ctx,
-		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names&
-			options
+		ecsact::codegen_plugin_context&                                       ctx,
+		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
 	) -> void {
 	}
 
 private:
-	const system_like_id_variant sys_like_id_variant;
-
 	std::string exec_start_label_name;
 	std::string pending_lazy_exec_struct;
 	std::string system_sorting_struct_name;

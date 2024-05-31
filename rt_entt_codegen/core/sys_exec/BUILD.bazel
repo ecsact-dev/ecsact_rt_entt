@@ -10,6 +10,7 @@ cc_library(
     deps = [
         "//rt_entt_codegen/shared:ecsact_entt_details",
         "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
         "//rt_entt_codegen/shared:util",
         "@ecsact_lang_cpp//:cpp_codegen_plugin_util",
     ],

@@ -7,34 +7,35 @@
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
-#include "rt_entt_codegen/shared//ecsact_entt_details.hh"
 
 auto ecsact::rt_entt_codegen::core::provider::notify::before_make_view_or_group(
 	ecsact::codegen_plugin_context&                                       ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details&            details,
 	const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
 	std::vector<std::string>& additional_view_components
 ) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
 	using ecsact::rt_entt_codegen::system_util::is_notify_system;
 
-	if(is_notify_system(options.sys_like_id_variant.get_sys_like_id())) {
+	auto system_name =
+		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
+
+	if(is_notify_system(sys_like_id_variant.get_sys_like_id())) {
 		additional_view_components.push_back(
-			std::format("ecsact::entt::detail::run_system<{}>", options.system_name)
+			std::format("ecsact::entt::detail::run_system<{}>", system_name)
 		);
 		print_system_notify_views(
 			ctx,
-			details,
-			options.sys_like_id_variant.get_sys_like_id(),
-			options.registry_var_name
+			sys_like_id_variant.get_sys_like_id(),
+			names.registry_var_name
 		);
 	}
 }
 
 auto ecsact::rt_entt_codegen::core::provider::notify::print_system_notify_views(
-	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	ecsact_system_like_id                                      system_id,
-	std::string                                                registry_name
+	ecsact::codegen_plugin_context& ctx,
+	ecsact_system_like_id           system_id,
+	std::string                     registry_name
 ) -> void {
 	using ecsact::cc_lang_support::c_identifier;
 	using ecsact::cc_lang_support::cpp_identifier;
@@ -96,7 +97,7 @@ auto ecsact::rt_entt_codegen::core::provider::notify::print_system_notify_views(
 				ctx,
 				view_name,
 				registry_name,
-				details,
+				system_details,
 				std::vector{pending_add_str},
 				std::vector{run_system_comp}
 			);
@@ -118,7 +119,7 @@ auto ecsact::rt_entt_codegen::core::provider::notify::print_system_notify_views(
 				ctx,
 				view_name,
 				registry_name,
-				details,
+				system_details,
 				std::vector{pending_remove_str},
 				std::vector{run_system_comp}
 			);
@@ -140,7 +141,7 @@ auto ecsact::rt_entt_codegen::core::provider::notify::print_system_notify_views(
 				ctx,
 				view_name,
 				registry_name,
-				details,
+				system_details,
 				std::vector{component_updated_str},
 				std::vector{run_system_comp}
 			);
@@ -164,7 +165,7 @@ auto ecsact::rt_entt_codegen::core::provider::notify::print_system_notify_views(
 				ctx,
 				view_name,
 				registry_name,
-				details,
+				system_details,
 				std::vector{exec_itr_onchange_str},
 				std::vector{run_system_comp}
 			);
