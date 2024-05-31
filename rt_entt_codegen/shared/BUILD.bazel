@@ -62,6 +62,7 @@ cc_library(
     deps = [
         ":ecsact_entt_details",
         ":util",
+        "//rt_entt_codegen/core/sys_exec",
         "@ecsact_codegen//:plugin",
         "@ecsact_lang_cpp//:cpp_codegen_plugin_util",
         "@ecsact_lang_cpp//:support",
@@ -76,6 +77,16 @@ cc_library(
     copts = copts,
     deps = [
         ":ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_variant",
         "@ecsact_lang_cpp//:cpp_codegen_plugin_util",
+    ],
+)
+
+cc_library(
+    name = "system_variant",
+    hdrs = ["system_variant.hh"],
+    copts = copts,
+    deps = [
+        "@ecsact_runtime//:common",
     ],
 )

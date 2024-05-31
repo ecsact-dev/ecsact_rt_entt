@@ -2,6 +2,7 @@
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 #include "rt_entt_codegen/shared/system_util.hh"
+#include "rt_entt_codegen/shared/util.hh"
 
 auto ecsact::rt_entt_codegen::core::print_cleanup_system_notifies(
 	codegen_plugin_context&    ctx,

@@ -1145,7 +1145,8 @@ TEST(Core, LazyParentSystem) {
 	ASSERT_NE(changed_index, -1);
 	auto initial_changed_component = test_components_c[changed_index];
 
-	for(auto i : std::views::iota(0U, test_entities.size() - 1)) {
+	for([[maybe_unused]] auto i :
+			std::views::iota(0U, test_entities.size() - 1)) {
 		reg.execute_systems();
 	}
 
@@ -1191,7 +1192,8 @@ TEST(Core, LazyParentSystem) {
 		) << "different component was changed with same set of data\nindex="
 			<< changed_index;
 
-		for(auto _ : std::views::iota(0U, test_entities.size() - 1)) {
+		for([[maybe_unused]] auto _ :
+				std::views::iota(0U, test_entities.size() - 1)) {
 			reg.execute_systems();
 		}
 	}

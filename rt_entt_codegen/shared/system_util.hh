@@ -1,28 +1,18 @@
 #pragma once
 
 #include "ecsact/runtime/meta.hh"
-#include "ecsact/cpp_codegen_plugin_util.hh"
 #include "ecsact/lang-support/lang-cc.hh"
-#include "rt_entt_codegen/shared/util.hh"
-#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 
 namespace ecsact::rt_entt_codegen::system_util {
+
+using capability_t =
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
 /*
  * Checks if a system uses notify and should implement the run_system<S>
  * component in its execution
  */
 auto is_notify_system(ecsact_system_like_id system_id) -> bool;
-
-/*
- * Prints the specialized views for ecsact_system_notify_settings components
- */
-auto print_system_notify_views(
-	ecsact::codegen_plugin_context&                            ctx,
-	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	ecsact_system_like_id                                      system_id,
-	std::string                                                registry_name
-) -> void;
 
 auto is_trivial_system(ecsact_system_like_id system_id) -> bool;
 
