@@ -8,7 +8,7 @@
 auto ecsact::rt_entt_codegen::core::print_child_systems(
 	ecsact::codegen_plugin_context&                        ctx,
 	const ecsact::rt_entt_codegen::core::common_vars&      names,
-	const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id_variant
+	const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id
 
 ) -> void {
 	using ecsact::cc_lang_support::cpp_identifier;
@@ -18,14 +18,14 @@ auto ecsact::rt_entt_codegen::core::print_child_systems(
 	using ecsact::rt_entt_codegen::system_like_id_variant;
 
 	auto child_system_ids =
-		ecsact::meta::get_child_system_ids(sys_like_id_variant.get_sys_like_id());
+		ecsact::meta::get_child_system_ids(sys_like_id.get_sys_like_id());
 
 	if(child_system_ids.size() == 1) {
 		// TODO(Kelwan): Make use case system agnostic when we support
 		// nested Action systems
 		// Issue: https://github.com/ecsact-dev/ecsact_parse/issues/154
 		for(auto child_sys_id :
-				get_child_system_ids(sys_like_id_variant.get_sys_like_id())) {
+				get_child_system_ids(sys_like_id.get_sys_like_id())) {
 			auto child_details = ecsact_entt_system_details::from_system_like(
 				ecsact_id_cast<ecsact_system_like_id>(child_sys_id)
 			);

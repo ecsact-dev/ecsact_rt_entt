@@ -279,12 +279,11 @@ static auto print_apply_pendings(
 
 static auto print_system_execution_context(
 	ecsact::codegen_plugin_context&                  ctx,
-	system_like_id_variant                           sys_like_id_variant,
+	system_like_id_variant                           sys_like_id,
 	const ecsact::rt_entt_codegen::core::common_vars names,
 	std::vector<std::shared_ptr<system_provider>>    system_providers
 ) -> void {
-	auto system_name =
-		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
+	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
 	block(ctx, "struct : ecsact_system_execution_context ", [&] {
 		ctx.write("view_t* view;\n");
@@ -320,7 +319,7 @@ static auto print_system_execution_context(
 	ctx.write("context.view = &view;\n\n");
 }
 
-static auto setup_system_providers(system_like_id_variant sys_like_id_variant
+static auto setup_system_providers(system_like_id_variant sys_like_id
 ) -> std::vector<std::shared_ptr<system_provider>> {
 	using ecsact::rt_entt_codegen::core::provider::association;
 	using ecsact::rt_entt_codegen::core::provider::basic;
@@ -328,29 +327,27 @@ static auto setup_system_providers(system_like_id_variant sys_like_id_variant
 	using ecsact::rt_entt_codegen::core::provider::notify;
 	using ecsact::rt_entt_codegen::system_util::is_notify_system;
 
-	assert(sys_like_id_variant != system_like_id_variant{});
+	assert(sys_like_id != system_like_id_variant{});
 
-	auto lazy_provider = std::make_shared<lazy>(sys_like_id_variant);
-	auto association_provider =
-		std::make_shared<association>(sys_like_id_variant);
-	auto notify_provider = std::make_shared<notify>(sys_like_id_variant);
-	auto basic_provider = std::make_shared<basic>(sys_like_id_variant);
+	auto lazy_provider = std::make_shared<lazy>(sys_like_id);
+	auto association_provider = std::make_shared<association>(sys_like_id);
+	auto notify_provider = std::make_shared<notify>(sys_like_id);
+	auto basic_provider = std::make_shared<basic>(sys_like_id);
 
 	std::vector<std::shared_ptr<system_provider>> system_providers{};
 
-	auto sys_details = ecsact_entt_system_details::from_system_like(
-		sys_like_id_variant.get_sys_like_id()
-	);
+	auto sys_details =
+		ecsact_entt_system_details::from_system_like(sys_like_id.get_sys_like_id());
 
 	int lazy_iteration_rate = 0;
 
-	if(sys_like_id_variant.is_system()) {
+	if(sys_like_id.is_system()) {
 		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(sys_like_id_variant.get_sys_like_id())
+			static_cast<ecsact_system_id>(sys_like_id.get_sys_like_id())
 		);
 	}
 
-	if(is_notify_system(sys_like_id_variant.get_sys_like_id())) {
+	if(is_notify_system(sys_like_id.get_sys_like_id())) {
 		system_providers.push_back(notify_provider);
 	}
 
@@ -369,15 +366,15 @@ static auto setup_system_providers(system_like_id_variant sys_like_id_variant
 
 static auto print_execute_systems(
 	ecsact::codegen_plugin_context&                  ctx,
-	system_like_id_variant                           sys_like_id_variant,
+	system_like_id_variant                           sys_like_id,
 	const ecsact::rt_entt_codegen::core::common_vars names
 ) -> void {
 	auto sys_caps =
-		ecsact::meta::system_capabilities(sys_like_id_variant.get_sys_like_id());
+		ecsact::meta::system_capabilities(sys_like_id.get_sys_like_id());
 
 	auto additional_view_components = std::vector<std::string>{};
 
-	auto system_providers = setup_system_providers(sys_like_id_variant);
+	auto system_providers = setup_system_providers(sys_like_id);
 
 	for(const auto& provider : system_providers) {
 		provider->initialization(ctx, names);
@@ -387,9 +384,8 @@ static auto print_execute_systems(
 		provider->before_make_view_or_group(ctx, names, additional_view_components);
 	}
 
-	auto sys_details = ecsact_entt_system_details::from_system_like(
-		sys_like_id_variant.get_sys_like_id()
-	);
+	auto sys_details =
+		ecsact_entt_system_details::from_system_like(sys_like_id.get_sys_like_id());
 
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,
@@ -401,12 +397,7 @@ static auto print_execute_systems(
 
 	ctx.write("using view_t = decltype(view);\n");
 
-	print_system_execution_context(
-		ctx,
-		sys_like_id_variant,
-		names,
-		system_providers
-	);
+	print_system_execution_context(ctx, sys_like_id, names, system_providers);
 
 	for(const auto& provider : system_providers) {
 		provider->after_make_view_or_group(ctx, names);
@@ -419,11 +410,7 @@ static auto print_execute_systems(
 	block(ctx, "for(ecsact::entt::entity_id entity : view)", [&] {
 		ctx.write("context.entity = entity;\n");
 
-		ecsact::rt_entt_codegen::core::print_child_systems(
-			ctx,
-			names,
-			sys_like_id_variant
-		);
+		ecsact::rt_entt_codegen::core::print_child_systems(ctx, names, sys_like_id);
 
 		for(const auto& provider : system_providers) {
 			provider->pre_exec_system_impl(ctx, names);
@@ -452,7 +439,7 @@ static auto print_execute_systems(
 	print_apply_pendings(
 		ctx,
 		sys_details,
-		sys_like_id_variant.get_sys_like_id(),
+		sys_like_id.get_sys_like_id(),
 		names.registry_var_name
 	);
 }

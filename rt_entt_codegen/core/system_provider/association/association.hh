@@ -89,7 +89,7 @@ private:
 
 	auto print_other_ctx_parent(
 		ecsact::codegen_plugin_context& ctx,
-		const system_like_id_variant&   sys_like_id_variant
+		const system_like_id_variant&   sys_like_id
 	) -> void;
 
 	auto print_other_ctx_other(

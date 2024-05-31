@@ -12,11 +12,11 @@ using ecsact::rt_entt_codegen::util::is_transient_component;
 
 auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant
+	const system_like_id_variant&   sys_like_id
 ) -> void {
-	if(sys_like_id_variant.is_action()) {
+	if(sys_like_id.is_action()) {
 		auto action_name =
-			cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
+			cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
 
 		ctx.write(
 			"*static_cast<",
@@ -153,8 +153,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
 ) -> void {
@@ -229,8 +229,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
 ) -> void {
@@ -287,8 +287,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
 	if(details.writable_comps.size() == 0) {
@@ -331,8 +331,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
 	if(details.generate_comps.size() == 0) {
@@ -385,14 +385,14 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 
 auto ecsact::rt_entt_codegen::core::provider::context_parent_impl(
 	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant
+	const system_like_id_variant&   sys_like_id
 ) -> void {
 	ctx.write("return this->parent_ctx;\n");
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
 	if(details.association_details.size() == 0) {

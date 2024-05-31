@@ -34,7 +34,7 @@ auto provider::association::context_function_other(
 	ecsact::codegen_plugin_context&                   ctx,
 	const ecsact::rt_entt_codegen::core::common_vars& names
 ) -> handle_exclusive_provide {
-	context_other_impl(ctx, sys_like_id_variant, system_details);
+	context_other_impl(ctx, sys_like_id, system_details);
 	return HANDLED;
 }
 
@@ -199,7 +199,7 @@ auto provider::association::print_other_contexts(
 			print_other_ctx_update(ctx, other_details, view_type_name);
 			print_other_ctx_has(ctx, other_details);
 			print_other_ctx_generate(ctx, other_details);
-			print_other_ctx_parent(ctx, sys_like_id_variant);
+			print_other_ctx_parent(ctx, sys_like_id);
 			print_other_ctx_other(ctx, other_details);
 		});
 		ctx.write(";\n\n");
@@ -222,7 +222,7 @@ auto provider::association::print_other_ctx_action(
 			.parameter("void*", "out_action_data")
 			.return_type("void final");
 
-	context_action_impl(ctx, sys_like_id_variant);
+	context_action_impl(ctx, sys_like_id);
 }
 
 auto provider::association::print_other_ctx_add(
@@ -264,7 +264,7 @@ auto provider::association::print_other_ctx_get(
 			.parameter("void*", "out_component_data")
 			.return_type("void final");
 
-	context_get_impl(ctx, sys_like_id_variant, details, view_type_name);
+	context_get_impl(ctx, sys_like_id, details, view_type_name);
 }
 
 auto provider::association::print_other_ctx_update(
@@ -278,7 +278,7 @@ auto provider::association::print_other_ctx_update(
 			.parameter("const void*", "component_data")
 			.return_type("void final");
 
-	context_update_impl(ctx, sys_like_id_variant, details, view_type_name);
+	context_update_impl(ctx, sys_like_id, details, view_type_name);
 }
 
 auto provider::association::print_other_ctx_has(
@@ -290,7 +290,7 @@ auto provider::association::print_other_ctx_has(
 			.parameter("ecsact_component_like_id", "component_id")
 			.return_type("bool final");
 
-	context_has_impl(ctx, sys_like_id_variant, details);
+	context_has_impl(ctx, sys_like_id, details);
 }
 
 auto provider::association::print_other_ctx_generate(
@@ -304,18 +304,18 @@ auto provider::association::print_other_ctx_generate(
 			.parameter("const void**", "components_data")
 			.return_type("void final");
 
-	context_generate_impl(ctx, sys_like_id_variant, details);
+	context_generate_impl(ctx, sys_like_id, details);
 }
 
 auto provider::association::print_other_ctx_parent(
 	ecsact::codegen_plugin_context&                        ctx,
-	const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id_variant
+	const ecsact::rt_entt_codegen::system_like_id_variant& sys_like_id
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "parent"} //
 			.return_type("const ecsact_system_execution_context* final");
 
-	context_parent_impl(ctx, sys_like_id_variant);
+	context_parent_impl(ctx, sys_like_id);
 }
 
 auto provider::association::print_other_ctx_other(
@@ -327,5 +327,5 @@ auto provider::association::print_other_ctx_other(
 			.parameter("ecsact_entity_id", "entity")
 			.return_type("ecsact_system_execution_context* final");
 
-	context_other_impl(ctx, sys_like_id_variant, details);
+	context_other_impl(ctx, sys_like_id, details);
 }

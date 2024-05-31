@@ -18,17 +18,17 @@ auto provider::lazy::initialization(
 	const common_vars&              names
 ) -> void {
 	auto system_name =
-		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
+		cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
 
-	if(sys_like_id_variant.is_system()) {
+	if(sys_like_id.is_system()) {
 		lazy_iteration_rate = ecsact_meta_get_lazy_iteration_rate(
-			static_cast<ecsact_system_id>(sys_like_id_variant.get_sys_like_id())
+			static_cast<ecsact_system_id>(sys_like_id.get_sys_like_id())
 		);
 	}
 
 	exec_start_label_name = std::format(
 		"exec_start_{}_",
-		static_cast<int>(sys_like_id_variant.get_sys_like_id())
+		static_cast<int>(sys_like_id.get_sys_like_id())
 	);
 
 	pending_lazy_exec_struct = std::format(
@@ -54,8 +54,8 @@ auto provider::lazy::before_make_view_or_group(
 	ctx.write(exec_start_label_name, ":\n");
 	additional_view_components.push_back(pending_lazy_exec_struct);
 
-	if(sys_like_id_variant.is_system()) {
-		if(system_needs_sorted_entities(sys_like_id_variant.as_system())) {
+	if(sys_like_id.is_system()) {
+		if(system_needs_sorted_entities(sys_like_id.as_system())) {
 			additional_view_components.push_back(system_sorting_struct_name);
 		}
 	}
@@ -65,8 +65,8 @@ auto provider::lazy::after_make_view_or_group(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> void {
-	if(sys_like_id_variant.is_system()) {
-		if(system_needs_sorted_entities(sys_like_id_variant.as_system())) {
+	if(sys_like_id.is_system()) {
+		if(system_needs_sorted_entities(sys_like_id.as_system())) {
 			ctx.write("view.use<", system_sorting_struct_name, ">();\n");
 		}
 	}
@@ -98,7 +98,7 @@ auto provider::lazy::post_iteration(
 	using ecsact::cpp_codegen_plugin_util::block;
 
 	auto system_name =
-		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
+		cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
 
 	ctx.write(
 		"// If this assertion triggers that's a ecsact_rt_entt codegen "

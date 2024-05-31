@@ -20,15 +20,15 @@ auto provider::notify::before_make_view_or_group(
 	using ecsact::rt_entt_codegen::system_util::is_notify_system;
 
 	auto system_name =
-		cpp_identifier(decl_full_name(sys_like_id_variant.get_sys_like_id()));
+		cpp_identifier(decl_full_name(sys_like_id.get_sys_like_id()));
 
-	if(is_notify_system(sys_like_id_variant.get_sys_like_id())) {
+	if(is_notify_system(sys_like_id.get_sys_like_id())) {
 		additional_view_components.push_back(
 			std::format("ecsact::entt::detail::run_system<{}>", system_name)
 		);
 		print_system_notify_views(
 			ctx,
-			sys_like_id_variant.get_sys_like_id(),
+			sys_like_id.get_sys_like_id(),
 			names.registry_var_name
 		);
 	}

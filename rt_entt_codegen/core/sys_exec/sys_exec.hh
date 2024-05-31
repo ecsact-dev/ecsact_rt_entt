@@ -18,6 +18,6 @@ struct common_vars {
 auto print_child_systems(
 	ecsact::codegen_plugin_context&                   ctx,
 	const ecsact::rt_entt_codegen::core::common_vars& names,
-	const system_like_id_variant&                     sys_like_id_variant
+	const system_like_id_variant&                     sys_like_id
 ) -> void;
 } // namespace ecsact::rt_entt_codegen::core
