@@ -7,17 +7,16 @@
 #include "rt_entt_codegen/shared/util.hh"
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
-#include "rt_entt_codegen/core/system_provider/system_ctx_functions.hh"
 
-using ecsact::rt_entt_codegen::provider::context_action_impl;
-using ecsact::rt_entt_codegen::provider::context_add_impl;
-using ecsact::rt_entt_codegen::provider::context_generate_impl;
-using ecsact::rt_entt_codegen::provider::context_get_impl;
-using ecsact::rt_entt_codegen::provider::context_has_impl;
-using ecsact::rt_entt_codegen::provider::context_other_impl;
-using ecsact::rt_entt_codegen::provider::context_parent_impl;
-using ecsact::rt_entt_codegen::provider::context_remove_impl;
-using ecsact::rt_entt_codegen::provider::context_update_impl;
+using ecsact::rt_entt_codegen::core::provider::context_action_impl;
+using ecsact::rt_entt_codegen::core::provider::context_add_impl;
+using ecsact::rt_entt_codegen::core::provider::context_generate_impl;
+using ecsact::rt_entt_codegen::core::provider::context_get_impl;
+using ecsact::rt_entt_codegen::core::provider::context_has_impl;
+using ecsact::rt_entt_codegen::core::provider::context_other_impl;
+using ecsact::rt_entt_codegen::core::provider::context_parent_impl;
+using ecsact::rt_entt_codegen::core::provider::context_remove_impl;
+using ecsact::rt_entt_codegen::core::provider::context_update_impl;
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -210,8 +209,13 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_contexts(
 			ctx.write(std::format("{}_t* view;\n", view_type_name));
 			ctx.write("\n");
 			print_other_ctx_action(ctx);
-			print_other_ctx_add(ctx, other_details);
-			print_other_ctx_remove(ctx, other_details, view_type_name);
+			print_other_ctx_add(ctx, assoc_detail.capabilities, other_details);
+			print_other_ctx_remove(
+				ctx,
+				assoc_detail.capabilities,
+				other_details,
+				view_type_name
+			);
 			print_other_ctx_get(ctx, other_details, view_type_name);
 			print_other_ctx_update(ctx, other_details, view_type_name);
 			print_other_ctx_has(ctx, other_details);
@@ -245,6 +249,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 
 auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_add(
 	ecsact::codegen_plugin_context&                            ctx,
+	const capability_t&                                        other_caps,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
 	auto printer = //
@@ -253,12 +258,13 @@ auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_add(
 			.parameter("const void*", "component_data")
 			.return_type("void final");
 
-	context_add_impl(ctx, sys_like_id_variant);
+	context_add_impl(ctx, other_caps);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::association::
 	print_other_ctx_remove(
 		ecsact::codegen_plugin_context&                            ctx,
+		const capability_t&                                        other_caps,
 		const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 		const std::string&                                         view_type_name
 	) -> void {
@@ -267,7 +273,7 @@ auto ecsact::rt_entt_codegen::core::provider::association::
 			.parameter("ecsact_component_like_id", "component_id")
 			.return_type("void final");
 
-	context_remove_impl(ctx, sys_like_id_variant, details, view_type_name);
+	context_remove_impl(ctx, other_caps, details, view_type_name);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::association::print_other_ctx_get(

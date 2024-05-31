@@ -4,18 +4,21 @@
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 #include "rt_entt_codegen/shared/system_variant.hh"
 
-namespace ecsact::rt_entt_codegen::provider {
+namespace ecsact::rt_entt_codegen::core::provider {
+using capability_t =
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
+
 auto context_action_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant
 ) -> void;
 auto context_add_impl(
 	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant
+	const capability_t&             sys_caps
 ) -> void;
 auto context_remove_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+	ecsact::codegen_plugin_context&                            ctx,
+	const capability_t&                                        sys_caps,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
 ) -> void;
@@ -50,4 +53,4 @@ auto context_other_impl(
 	const system_like_id_variant&   sys_like_id_variant,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void;
-} // namespace ecsact::rt_entt_codegen::provider
+} // namespace ecsact::rt_entt_codegen::core::provider

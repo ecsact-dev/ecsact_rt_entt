@@ -10,7 +10,7 @@ using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::meta::decl_full_name;
 using ecsact::rt_entt_codegen::util::is_transient_component;
 
-auto ecsact::rt_entt_codegen::provider::context_action_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant
 ) -> void {
@@ -31,14 +31,11 @@ auto ecsact::rt_entt_codegen::provider::context_action_impl(
 	}
 }
 
-auto ecsact::rt_entt_codegen::provider::context_add_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_add_impl(
 	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant
+	const capability_t&             sys_caps
 ) -> void {
 	auto adds_comps = std::vector<ecsact_component_like_id>{};
-
-	auto sys_caps =
-		ecsact::meta::system_capabilities(sys_like_id_variant.get_sys_like_id());
 
 	for(auto&& [comp_id, sys_cap] : sys_caps) {
 		if(is_transient_component(ctx.package_id, comp_id)) {
@@ -92,16 +89,13 @@ auto ecsact::rt_entt_codegen::provider::context_add_impl(
 	ctx.write("add_fns.at(component_id)(this, component_id, component_data);\n");
 }
 
-auto ecsact::rt_entt_codegen::provider::context_remove_impl(
-	ecsact::codegen_plugin_context& ctx,
-	const system_like_id_variant&   sys_like_id_variant,
+auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
+	ecsact::codegen_plugin_context&                            ctx,
+	const capability_t&                                        sys_caps,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
 	const std::string&                                         view_type_name
 ) -> void {
 	auto remove_comps = std::vector<ecsact_component_like_id>{};
-
-	auto sys_caps =
-		ecsact::meta::system_capabilities(sys_like_id_variant.get_sys_like_id());
 
 	for(auto&& [comp_id, sys_cap] : sys_caps) {
 		if(is_transient_component(ctx.package_id, comp_id)) {
@@ -158,7 +152,7 @@ auto ecsact::rt_entt_codegen::provider::context_remove_impl(
 	ctx.write("();\n");
 }
 
-auto ecsact::rt_entt_codegen::provider::context_get_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
@@ -234,7 +228,7 @@ auto ecsact::rt_entt_codegen::provider::context_get_impl(
 	);
 }
 
-auto ecsact::rt_entt_codegen::provider::context_update_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
@@ -292,7 +286,7 @@ auto ecsact::rt_entt_codegen::provider::context_update_impl(
 	);
 }
 
-auto ecsact::rt_entt_codegen::provider::context_has_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
@@ -336,7 +330,7 @@ auto ecsact::rt_entt_codegen::provider::context_has_impl(
 	ctx.write("return has_fns.at(component_id)(this, component_id);\n");
 }
 
-auto ecsact::rt_entt_codegen::provider::context_generate_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
@@ -389,14 +383,14 @@ auto ecsact::rt_entt_codegen::provider::context_generate_impl(
 	});
 }
 
-auto ecsact::rt_entt_codegen::provider::context_parent_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_parent_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant
 ) -> void {
 	ctx.write("return this->parent_ctx;\n");
 }
 
-auto ecsact::rt_entt_codegen::provider::context_other_impl(
+auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id_variant,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
