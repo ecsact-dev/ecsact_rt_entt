@@ -9,10 +9,6 @@ struct system_like_id_variant
 	: std::variant<ecsact_system_id, ecsact_action_id> {
 	using variant::variant;
 
-	// operator ecsact_system_like_id() const {
-	// 	return get_sys_like_id();
-	// }
-
 	auto as_system() const -> ecsact_system_id {
 		return std::get<ecsact_system_id>(*this);
 	}
