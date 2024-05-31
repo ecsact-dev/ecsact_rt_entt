@@ -22,80 +22,80 @@ public:
 	virtual auto initialization(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
+	) -> void;
 
 	virtual auto before_make_view_or_group(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names,
 		std::vector<std::string>& additional_view_components
-	) -> void = 0;
+	) -> void;
 
 	virtual auto after_make_view_or_group(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
+	) -> void;
 
 	virtual auto context_function_header(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
-	virtual auto context_function_action(
+	) -> void;
+	[[nodiscard]] virtual auto context_function_action(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_add(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_add(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_remove(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_remove(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_get(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_get(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_update(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_update(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_has(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_has(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_generate(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_generate(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_parent(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_parent(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
-	virtual auto context_function_other(
+	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_other(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
+	) -> handle_exclusive_provide;
 
 	virtual auto pre_entity_iteration(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
+	) -> void;
 	virtual auto pre_exec_system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
+	) -> void;
 	virtual auto system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> handle_exclusive_provide = 0;
+	) -> handle_exclusive_provide;
 	virtual auto post_exec_system_impl(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
+	) -> void;
 	virtual auto post_iteration(
 		ecsact::codegen_plugin_context&                                       ctx,
 		const ecsact::rt_entt_codegen::core::print_execute_systems_var_names& names
-	) -> void = 0;
+	) -> void;
 
 protected:
 	system_like_id_variant     sys_like_id_variant;

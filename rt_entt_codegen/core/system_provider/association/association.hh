@@ -2,13 +2,12 @@
 
 #include <string>
 #include <map>
-
 #include "rt_entt_codegen/core/system_provider/system_provider.hh"
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/core/system_provider/system_ctx_functions.hh"
 
 namespace ecsact::rt_entt_codegen::core::provider {
-class association : public system_provider {
+class association final : public system_provider {
 public:
 	using system_provider::system_provider;
 
