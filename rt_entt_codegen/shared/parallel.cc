@@ -45,7 +45,7 @@ static auto is_capability_safe(ecsact_system_capability capability) -> bool {
  */
 static auto should_run_independently(ecsact_system_like_id id) -> bool {
 	// User has explicitly marked a system as not parallel; respect that.
-	if(!ecsact_meta_get_system_parallel_execution(id)) {
+	if(ecsact_meta_get_system_parallel_execution(id) == ECSACT_PARA_EXEC_DENY) {
 		return true;
 	}
 
