@@ -39,6 +39,25 @@ static auto is_capability_safe(ecsact_system_capability capability) -> bool {
 	return (unsafe_caps & capability) == 0b0;
 }
 
+/**
+ * Quick check to see if a system should run independently regardless of it's
+ * system capbilities.
+ */
+static auto should_run_independently(ecsact_system_like_id id) -> bool {
+	// User has explicitly marked a system as not parallel; respect that.
+	if(ecsact_meta_get_system_parallel_execution(id) == ECSACT_PARA_EXEC_DENY) {
+		return true;
+	}
+
+	// Generator systems increase storage so they may not run in parallel with
+	// other systems.
+	if(!ecsact::meta::get_system_generates_ids(id).empty()) {
+		return true;
+	}
+
+	return false;
+}
+
 static auto loop_iterator(
 	const std::vector<system_like_id_variant>&          system_list,
 	const std::vector<system_like_id_variant>::iterator begin,
@@ -51,10 +70,8 @@ static auto loop_iterator(
 
 	for(auto iterator = begin; iterator != system_list.end(); iterator++) {
 		auto sys_like_id = *iterator;
-		auto capabilities = ecsact::meta::system_capabilities(sys_like_id);
-		auto generate_ids = ecsact::meta::get_system_generates_ids(sys_like_id);
 
-		if(!generate_ids.empty()) {
+		if(should_run_independently(sys_like_id)) {
 			if(!parallel_system_list.empty()) {
 				parallel_system_cluster.push_back(parallel_system_list);
 			}
@@ -70,8 +87,8 @@ static auto loop_iterator(
 			return;
 		}
 
-		std::set<ecsact_component_like_id> child_unsafe_comps{};
-
+		auto capabilities = ecsact::meta::system_capabilities(sys_like_id);
+		auto child_unsafe_comps = std::set<ecsact_component_like_id>{};
 		auto child_systems = ecsact::meta::get_child_system_ids(sys_like_id);
 
 		for(auto child_sys_id : child_systems) {
