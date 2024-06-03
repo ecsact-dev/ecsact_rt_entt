@@ -1,5 +1,7 @@
 main package parallel_test;
 
+import entity_test;
+
 component ParallelA {
     i32 val;
 }

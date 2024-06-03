@@ -1,0 +1,16 @@
+package entity_test;
+
+component ComponentA {
+    i32 val;
+}
+component ComponentB {
+    i32 val;
+}
+
+system ReadonlyParallelA {
+    readonly ComponentA;
+}
+
+system ReadonlyParallelB {
+    readonly ComponentB;
+}

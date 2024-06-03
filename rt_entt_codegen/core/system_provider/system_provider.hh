@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <string>
-#include <variant>
+#include <functional>
 
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/shared/system_variant.hh"
@@ -80,6 +80,11 @@ public:
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
+	[[nodiscard]] virtual auto entity_iteration(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::function<void()>                             iter_func
+	) -> handle_exclusive_provide;
 	virtual auto pre_exec_system_impl(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names

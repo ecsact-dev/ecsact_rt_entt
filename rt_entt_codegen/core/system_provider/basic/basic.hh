@@ -66,6 +66,12 @@ public:
 		const common_vars&              names
 	) -> handle_exclusive_provide final;
 
+	auto entity_iteration(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::function<void()>                             iter_func
+	) -> handle_exclusive_provide;
+
 	auto system_impl(
 		ecsact::codegen_plugin_context& ctx,
 		const common_vars&              names

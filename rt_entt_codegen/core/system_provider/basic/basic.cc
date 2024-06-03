@@ -1,6 +1,7 @@
 #include "basic.hh"
 
 #include "ecsact/runtime/meta.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 #include "rt_entt_codegen/core/system_provider/system_ctx_functions.hh"
 
 using namespace ecsact::rt_entt_codegen::core;
@@ -104,5 +105,18 @@ auto provider::basic::system_impl(
 	const common_vars&              names
 ) -> handle_exclusive_provide {
 	ctx.write("system_impl(&context);\n");
+	return HANDLED;
+}
+
+auto provider::basic::entity_iteration(
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names,
+	std::function<void()>                             iter_func
+) -> handle_exclusive_provide {
+	using ecsact::cpp_codegen_plugin_util::block;
+
+	block(ctx, "for(ecsact::entt::entity_id entity : view)", [&] {
+		iter_func();
+	});
 	return HANDLED;
 }

@@ -75,6 +75,12 @@ void parallel_test::ParentWithSharedComponentA::ChildWithSharedComponentA::impl(
 ) {
 }
 
+void entity_test::ReadonlyParallelA::impl(context& ctx) {
+}
+
+void entity_test::ReadonlyParallelB::impl(context& ctx) {
+}
+
 TEST(Parallel, RunEntitiesinParallel) {
 	auto reg = ecsact::core::registry("RunEntitiesInParallel");
 
