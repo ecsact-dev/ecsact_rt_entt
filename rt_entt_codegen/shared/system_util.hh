@@ -29,6 +29,14 @@ static auto create_context_struct_name( //
 	return full_name + "Struct";
 }
 
+static auto create_context_struct_name( //
+	system_like_id_variant sys_like_id
+) -> std::string {
+	using ecsact::cc_lang_support::c_identifier;
+	auto full_name = c_identifier(ecsact::meta::decl_full_name(sys_like_id));
+	return full_name + "Struct";
+}
+
 template<typename ComponentLikeID>
 static auto create_context_var_name( //
 	ComponentLikeID component_like_id
@@ -39,7 +47,6 @@ static auto create_context_var_name( //
 	return full_name + "_context";
 }
 
-template<typename ComponentLikeID>
 static auto create_context_var_name( //
 	system_like_id_variant sys_like_id
 ) -> std::string {

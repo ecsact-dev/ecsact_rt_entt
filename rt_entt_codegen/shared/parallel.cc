@@ -319,5 +319,7 @@ static auto loop_iterator(
 
 		parallel_system_list.push_back(sys_like_id);
 	}
-	parallel_system_cluster.push_back(parallel_system_list);
+	if(!parallel_system_list.empty()) {
+		parallel_system_cluster.push_back(parallel_system_list);
+	}
 }

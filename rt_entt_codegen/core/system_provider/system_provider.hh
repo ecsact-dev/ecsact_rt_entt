@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string_view>
 #include <vector>
 #include <string>
 #include <functional>
@@ -39,6 +40,7 @@ public:
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
+
 	[[nodiscard]] virtual auto context_function_action(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
@@ -80,23 +82,40 @@ public:
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
+
+	virtual auto provide_context_init(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::string_view                                  context_type_name
+	) -> handle_exclusive_provide;
+
 	[[nodiscard]] virtual auto entity_iteration(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names,
 		std::function<void()>                             iter_func
 	) -> handle_exclusive_provide;
+
 	virtual auto pre_exec_system_impl(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
+
+	virtual auto pre_exec_system_impl_context_init(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::string_view                                  context_type_name
+	) -> void;
+
 	virtual auto system_impl(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
+
 	virtual auto post_exec_system_impl(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> void;
+
 	virtual auto post_iteration(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names

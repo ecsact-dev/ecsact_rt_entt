@@ -14,7 +14,7 @@ using ecsact::rt_entt_codegen::util::decl_cpp_ident;
 
 constexpr auto RECALC_COMPONENTS_HASH_DECL = R"cpp(
 template<typename S>
-static auto _recalc_sorting_hash(::entt::registry&) -> void;
+static auto _recalc_sorting_hash(ecsact::entt::registry_t&) -> void;
 )cpp";
 
 static auto print_system_entity_sorting_component_struct(
@@ -35,7 +35,7 @@ static auto print_system_entity_sorting_component_struct(
 	ctx.write("template<>\n");
 	auto printer =
 		method_printer{ctx, "_recalc_sorting_hash<" + system_cpp_name + ">"}
-			.parameter("::entt::registry&", "reg")
+			.parameter("ecsact::entt::registry_t&", "reg")
 			.return_type("void");
 
 	auto gen_comp_var_name = [](auto comp_id) -> std::string {

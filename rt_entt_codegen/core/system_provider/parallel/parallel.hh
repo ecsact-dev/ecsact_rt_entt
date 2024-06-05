@@ -13,5 +13,17 @@ public:
 		const ecsact::rt_entt_codegen::core::common_vars& names,
 		std::function<void()>                             iter_func
 	) -> handle_exclusive_provide;
+
+	auto provide_context_init(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::string_view                                  context_type_name
+	) -> handle_exclusive_provide;
+
+	auto pre_exec_system_impl_context_init(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::string_view                                  context_type_name
+	) -> void;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider

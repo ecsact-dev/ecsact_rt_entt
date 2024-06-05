@@ -2,6 +2,7 @@ package(default_visibility = ["//visibility:public"])
 
 # keep sorted
 _srcs = [
+    "allocator.cc",
     "ecsact_rt_entt_core.cc",
     "ecsact_rt_entt_dynamic.cc",
     "hash.cc",

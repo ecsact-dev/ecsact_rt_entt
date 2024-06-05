@@ -7,7 +7,7 @@
 namespace ecsact::entt::detail {
 
 template<typename C>
-auto apply_pending_add(::entt::registry& registry) -> void {
+auto apply_pending_add(ecsact::entt::registry_t& registry) -> void {
 	if constexpr(std::is_empty_v<C>) {
 		registry.view<pending_add<C>>().each([&](auto entity) {
 			registry.emplace<C>(entity);
@@ -26,7 +26,7 @@ auto apply_pending_add(::entt::registry& registry) -> void {
 }
 
 template<typename C>
-auto apply_pending_remove(::entt::registry& registry) -> void {
+auto apply_pending_remove(ecsact::entt::registry_t& registry) -> void {
 	registry.view<pending_remove<C>>().each([&](auto entity) {
 		if constexpr(!std::is_empty_v<C>) {
 			registry.erase<exec_beforechange_storage<C>>(entity);

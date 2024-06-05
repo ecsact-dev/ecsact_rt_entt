@@ -77,6 +77,18 @@ public:
 		const common_vars&              names
 	) -> handle_exclusive_provide final;
 
+	auto provide_context_init(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::string_view                                  context_type_name
+	) -> handle_exclusive_provide;
+
+	auto pre_exec_system_impl_context_init(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::string_view                                  context_type_name
+	) -> void;
+
 private:
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
 		sys_caps;

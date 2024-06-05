@@ -49,7 +49,7 @@ static auto print_check_add_component_error_template_specialization(
 
 	auto printer = //
 		method_printer{ctx, method_name}
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter("::ecsact::entt::entity_id", "entity")
 			.parameter(cpp_component_ident + " const&", "component")
 			.return_type("ecsact_add_error");
@@ -82,7 +82,7 @@ static auto print_check_update_component_error_template_specialization(
 
 	auto printer = //
 		method_printer{ctx, method_name}
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter("::ecsact::entt::entity_id", "entity")
 			.parameter(cpp_component_ident + " const&", "component")
 			.return_type("ecsact_update_error");
@@ -115,7 +115,7 @@ static auto print_check_action_error_template_specialization(
 
 	auto printer = //
 		method_printer{ctx, method_name}
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter(cpp_action_ident + " const&", "action")
 			.return_type("ecsact_execute_systems_error");
 

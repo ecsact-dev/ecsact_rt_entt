@@ -404,9 +404,13 @@ inline auto prepare_component(ecsact_registry_id registry_id) -> void {
 	reg.template storage<C>();
 	reg.template storage<component_added<C>>();
 	reg.template storage<component_removed<C>>();
+	reg.template storage<detail::pending_add<C>>();
+	reg.template storage<detail::pending_remove<C>>();
+	reg.template storage<detail::beforeremove_storage<C>>();
 
 	if constexpr(!std::is_empty_v<C>) {
-		reg.storage<detail::exec_beforechange_storage<C>>();
+		reg.template storage<detail::exec_beforechange_storage<C>>();
+		reg.template storage<detail::exec_itr_beforechange_storage<C>>();
 		reg.template storage<component_updated<C>>();
 	}
 }
@@ -418,6 +422,7 @@ inline auto prepare_system(ecsact_registry_id registry_id) -> void {
 
 	reg.template storage<system_sorted<S>>();
 	reg.template storage<pending_lazy_execution<S>>();
+	reg.template storage<run_system<S>>();
 }
 
 template<typename C, typename V>
@@ -435,8 +440,10 @@ auto has_component_changed(entt::entity_id entity, V& view) -> bool {
 }
 
 template<typename C>
-auto update_exec_itr_beforechange(entt::entity_id entity, ::entt::registry& reg)
-	-> void {
+auto update_exec_itr_beforechange(
+	entt::entity_id           entity,
+	ecsact::entt::registry_t& reg
+) -> void {
 	auto  comp = reg.get<C>(entity);
 	auto& beforechange_comp =
 		reg.get<detail::exec_itr_beforechange_storage<C>>(entity);

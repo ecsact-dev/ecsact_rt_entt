@@ -29,7 +29,7 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_add_fn(
 				"ecsact::entt::detail::add_system_markers_if_needed<" + comp_cpp_ident +
 					">"
 			}
-				.parameter("::entt::registry&", "reg")
+				.parameter("ecsact::entt::registry_t&", "reg")
 				.parameter("ecsact::entt::entity_id", "entity")
 				.return_type("void");
 
@@ -80,7 +80,7 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_remove_fn(
 				"ecsact::entt::detail::remove_system_markers_if_needed<" +
 					comp_cpp_ident + ">"
 			}
-				.parameter("::entt::registry&", "reg")
+				.parameter("ecsact::entt::registry_t&", "reg")
 				.parameter("ecsact::entt::entity_id", "entity")
 				.return_type("void");
 
@@ -109,7 +109,7 @@ auto ecsact::rt_entt_codegen::core::print_add_sys_beforestorage_fn(
 					comp_name
 				)
 			}
-				.parameter("::entt::registry&", "reg")
+				.parameter("ecsact::entt::registry_t&", "reg")
 				.parameter("ecsact::entt::entity_id", "entity")
 				.return_type("void");
 

@@ -179,6 +179,8 @@ sources:
     outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/globals.hh
     outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/registry.hh
+    outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/internal_markers.hh
     outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/system_execution_context.hh
@@ -206,6 +208,7 @@ sources:
   - ./runtime/ecsact_rt_entt_core.cc
   - ./runtime/ecsact_rt_entt_dynamic.cc
   - ./runtime/hash.cc
+  - ./runtime/allocator.cc
 
 exports:
   # core

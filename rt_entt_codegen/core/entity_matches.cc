@@ -29,7 +29,7 @@ auto ecsact::rt_entt_codegen::core::print_entity_match_fn(
 		ctx.write("template<>\n");
 		auto printer = //
 			method_printer{ctx, method_name}
-				.parameter("::entt::registry&", "reg")
+				.parameter("ecsact::entt::registry_t&", "reg")
 				.parameter("ecsact::entt::entity_id", "entity")
 				.return_type("bool");
 

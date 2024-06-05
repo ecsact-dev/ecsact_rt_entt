@@ -7,6 +7,7 @@
 #include "ecsact/runtime/core.h"
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/entt/detail/system_execution_context.hh"
+#include "ecsact/entt/detail/registry.hh"
 
 /**
  * A small set of globals expected to be available the ecsact_rt_entt_codegen
@@ -19,7 +20,7 @@ namespace ecsact::entt::detail::globals {
  */
 extern std::unordered_map< //
 	ecsact_registry_id,
-	::entt::registry>
+	ecsact::entt::registry_t>
 	registries;
 
 /**

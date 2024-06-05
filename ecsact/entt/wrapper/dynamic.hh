@@ -48,8 +48,8 @@ auto context_add(
 
 template<typename C>
 auto component_add_trivial(
-	::entt::registry&       registry,
-	ecsact::entt::entity_id entity_id
+	ecsact::entt::registry_t& registry,
+	ecsact::entt::entity_id   entity_id
 ) -> void {
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
@@ -100,9 +100,9 @@ auto context_remove(
 
 template<typename C>
 auto component_remove_trivial(
-	::entt::registry&       registry,
-	ecsact::entt::entity_id entity_id,
-	auto&                   view
+	ecsact::entt::registry_t& registry,
+	ecsact::entt::entity_id   entity_id,
+	auto&                     view
 ) -> void {
 	using ecsact::entt::component_removed;
 	using ecsact::entt::component_updated;

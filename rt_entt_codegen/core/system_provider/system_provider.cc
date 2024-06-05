@@ -105,6 +105,14 @@ auto system_provider::pre_entity_iteration(
 ) -> void {
 }
 
+auto system_provider::provide_context_init(
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names,
+	std::string_view                                  context_type_name
+) -> handle_exclusive_provide {
+	return NOT_HANDLED;
+}
+
 auto system_provider::entity_iteration(
 	ecsact::codegen_plugin_context&                   ctx,
 	const ecsact::rt_entt_codegen::core::common_vars& names,
@@ -116,6 +124,13 @@ auto system_provider::entity_iteration(
 auto system_provider::pre_exec_system_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
+) -> void {
+}
+
+auto system_provider::pre_exec_system_impl_context_init(
+	ecsact::codegen_plugin_context&                   ctx,
+	const ecsact::rt_entt_codegen::core::common_vars& names,
+	std::string_view                                  context_type_name
 ) -> void {
 }
 
