@@ -8,9 +8,9 @@
 namespace ecsact::rt_entt_codegen {
 
 struct association_info {
-	ecsact_component_like_id component_id;
-	ecsact_field_id          field_id;
-	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+	ecsact_component_like_id     component_id;
+	std::vector<ecsact_field_id> field_ids;
+	std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>
 		capabilities;
 };
 

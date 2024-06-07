@@ -281,17 +281,17 @@ static auto loop_iterator(
 				}
 			}
 
-			auto other_fields =
-				ecsact::meta::system_association_fields(sys_like_id, comp_id);
+			auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
 
-			for(auto field_id : other_fields) {
-				auto other_capabilities = ecsact::meta::system_association_capabilities(
-					sys_like_id,
-					comp_id,
-					field_id
-				);
+			for(auto assoc_id : assoc_ids) {
+				auto assoc_comp_id =
+					ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+				auto assoc_field_ids =
+					ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
+				auto assoc_capabilities =
+					ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 
-				for(const auto [other_comp_id, other_capability] : other_capabilities) {
+				for(const auto [other_comp_id, other_capability] : assoc_capabilities) {
 					auto cpp_name = decl_full_name(other_comp_id);
 					if(!is_capability_safe(other_capability)) {
 						if(!unsafe_comps.contains(other_comp_id)) {

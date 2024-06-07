@@ -7,14 +7,19 @@ module(
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.6.1")
 bazel_dep(name = "rules_ecsact", version = "0.5.2")
-bazel_dep(name = "ecsact_runtime", version = "0.6.2")
-bazel_dep(name = "ecsact_lang_cpp", version = "0.4.1")
+bazel_dep(name = "ecsact_runtime", version = "0.6.5")
+bazel_dep(name = "ecsact_lang_cpp", version = "0.4.3")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "ecsact_codegen", version = "0.2.0")
-bazel_dep(name = "ecsact_cli", version = "0.3.9")
+bazel_dep(name = "ecsact_cli", version = "0.3.10")
 bazel_dep(name = "xxhash", version = "0.8.2")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
+
+local_path_override(
+    module_name = "ecsact_lang_cpp",
+    path = "../ecsact_lang_cpp",
+)
 
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)

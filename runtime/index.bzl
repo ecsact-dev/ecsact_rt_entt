@@ -28,7 +28,6 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
             "@ecsact_lang_cpp//cpp_header_codegen",
             "@ecsact_lang_cpp//cpp_systems_header_codegen",
             "@ecsact_lang_cpp//systems_header_codegen",
-            "@ecsact_lang_cpp//cpp_meta_header_codegen",
         ],
         output_directory = "_%s__public_hdrs" % name,
         **kwargs
@@ -42,7 +41,6 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         strip_include_prefix = "_%s__public_hdrs" % name,
         deps = [
             "@ecsact_lang_cpp//:execution_context",
-            "@ecsact_lang_cpp//:type_info",
         ],
         **kwargs
     )
