@@ -10,6 +10,8 @@
 #include "ecsact/runtime/core.hh"
 #include "ecsact/runtime/dynamic.h"
 
+#include <iostream>
+
 #include "runtime_test.ecsact.hh"
 #include "runtime_test.ecsact.systems.hh"
 

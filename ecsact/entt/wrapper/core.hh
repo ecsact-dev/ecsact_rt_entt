@@ -10,6 +10,8 @@
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
 
+#include <iostream>
+
 namespace ecsact::entt::wrapper::core {
 
 template<typename C>
@@ -156,7 +158,6 @@ inline auto update_component_exec_options( //
 
 	if(err == ECSACT_UPDATE_OK) {
 		reg.replace<C>(entity, *static_cast<const C*>(component_data));
-		reg.template emplace_or_replace<component_updated<C>>(entity);
 	}
 
 	return err;
@@ -177,7 +178,6 @@ auto remove_component(
 		reg.remove<detail::exec_beforechange_storage<C>>(entity);
 	}
 	reg.template remove<component_added<C>>(entity);
-	reg.template remove<component_updated<C>>(entity);
 	reg.template emplace_or_replace<component_removed<C>>(entity);
 	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
 }
@@ -203,7 +203,6 @@ auto remove_component_exec_options(
 
 	reg.template erase<C>(entity);
 	reg.template remove<component_added<C>>(entity);
-	reg.template remove<component_updated<C>>(entity);
 	reg.template emplace_or_replace<component_removed<C>>(entity);
 
 	if constexpr(!std::is_empty_v<C>) {
@@ -295,7 +294,6 @@ auto _trigger_update_component_event(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
-	using ecsact::entt::component_updated;
 	using ecsact::entt::detail::exec_beforechange_storage;
 
 	if(!events_collector.has_update_callback()) {
@@ -307,7 +305,6 @@ auto _trigger_update_component_event(
 		::entt::basic_view changed_view{
 			reg.template storage<C>(),
 			reg.template storage<exec_beforechange_storage<C>>(),
-			reg.template storage<component_updated<C>>(),
 		};
 
 		for(ecsact::entt::entity_id entity : changed_view) {
@@ -384,7 +381,6 @@ inline auto clear_component(ecsact_registry_id registry_id) -> void {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	reg.clear<ecsact::entt::component_added<C>>();
-	reg.clear<ecsact::entt::component_updated<C>>();
 	reg.clear<ecsact::entt::component_removed<C>>();
 }
 
@@ -411,7 +407,6 @@ inline auto prepare_component(ecsact_registry_id registry_id) -> void {
 	if constexpr(!std::is_empty_v<C>) {
 		reg.template storage<detail::exec_beforechange_storage<C>>();
 		reg.template storage<detail::exec_itr_beforechange_storage<C>>();
-		reg.template storage<component_updated<C>>();
 	}
 }
 
