@@ -208,7 +208,6 @@ sources:
   - ./runtime/ecsact_rt_entt_core.cc
   - ./runtime/ecsact_rt_entt_dynamic.cc
   - ./runtime/hash.cc
-  - ./runtime/allocator.cc
 
 exports:
   # core
