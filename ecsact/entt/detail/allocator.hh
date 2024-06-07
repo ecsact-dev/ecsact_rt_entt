@@ -5,7 +5,6 @@
 #include <memory>
 #include <atomic>
 #include <type_traits>
-#include <iostream>
 
 namespace ecsact::entt::detail {
 

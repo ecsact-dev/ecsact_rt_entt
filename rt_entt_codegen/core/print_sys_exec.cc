@@ -322,27 +322,6 @@ static auto print_system_execution_context(
 	return context_type_name;
 }
 
-static auto print_system_context_init_vars(
-	ecsact::codegen_plugin_context& ctx,
-	system_like_id_variant          sys_like_id,
-	const common_vars               names
-) -> void {
-	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
-
-	ctx.write("context.registry = &", names.registry_var_name, ";\n");
-	if(names.action_var_name) {
-		ctx.write("context.action_data = ", *names.action_var_name, ";\n\n");
-	}
-
-	ctx.write(
-		"context.id = ecsact_id_cast<ecsact_system_like_id>(::",
-		system_name,
-		"::id);\n"
-	);
-	ctx.write("context.parent_ctx = ", names.parent_context_var_name, ";\n");
-	ctx.write("context.view = &view;\n\n");
-}
-
 static auto setup_system_providers(system_like_id_variant sys_like_id
 ) -> system_provider_t {
 	using ecsact::rt_entt_codegen::core::provider::association;

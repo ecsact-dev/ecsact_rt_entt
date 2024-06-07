@@ -8,7 +8,3 @@ namespace ecsact::entt {
 using registry_t = ::entt::
 	basic_registry<::entt::entity, detail::static_allocator<::entt::entity>>;
 }
-
-// using registry_t = ::entt::
-// 	basic_registry<::entt::entity, detail::static_allocator<::entt::entity>>;
-// }

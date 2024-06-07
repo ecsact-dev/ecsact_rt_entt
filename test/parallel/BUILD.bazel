@@ -6,7 +6,6 @@ load("@rules_ecsact//ecsact:defs.bzl", "ecsact_codegen")
 ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",
     srcs = [
-        "entity_parallel_test.ecsact",
         "parallel_test.ecsact",
     ],
     output_directory = "_ecsact_cc_system_impl_srcs",
@@ -18,7 +17,6 @@ ecsact_codegen(
 ecsact_entt_runtime(
     name = "runtime",
     srcs = [
-        "entity_parallel_test.ecsact",
         "parallel_test.ecsact",
     ],
     ECSACT_ENTT_RUNTIME_PACKAGE = "::parallel_test::package",
