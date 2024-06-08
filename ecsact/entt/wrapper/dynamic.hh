@@ -127,10 +127,7 @@ auto context_get(
 	void*                                     out_component_data,
 	auto&                                     view
 ) -> void {
-	auto        entity = context->entity;
-	const auto& registry = *context->registry;
-
-	assert(registry.template any_of<C>(entity));
+	auto entity = context->entity;
 
 	*static_cast<C*>(out_component_data) = view.template get<C>(entity);
 }
@@ -145,13 +142,11 @@ auto context_update(
 	using ecsact::entt::detail::exec_beforechange_storage;
 	// TODO(Kelwan): for remove, beforeremove_storage
 
-	auto  entity = context->entity;
-	auto& registry = *context->registry;
+	auto entity = context->entity;
 
 	const auto& in_component = *static_cast<const C*>(in_component_data);
-
-	auto& current_component = view.template get<C>(entity);
 	auto& beforechange = view.template get<exec_beforechange_storage<C>>(entity);
+	auto& current_component = view.template get<C>(entity);
 
 	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;

@@ -10,6 +10,8 @@
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
 
+#include <iostream>
+
 namespace ecsact::entt::wrapper::core {
 
 template<typename C>
@@ -118,6 +120,8 @@ inline auto update_component( //
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data
 ) -> ecsact_update_error {
+	using ecsact::entt::detail::exec_beforechange_storage;
+
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -129,9 +133,20 @@ inline auto update_component( //
 		*static_cast<const C*>(component_data)
 	);
 
-	if(err == ECSACT_UPDATE_OK) {
-		reg.replace<C>(entity, *static_cast<const C*>(component_data));
+	if(err != ECSACT_UPDATE_OK) {
+		return err;
 	}
+
+	const auto& in_component = *static_cast<const C*>(component_data);
+	auto& beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
+	auto& current_component = reg.template get<C>(entity);
+
+	if(!beforechange.has_update_occurred) {
+		beforechange.value = current_component;
+		beforechange.has_update_occurred = true;
+	}
+
+	current_component = in_component;
 
 	return err;
 }
@@ -143,6 +158,8 @@ inline auto update_component_exec_options( //
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data
 ) -> ecsact_update_error {
+	using ecsact::entt::detail::exec_beforechange_storage;
+
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -154,9 +171,19 @@ inline auto update_component_exec_options( //
 		*static_cast<const C*>(component_data)
 	);
 
-	if(err == ECSACT_UPDATE_OK) {
-		reg.replace<C>(entity, *static_cast<const C*>(component_data));
+	if(err != ECSACT_UPDATE_OK) {
+		return err;
 	}
+
+	const auto& in_component = *static_cast<const C*>(component_data);
+	auto& beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
+	auto& current_component = reg.template get<C>(entity);
+
+	if(!beforechange.has_update_occurred) {
+		beforechange.value = current_component;
+		beforechange.has_update_occurred = true;
+	}
+	current_component = in_component;
 
 	return err;
 }
@@ -292,7 +319,10 @@ auto _trigger_update_component_event(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
+	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::exec_beforechange_storage;
+
+	//
 
 	if(!events_collector.has_update_callback()) {
 		return;
@@ -300,20 +330,19 @@ auto _trigger_update_component_event(
 
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	if constexpr(!C::transient && !std::is_empty_v<C>) {
-		::entt::basic_view changed_view{
-			reg.template storage<C>(),
-			reg.template storage<exec_beforechange_storage<C>>(),
-		};
+		auto comp_view = reg.view<C, exec_beforechange_storage<C>>( //
+			::entt::exclude<beforeremove_storage<C>>
+		);
 
-		for(ecsact::entt::entity_id entity : changed_view) {
+		for(ecsact::entt::entity_id entity : comp_view) {
 			auto& before =
-				changed_view.template get<exec_beforechange_storage<C>>(entity);
-			auto& current = changed_view.template get<C>(entity);
-			before.has_update_occurred = false;
+				comp_view.template get<exec_beforechange_storage<C>>(entity);
+			auto& current = comp_view.template get<C>(entity);
 
-			if(before.value != current) {
+			if(before.has_update_occurred && before.value != current) {
 				events_collector.invoke_update_callback<C>(entity, current);
 			}
+			before.has_update_occurred = false;
 		}
 	}
 }
