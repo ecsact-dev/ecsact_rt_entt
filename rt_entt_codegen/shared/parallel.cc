@@ -141,8 +141,6 @@ static auto can_parent_and_child_system_parallel(
 				if(comp_id == child_comp_id) {
 					if(!is_capability_safe(capability) ||
 						 !is_capability_safe(child_capability)) {
-						std::cout << testing_sys_name << " failed on child systems check"
-											<< std::endl;
 						return false;
 					}
 				}
@@ -161,8 +159,6 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 	auto testing_sys_name = decl_full_name(sys_like_id);
 	for(const auto& [comp_id, capability] : capabilities) {
 		if(!is_capability_safe_entities(sys_like_id, capability)) {
-			std::cout << testing_sys_name << " failed on capability check"
-								<< std::endl;
 			return false;
 		}
 

@@ -136,13 +136,7 @@ inline auto update_component( //
 	}
 
 	const auto& in_component = *static_cast<const C*>(component_data);
-	auto& beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
-	auto& current_component = reg.template get<C>(entity);
-
-	if(!beforechange.has_update_occurred) {
-		beforechange.value = current_component;
-		beforechange.has_update_occurred = true;
-	}
+	auto&       current_component = reg.template get<C>(entity);
 
 	current_component = in_component;
 
