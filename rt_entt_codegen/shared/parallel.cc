@@ -10,8 +10,6 @@
 #include "system_variant.hh"
 #include "ecsact/runtime/meta.hh"
 
-#include <iostream>
-
 using ecsact::rt_entt_codegen::system_like_id_variant;
 
 static auto loop_iterator(

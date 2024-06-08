@@ -10,8 +10,6 @@
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
 
-#include <iostream>
-
 namespace ecsact::entt::wrapper::core {
 
 template<typename C>
