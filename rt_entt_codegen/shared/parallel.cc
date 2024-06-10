@@ -174,7 +174,8 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 
 			// NOTE(Kelwan): Association is currently not compatible with executing
 			// entities in parallel.
-			for(const auto [other_comp_id, other_capability] : other_capabilities) {
+			for([[maybe_unused]] const auto [other_comp_id, other_capability] :
+					other_capabilities) {
 				return false;
 				// if(!is_capability_safe_entities(sys_like_id, other_capability)) {
 				// 	return false;
