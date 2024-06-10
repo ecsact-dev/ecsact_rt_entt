@@ -11,12 +11,6 @@ template<typename C>
 struct component_added {};
 
 /**
- * Marker to indicate that a component has been changed during execution
- */
-template<typename C>
-struct component_updated {};
-
-/**
  * Marker to indicate that a component has been removed
  */
 template<typename C>

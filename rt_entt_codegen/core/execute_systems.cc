@@ -22,7 +22,7 @@ auto ecsact::rt_entt_codegen::core::print_parallel_system_execute(
 	ctx.write("template<std::size_t N>\n");
 	auto printer = //
 		method_printer{ctx, "execute_parallel_cluster"} //
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter("ecsact_system_execution_context*", "parent_context")
 			.parameter("std::array<exec_entry_t, N>", "system_arr")
 			.return_type("void");

@@ -2,6 +2,7 @@
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/lang-support/lang-cc.hh"
+#include "rt_entt_codegen/shared/system_variant.hh"
 
 namespace ecsact::rt_entt_codegen::system_util {
 

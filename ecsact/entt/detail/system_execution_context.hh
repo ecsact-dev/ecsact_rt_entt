@@ -10,6 +10,7 @@
 #include "ecsact/runtime/common.h"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/entity.hh"
+#include "ecsact/entt/detail/registry.hh"
 
 namespace ecsact::entt {
 /**
@@ -30,10 +31,10 @@ constexpr auto underlying_assoc_index(assoc_index n) -> unsigned {
 } // namespace ecsact::entt
 
 struct ecsact_system_execution_context {
-	ecsact_system_like_id   id;
-	ecsact::entt::entity_id entity;
-	::entt::registry*       registry = nullptr;
-	const void*             action_data = nullptr;
+	ecsact_system_like_id     id;
+	ecsact::entt::entity_id   entity;
+	ecsact::entt::registry_t* registry = nullptr;
+	const void*               action_data = nullptr;
 
 	// pass in the context to this class that's a pointer
 	// context(ptr) = parent_ctx(ptr)

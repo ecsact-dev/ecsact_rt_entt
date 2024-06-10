@@ -87,7 +87,7 @@ constexpr bool system_markers_unimplemented_by_codegen = false;
 
 template<typename C>
 auto add_system_markers_if_needed( //
-	::entt::registry&,
+	ecsact::entt::registry_t&,
 	ecsact::entt::entity_id
 ) -> void {
 	static_assert(system_markers_unimplemented_by_codegen<C>, R"(
@@ -101,7 +101,7 @@ auto add_system_markers_if_needed( //
 
 template<typename C>
 auto remove_system_markers_if_needed( //
-	::entt::registry&,
+	ecsact::entt::registry_t&,
 	ecsact::entt::entity_id
 ) -> void {
 	static_assert(system_markers_unimplemented_by_codegen<C>, R"(
@@ -115,7 +115,7 @@ auto remove_system_markers_if_needed( //
 
 template<typename C>
 auto add_exec_itr_beforechange_if_needed( //
-	::entt::registry&,
+	ecsact::entt::registry_t&,
 	ecsact::entt::entity_id
 ) -> void {
 	static_assert(system_markers_unimplemented_by_codegen<C>, R"(

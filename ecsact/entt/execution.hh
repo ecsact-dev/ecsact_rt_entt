@@ -93,7 +93,7 @@ struct actions_map {
  */
 template<typename System>
 auto execute_system( //
-	::entt::registry&                registry,
+	ecsact::entt::registry_t&        registry,
 	ecsact_system_execution_context* parent,
 	const ecsact::entt::actions_map& actions_map
 ) -> void {
@@ -115,7 +115,7 @@ auto execute_system( //
  */
 template<typename Action>
 auto execute_actions( //
-	::entt::registry&                registry,
+	ecsact::entt::registry_t&        registry,
 	ecsact_system_execution_context* parent,
 	const ecsact::entt::actions_map& actions_map
 ) -> void {
@@ -129,7 +129,7 @@ auto execute_actions( //
 }
 
 using execute_fn_t = void (*)(
-	::entt::registry&                registry,
+	ecsact::entt::registry_t&        registry,
 	ecsact_system_execution_context* parent,
 	const ecsact::entt::actions_map& actions_map
 );
@@ -140,7 +140,7 @@ using execute_fn_t = void (*)(
  *       `ecsact_rt_entt_codegen`.
  */
 template<typename SystemLike>
-auto prepare_system_like(::entt::registry&) -> void {
+auto prepare_system_like(ecsact::entt::registry_t&) -> void {
 	static_assert(detail::unimplemented_by_codegen<SystemLike>, R"(
  -----------------------------------------------------------------------------
 | (!) CODEGEN ERROR                                                           |
@@ -155,7 +155,8 @@ auto prepare_system_like(::entt::registry&) -> void {
  * entity.
  */
 template<typename SystemLike>
-auto entity_matches_system(::entt::registry&, ecsact::entt::entity_id) -> bool {
+auto entity_matches_system(ecsact::entt::registry_t&, ecsact::entt::entity_id)
+	-> bool {
 	static_assert(detail::unimplemented_by_codegen<SystemLike>, R"(
  -----------------------------------------------------------------------------
 | (!) CODEGEN ERROR                                                           |

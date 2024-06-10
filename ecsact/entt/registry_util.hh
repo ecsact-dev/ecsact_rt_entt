@@ -3,12 +3,13 @@
 #include <cassert>
 #include "entt/entity/registry.hpp"
 #include "ecsact/entt/detail/globals.hh"
+#include "ecsact/entt/detail/registry.hh"
 
 namespace ecsact::entt {
 
 inline auto get_registry( //
 	ecsact_registry_id id
-) -> ::entt::registry& {
+) -> ecsact::entt::registry_t& {
 	using ecsact::entt::detail::globals::registries;
 
 	// Check to make sure we're not trying to get a registry that doesn't exist
@@ -18,7 +19,7 @@ inline auto get_registry( //
 }
 
 inline auto create_registry()
-	-> std::tuple<ecsact_registry_id, ::entt::registry&> {
+	-> std::tuple<ecsact_registry_id, ecsact::entt::registry_t&> {
 	using ecsact::entt::detail::globals::last_registry_id;
 	using ecsact::entt::detail::globals::registries;
 

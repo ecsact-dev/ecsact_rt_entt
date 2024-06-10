@@ -179,6 +179,8 @@ sources:
     outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/globals.hh
     outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/registry.hh
+    outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/internal_markers.hh
     outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/system_execution_context.hh

@@ -129,9 +129,6 @@ auto provider::notify::print_system_notify_views(
 		}
 
 		if(notify_setting == ECSACT_SYS_NOTIFY_ONUPDATE) {
-			auto component_updated_str =
-				std::format("ecsact::entt::component_updated<{}>", cpp_comp_name);
-
 			auto view_name = std::format("{}_update_view", comp_name);
 
 			ecsact::rt_entt_codegen::util::make_view(
@@ -139,7 +136,7 @@ auto provider::notify::print_system_notify_views(
 				view_name,
 				registry_name,
 				system_details,
-				std::vector{component_updated_str},
+				{},
 				std::vector{run_system_comp}
 			);
 

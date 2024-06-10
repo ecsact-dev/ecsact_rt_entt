@@ -19,7 +19,7 @@ namespace ecsact::entt {
 
 template<typename C>
 auto check_add_component_error( //
-	::entt::registry&,
+	ecsact::entt::registry_t&,
 	::ecsact::entt::entity_id,
 	const C&
 ) -> ecsact_add_error {
@@ -34,7 +34,7 @@ auto check_add_component_error( //
 
 template<typename C>
 auto check_update_component_error( //
-	::entt::registry&,
+	ecsact::entt::registry_t&,
 	::ecsact::entt::entity_id,
 	const C&
 ) -> ecsact_update_error {
@@ -49,7 +49,7 @@ auto check_update_component_error( //
 
 template<typename A>
 auto check_action_error( //
-	::entt::registry&,
+	ecsact::entt::registry_t&,
 	const A&
 ) -> ecsact_execute_systems_error {
 	static_assert(detail::error_check_unimplemented_by_codegen<A>, R"(

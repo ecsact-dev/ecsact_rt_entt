@@ -4,10 +4,13 @@
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
+#include "ecsact/cpp_codegen_plugin_util.hh"
 
 #include "rt_entt_codegen/core/core.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 #include "shared/util.hh"
+
+using ecsact::cpp_codegen_plugin_util::block;
 
 constexpr auto GENERATED_FILE_DISCLAIMER = R"(
 // GENERATED FILE - DO NOT EDIT
@@ -48,6 +51,7 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/registry_util.hh");
 	inc_header(ctx, "ecsact/entt/detail/globals.hh");
 	inc_header(ctx, "ecsact/entt/detail/apply_pending.hh");
+	inc_header(ctx, "ecsact/entt/detail/registry.hh");
 	inc_header(ctx, "ecsact/entt/detail/bytes.hh");
 	inc_header(ctx, "ecsact/entt/detail/hash.hh");
 	inc_header(ctx, "ecsact/entt/detail/hash.hh");
@@ -208,6 +212,24 @@ void ecsact_codegen_plugin(
 	});
 
 	ctx.write("\n");
+
+	for(auto comp_id : details.all_components) {
+		auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
+		block(
+			ctx,
+			std::format(
+				"template<> struct entt::component_traits<{}>",
+				cpp_comp_name
+			),
+			[&] {
+				ctx.write("using type = ::", cpp_comp_name, ";\n");
+				ctx.write("static constexpr bool in_place_delete = true;\n");
+				ctx.write("static constexpr std::size_t page_size = ENTT_PACKED_PAGE;\n"
+				);
+			}
+		);
+		ctx.write(";\n");
+	}
 
 	{ // Print core Ecsact API methods
 		using namespace ecsact::rt_entt_codegen;

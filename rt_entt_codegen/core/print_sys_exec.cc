@@ -16,12 +16,14 @@
 #include "rt_entt_codegen/shared/comps_with_caps.hh"
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
+#include "rt_entt_codegen/shared/parallel.hh"
 #include "system_provider/system_provider.hh"
 #include "rt_entt_codegen/core/system_provider/lazy/lazy.hh"
 #include "system_provider/lazy/lazy.hh"
 #include "system_provider/association/association.hh"
 #include "system_provider/notify/notify.hh"
 #include "system_provider/basic/basic.hh"
+#include "system_provider/parallel/parallel.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -285,10 +287,19 @@ static auto print_system_execution_context(
 	system_like_id_variant          sys_like_id,
 	const common_vars               names,
 	system_provider_t               system_providers
-) -> void {
+) -> std::string {
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
-	block(ctx, "struct : ecsact_system_execution_context ", [&] {
+	auto context_type_name =
+		ecsact::rt_entt_codegen::system_util::create_context_struct_name(sys_like_id
+		);
+
+	auto struct_header = std::format(
+		"struct {}: ecsact_system_execution_context ",
+		context_type_name
+	);
+
+	block(ctx, struct_header, [&] {
 		ctx.write("view_t* view;\n");
 
 		for(const auto& provider : system_providers) {
@@ -306,20 +317,9 @@ static auto print_system_execution_context(
 		print_sys_exec_ctx_parent(ctx, names, system_providers);
 		print_sys_exec_ctx_other(ctx, names, system_providers);
 	});
-	ctx.write("context;\n\n");
+	ctx.write(";\n\n");
 
-	ctx.write("context.registry = &", names.registry_var_name, ";\n");
-	if(names.action_var_name) {
-		ctx.write("context.action_data = ", *names.action_var_name, ";\n\n");
-	}
-
-	ctx.write(
-		"context.id = ecsact_id_cast<ecsact_system_like_id>(::",
-		system_name,
-		"::id);\n"
-	);
-	ctx.write("context.parent_ctx = ", names.parent_context_var_name, ";\n");
-	ctx.write("context.view = &view;\n\n");
+	return context_type_name;
 }
 
 static auto setup_system_providers(system_like_id_variant sys_like_id
@@ -328,6 +328,8 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 	using ecsact::rt_entt_codegen::core::provider::basic;
 	using ecsact::rt_entt_codegen::core::provider::lazy;
 	using ecsact::rt_entt_codegen::core::provider::notify;
+	using ecsact::rt_entt_codegen::core::provider::parallel;
+	using ecsact::rt_entt_codegen::parallel::can_entities_parallel;
 	using ecsact::rt_entt_codegen::system_util::is_notify_system;
 
 	assert(sys_like_id != system_like_id_variant{});
@@ -355,7 +357,15 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 		system_providers.push_back(std::make_shared<association>(sys_like_id));
 	}
 
+	if(can_entities_parallel(sys_like_id)) {
+		system_providers.push_back(std::make_shared<parallel>(sys_like_id));
+	}
+
 	system_providers.push_back(std::make_shared<basic>(sys_like_id));
+
+	// NOTE: The basic provider must always be last. It's the only
+	// guaranteed provider and has fallbacks for exclusive functions
+	assert(dynamic_cast<basic*>(system_providers.back().get()) != nullptr);
 
 	return system_providers;
 }
@@ -389,7 +399,8 @@ static auto print_execute_systems(
 
 	ctx.write("using view_t = decltype(view);\n");
 
-	print_system_execution_context(ctx, sys_like_id, names, system_providers);
+	auto context_type_name =
+		print_system_execution_context(ctx, sys_like_id, names, system_providers);
 
 	for(const auto& provider : system_providers) {
 		provider->after_make_view_or_group(ctx, names);
@@ -399,30 +410,49 @@ static auto print_execute_systems(
 		provider->pre_entity_iteration(ctx, names);
 	}
 
-	block(ctx, "for(ecsact::entt::entity_id entity : view)", [&] {
-		ctx.write("context.entity = entity;\n");
-
-		ecsact::rt_entt_codegen::core::print_child_systems(ctx, names, sys_like_id);
-
-		for(const auto& provider : system_providers) {
-			provider->pre_exec_system_impl(ctx, names);
+	auto context_init_provider = std::shared_ptr<system_provider>{};
+	for(const auto& provider : system_providers) {
+		if(provider->provide_context_init(ctx, names, context_type_name) ==
+			 provider::HANDLED) {
+			context_init_provider = provider;
+			break;
 		}
+	}
 
-		auto result = std::ranges::find_if(system_providers, [&](auto provider) {
-			return provider->system_impl(ctx, names) ==
-				handle_exclusive_provide::HANDLED;
+	for(auto provider : system_providers) {
+		auto result = provider->entity_iteration(ctx, names, [&] {
+			for(const auto& provider : system_providers) {
+				provider->pre_exec_system_impl(ctx, names);
+			}
+
+			context_init_provider
+				->pre_exec_system_impl_context_init(ctx, names, context_type_name);
+
+			ecsact::rt_entt_codegen::core::print_child_systems(
+				ctx,
+				names,
+				sys_like_id
+			);
+
+			auto result = std::ranges::find_if(system_providers, [&](auto provider) {
+				return provider->system_impl(ctx, names) ==
+					handle_exclusive_provide::HANDLED;
+			});
+
+			if(result == system_providers.end()) {
+				throw std::logic_error("system_impl was not handled by providers");
+			}
+
+			for(const auto& provider : system_providers) {
+				provider->post_exec_system_impl(ctx, names);
+			}
+
+			ctx.write("\n");
 		});
-
-		if(result == system_providers.end()) {
-			throw std::logic_error("system_impl was not handled by providers");
+		if(result == handle_exclusive_provide::HANDLED) {
+			break;
 		}
-
-		for(const auto& provider : system_providers) {
-			provider->post_exec_system_impl(ctx, names);
-		}
-
-		ctx.write("\n");
-	});
+	}
 
 	for(const auto& provider : system_providers) {
 		provider->post_iteration(ctx, names);
@@ -445,7 +475,7 @@ static auto print_trivial_system_like(
 	ctx.write("template<>\n");
 	auto printer = //
 		method_printer{ctx, "ecsact::entt::execute_system<::" + system_name + ">"}
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter("ecsact_system_execution_context*", "parent_context")
 			.parameter("const ecsact::entt::actions_map&", "actions_map")
 			.return_type("void");
@@ -500,7 +530,7 @@ static auto print_execute_system_template_specialization(
 	ctx.write("template<>\n");
 	auto printer = //
 		method_printer{ctx, "ecsact::entt::execute_system<::" + system_name + ">"}
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter("ecsact_system_execution_context*", "parent_context")
 			.parameter("const ecsact::entt::actions_map&", "actions_map")
 			.return_type("void");
@@ -550,7 +580,7 @@ static auto print_execute_actions_template_specialization(
 	ctx.write("template<>\n");
 	auto printer = //
 		method_printer{ctx, method_name}
-			.parameter("::entt::registry&", "registry")
+			.parameter("ecsact::entt::registry_t&", "registry")
 			.parameter("ecsact_system_execution_context", "*parent_context")
 			.parameter("const ecsact::entt::actions_map&", "actions_map")
 			.return_type("void");

@@ -48,8 +48,8 @@ auto context_add(
 
 template<typename C>
 auto component_add_trivial(
-	::entt::registry&       registry,
-	ecsact::entt::entity_id entity_id
+	ecsact::entt::registry_t& registry,
+	ecsact::entt::entity_id   entity_id
 ) -> void {
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
@@ -75,7 +75,6 @@ auto context_remove(
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
 	using ecsact::entt::component_removed;
-	using ecsact::entt::component_updated;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;
 
@@ -83,7 +82,6 @@ auto context_remove(
 	auto& registry = *context->registry;
 
 	registry.template remove<component_added<C>>(entity);
-	registry.template remove<component_updated<C>>(entity);
 	registry.template emplace_or_replace<pending_remove<C>>(entity);
 	registry.template emplace_or_replace<component_removed<C>>(entity);
 
@@ -100,17 +98,15 @@ auto context_remove(
 
 template<typename C>
 auto component_remove_trivial(
-	::entt::registry&       registry,
-	ecsact::entt::entity_id entity_id,
-	auto&                   view
+	ecsact::entt::registry_t& registry,
+	ecsact::entt::entity_id   entity_id,
+	auto&                     view
 ) -> void {
 	using ecsact::entt::component_removed;
-	using ecsact::entt::component_updated;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;
 
 	registry.template remove<component_added<C>>(entity_id);
-	registry.template remove<component_updated<C>>(entity_id);
 	registry.template emplace_or_replace<pending_remove<C>>(entity_id);
 	registry.template emplace_or_replace<component_removed<C>>(entity_id);
 
@@ -131,10 +127,7 @@ auto context_get(
 	void*                                     out_component_data,
 	auto&                                     view
 ) -> void {
-	auto        entity = context->entity;
-	const auto& registry = *context->registry;
-
-	assert(registry.template any_of<C>(entity));
+	auto entity = context->entity;
 
 	*static_cast<C*>(out_component_data) = view.template get<C>(entity);
 }
@@ -146,22 +139,18 @@ auto context_update(
 	const void*                               in_component_data,
 	auto&                                     view
 ) -> void {
-	using ecsact::entt::component_updated;
 	using ecsact::entt::detail::exec_beforechange_storage;
 	// TODO(Kelwan): for remove, beforeremove_storage
 
-	auto  entity = context->entity;
-	auto& registry = *context->registry;
+	auto entity = context->entity;
 
 	const auto& in_component = *static_cast<const C*>(in_component_data);
-
-	auto& current_component = view.template get<C>(entity);
 	auto& beforechange = view.template get<exec_beforechange_storage<C>>(entity);
+	auto& current_component = view.template get<C>(entity);
 
 	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;
 		beforechange.has_update_occurred = true;
-		registry.template emplace_or_replace<component_updated<C>>(entity);
 	}
 	current_component = in_component;
 }

@@ -83,3 +83,18 @@ cc_library(
         "//rt_entt_codegen/shared:system_variant",
     ],
 )
+
+cc_library(
+    name = "parallel",
+    srcs = ["parallel/parallel.cc"],
+    hdrs = ["parallel/parallel.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
+)

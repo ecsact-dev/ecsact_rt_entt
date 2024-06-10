@@ -16,4 +16,10 @@ auto print_parallel_execution_cluster(
 	const std::vector<std::vector<system_like_id_variant>>&
 		parallel_system_cluster
 ) -> void;
+
+/*
+ * Checks if the entities in a system can run in parallel
+ */
+auto can_entities_parallel(const system_like_id_variant sys_like_id) -> bool;
+
 } // namespace ecsact::rt_entt_codegen::parallel
