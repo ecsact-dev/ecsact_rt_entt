@@ -34,6 +34,7 @@ concept system_or_action =
 
 using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::cpp_codegen_plugin_util::block;
+using ecsact::cpp_codegen_plugin_util::comma_delim;
 using ecsact::meta::decl_full_name;
 using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 using ecsact::rt_entt_codegen::system_comps_with_caps;
@@ -41,8 +42,11 @@ using ecsact::rt_entt_codegen::system_like_id_variant;
 using ecsact::rt_entt_codegen::core::provider::handle_exclusive_provide;
 using ecsact::rt_entt_codegen::core::provider::system_provider;
 using ecsact::rt_entt_codegen::system_util::is_trivial_system;
+using ecsact::rt_entt_codegen::util::make_view;
+using ecsact::rt_entt_codegen::util::make_view_options;
 using ecsact::rt_entt_codegen::util::method_printer;
 using namespace ecsact::rt_entt_codegen::core;
+using namespace std::string_literals;
 
 using system_provider_t = std::vector<std::shared_ptr<system_provider>>;
 
@@ -377,25 +381,25 @@ static auto print_execute_systems(
 ) -> void {
 	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 	auto system_providers = setup_system_providers(sys_like_id);
+	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
+	auto make_view_opts = make_view_options(sys_details);
+	make_view_opts.registry_var_name = names.registry_var_name;
+	make_view_opts.view_var_name = "view";
+	make_view_opts.sys_like_id = sys_like_id;
 
 	for(const auto& provider : system_providers) {
 		provider->initialization(ctx, names);
 	}
 
-	auto additional_view_components = std::vector<std::string>{};
 	for(const auto& provider : system_providers) {
-		provider->before_make_view_or_group(ctx, names, additional_view_components);
+		provider->before_make_view_or_group(
+			ctx,
+			names,
+			make_view_opts.additional_components
+		);
 	}
 
-	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
-
-	ecsact::rt_entt_codegen::util::make_view(
-		ctx,
-		"view",
-		names.registry_var_name,
-		sys_details,
-		additional_view_components
-	);
+	make_view(ctx, make_view_opts);
 
 	ctx.write("using view_t = decltype(view);\n");
 

@@ -162,15 +162,13 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 			return false;
 		}
 
-		auto other_fields =
-			ecsact::meta::system_association_fields(sys_like_id, comp_id);
+		auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
 
-		for(auto field_id : other_fields) {
-			auto other_capabilities = ecsact::meta::system_association_capabilities(
-				sys_like_id,
-				comp_id,
-				field_id
-			);
+		for(auto assoc_id : assoc_ids) {
+			auto assoc_comp_id =
+				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+			auto other_capabilities =
+				ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 
 			// NOTE(Kelwan): Association is currently not compatible with executing
 			// entities in parallel.
