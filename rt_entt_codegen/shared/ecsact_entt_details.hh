@@ -60,6 +60,11 @@ struct ecsact_entt_system_details {
 		std::unordered_map<ecsact_component_like_id, ecsact_system_capability> caps
 	) -> ecsact_entt_system_details;
 
+	static auto from_capabilities(
+		std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>
+			caps
+	) -> ecsact_entt_system_details;
+
 private:
 	static auto fill_system_details(
 		ecsact_entt_system_details& in_details,

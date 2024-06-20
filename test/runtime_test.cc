@@ -35,7 +35,7 @@ void runtime_test::SimpleSystem::impl(context& ctx) {
 
 void runtime_test::OtherEntitySystem::impl(context& ctx) {
 	auto comp = ctx.get<OtherEntityComponent>();
-	auto other = ctx._ctx.other(comp.target);
+	auto other = ctx.other<0>();
 	auto other_comp = other.get<ComponentA>();
 
 	comp.num += -other_comp.a;
@@ -93,7 +93,7 @@ void runtime_test::AssocTestAction::impl(context& ctx) {
 
 void runtime_test::AttackDamage::impl(context& ctx) {
 	// auto attacking = ctx.get<Attacking>();
-	// auto target_ctx = ctx._ctx.other(attacking.target);
+	// auto target_ctx = ctx._ctx.other();
 	// auto target_health = target_ctx.get<Health>();
 	// target_health.value -= 1.f;
 	// target_ctx.update(target_health);
@@ -101,7 +101,7 @@ void runtime_test::AttackDamage::impl(context& ctx) {
 
 void runtime_test::AttackDamageWeakened::impl(context& ctx) {
 	// auto attacking = ctx.get<Attacking>();
-	// auto target_ctx = ctx._ctx.other(attacking.target);
+	// auto target_ctx = ctx._ctx.other();
 	// auto target_health = target_ctx.get<Health>();
 	// auto target_weakened = target_ctx.get<Weakened>();
 	// target_health.value -= 1.f * target_weakened.value;
@@ -157,8 +157,8 @@ void runtime_test::AddAssocTest::impl(context& ctx) {
 	auto other_entity = ctx.get<OtherEntityComponent>();
 
 	// Get Target other context from OtherEntityComponent
-	auto target_ctx = ctx._ctx.other(other_entity.target);
-	assert(target_ctx._ctx != nullptr);
+	auto target_ctx = ctx.other();
+	assert(target_ctx._ctx._ctx != nullptr);
 	target_ctx.add(AddAssocTestComponent{.num = 10});
 }
 
@@ -169,7 +169,7 @@ void runtime_test::RemoveAssocTest::impl(context& ctx) {
 	auto other_entity = ctx.get<OtherEntityComponent>();
 
 	// Get Target other context from OtherEntityComponent
-	auto target_ctx = ctx._ctx.other(other_entity.target);
+	auto target_ctx = ctx.other();
 	target_ctx.remove<RemoveAssocTestComponent>();
 }
 
@@ -694,9 +694,9 @@ TEST(Core, AssociationEntityCorrectness) {
 		ecsact_id_cast<ecsact_system_like_id>(AttackDamageWeakened::id),
 		[](ecsact_system_execution_context* cctx) {
 			++attack_damage_weakened_exec_count;
-			ecsact::execution_context ctx{cctx};
+			AttackDamageWeakened::context ctx{cctx};
 			ASSERT_TRUE(attacker_entities.contains(ctx.entity()));
-			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
+			auto target_ctx = ctx.other();
 			ASSERT_TRUE(weakened_target_entities.contains(target_ctx.entity()));
 		}
 	);
@@ -705,11 +705,11 @@ TEST(Core, AssociationEntityCorrectness) {
 		ecsact_id_cast<ecsact_system_like_id>(AttackDamage::id),
 		[](ecsact_system_execution_context* cctx) {
 			++attack_damage_exec_count;
-			ecsact::execution_context ctx{cctx};
+			AttackDamage::context ctx{cctx};
 			ASSERT_TRUE(attacker_entities.contains(ctx.entity()));
 
 			// Sanity check - no exception
-			ctx.other(ctx.get<runtime_test::Attacking>().target);
+			ctx.other();
 		}
 	);
 

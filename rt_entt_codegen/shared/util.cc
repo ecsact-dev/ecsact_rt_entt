@@ -2,15 +2,15 @@
 
 #include <map>
 
+using namespace std::string_literals;
+using ecsact::cc_lang_support::cpp_identifier;
+using ecsact::meta::decl_full_name;
+using std::views::transform;
+
 auto ecsact::rt_entt_codegen::util::make_view( //
 	ecsact::codegen_plugin_context& ctx,
 	make_view_options               opts
 ) -> void {
-	using namespace std::string_literals;
-	using ecsact::rt_entt_codegen::util::comma_delim;
-	using ecsact::rt_entt_codegen::util::decl_cpp_ident;
-	using std::views::transform;
-
 	ctx.write(
 		"auto ",
 		opts.view_var_name,
@@ -88,7 +88,7 @@ auto ecsact::rt_entt_codegen::util::make_view( //
 			);
 			ctx.write(std::format(
 				"view.storage({}.storage<::ecsact::entt::indexed<{}>>({}));\n",
-				names.registry_var_name,
+				opts.registry_var_name,
 				compo_name,
 				hash_fields_str
 			));

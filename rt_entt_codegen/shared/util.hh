@@ -11,7 +11,7 @@
 #include "ecsact/runtime/meta.h"
 #include "ecsact/runtime/meta.hh"
 #include "ecsact_entt_details.hh"
-#include "system_variant.hh"
+#include "rt_entt_codegen/shared/system_variant.hh"
 
 namespace ecsact::rt_entt_codegen::util {
 
@@ -281,7 +281,7 @@ struct make_view_options {
 
 	const ecsact_entt_system_details& details;
 
-	inline make_view_options(ecsact_entt_system_details& details)
+	inline make_view_options(const ecsact_entt_system_details& details)
 		: details(details) {
 	}
 
@@ -294,5 +294,22 @@ auto make_view( //
 	ecsact::codegen_plugin_context& ctx,
 	make_view_options               opts
 ) -> void;
+
+[[deprecated("use make_view() overload that uses make_view_options instead")]]
+inline auto make_view( //
+	ecsact::codegen_plugin_context&                            ctx,
+	auto&&                                                     view_var_name,
+	auto&&                                                     registry_var_name,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
+	std::vector<std::string> additional_components = {},
+	std::vector<std::string> additional_exclude_components = {}
+) -> void {
+	auto opts = make_view_options{details};
+	opts.registry_var_name = registry_var_name;
+	opts.view_var_name = view_var_name;
+	opts.additional_components = additional_components;
+	opts.additional_exclude_components = additional_exclude_components;
+	return make_view(ctx, opts);
+}
 
 } // namespace ecsact::rt_entt_codegen::util

@@ -180,6 +180,13 @@ auto ecsact_entt_system_details::from_capabilities( //
 	return details;
 }
 
+auto ecsact_entt_system_details::from_capabilities(
+	std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>
+		caps
+) -> ecsact_entt_system_details {
+	return from_capabilities(std::unordered_map{caps.begin(), caps.end()});
+}
+
 auto ecsact_entt_details::from_package( //
 	ecsact_package_id pkg_id
 ) -> ecsact_entt_details {

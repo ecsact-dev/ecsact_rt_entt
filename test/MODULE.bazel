@@ -9,7 +9,7 @@ bazel_dep(name = "ecsact_runtime", version = "0.6.5")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
 bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2")
 bazel_dep(name = "entt", version = "3.12.2")
-bazel_dep(name = "ecsact_cli", version = "0.3.10")
+bazel_dep(name = "ecsact_cli", version = "0.3.11")
 bazel_dep(name = "boost.process", version = "1.83.0.bzl.2")
 
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
@@ -21,15 +21,13 @@ git_override(
 )
 
 local_path_override(
-    module_name = "ecsact_lang_cpp",
-    path = "../../ecsact_lang_cpp",
+    module_name = "ecsact_runtime",
+    path = "../../ecsact_runtime",
 )
 
-# TODO: https://github.com/bazelbuild/bazel-central-registry/pull/1916
-git_override(
-    module_name = "libarchive",
-    commit = "7c331f92acea5243c195cdc6fb46ecfa11ce1ce2",
-    remote = "https://github.com/zaucy/libarchive.git",
+local_path_override(
+    module_name = "ecsact_lang_cpp",
+    path = "../../ecsact_lang_cpp",
 )
 
 bazel_dep(name = "ecsact_rt_entt")
