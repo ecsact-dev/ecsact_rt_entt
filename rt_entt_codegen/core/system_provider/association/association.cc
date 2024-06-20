@@ -28,7 +28,29 @@ auto provider::association::initialization(
 ) -> void {
 	auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
 	for(auto assoc_id : assoc_ids) {
+		auto assoc_comp_id =
+			ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+		auto assoc_field_ids =
+			ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
 		assoc_view_names.insert({assoc_id, get_unique_view_name()});
+
+		for(auto field_id : assoc_field_ids) {
+			auto field_type = ecsact::meta::get_field_type(assoc_comp_id, field_id);
+			if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
+				 field_type.type.builtin == ECSACT_ENTITY_TYPE) {
+				auto compo_id = ecsact_id_cast<ecsact_composite_id>(assoc_comp_id);
+				assoc_fields[compo_id].push_back(field_id);
+				assoc_composites[assoc_id].insert(compo_id);
+			} else if(field_type.kind == ECSACT_TYPE_KIND_FIELD_INDEX) {
+				auto compo_id = field_type.type.field_index.composite_id;
+				assoc_fields[compo_id].push_back(field_id);
+				assoc_composites[assoc_id].insert(compo_id);
+			} else {
+				// Should never get here. Association fields may only be an indexed
+				// field or entity field.
+				assert(false);
+			}
+		}
 	}
 }
 
@@ -84,7 +106,37 @@ auto provider::association::entity_iteration(
 			make_view_opts.view_var_name = assoc_view_names.at(assoc_id);
 			make_view_opts.registry_var_name = names.registry_var_name;
 
+			for(auto compo_id : assoc_composites.at(assoc_id)) {
+			}
+
 			util::make_view(ctx, make_view_opts);
+		}
+
+		for(auto&& [assoc_id, compo_ids] : assoc_composites) {
+			for(auto compo_id : compo_ids) {
+				auto field_ids = assoc_fields.at(compo_id);
+				auto compo_cpp_ident = cpp_identifier(decl_full_name(compo_id));
+
+				ctx.write(std::format(
+					"{0}.storage({3}.storage<{1}>(static_cast<::entt::id_type>(::ecsact::"
+					"entt::detail::"
+					"hash_vals({1}::"
+					"id, {2}))));\n",
+					assoc_view_names.at(assoc_id),
+					compo_cpp_ident,
+					util::comma_delim(
+						field_ids |
+						std::views::transform([&](auto field_id) -> std::string {
+							return std::format(
+								"view.get<{}>(entity).{}",
+								compo_cpp_ident,
+								ecsact::meta::field_name(compo_id, field_id)
+							);
+						})
+					),
+					names.registry_var_name
+				));
+			}
 		}
 
 		for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
@@ -93,26 +145,6 @@ auto provider::association::entity_iteration(
 			auto assoc_field_ids =
 				ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
 			auto assoc_comp_cpp_ident = cpp_identifier(decl_full_name(assoc_comp_id));
-
-			ctx.write(std::format(
-				"{0}.storage({3}.storage<{1}>(static_cast<::entt::id_type>(::ecsact::"
-				"entt::detail::"
-				"hash_vals({1}::"
-				"id, {2}))));\n",
-				assoc_view_names.at(assoc_id),
-				assoc_comp_cpp_ident,
-				util::comma_delim(
-					assoc_field_ids |
-					std::views::transform([&](auto field_id) -> std::string {
-						return std::format(
-							"view.get<{}>(entity).{}",
-							assoc_comp_cpp_ident,
-							ecsact::meta::field_name(assoc_comp_id, field_id)
-						);
-					})
-				),
-				names.registry_var_name
-			));
 		}
 
 		for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {

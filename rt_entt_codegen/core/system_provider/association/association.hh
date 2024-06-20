@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include "rt_entt_codegen/core/system_provider/system_provider.hh"
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/core/system_provider/system_ctx_functions.hh"
@@ -53,7 +54,13 @@ public:
 	) -> handle_exclusive_provide final;
 
 private:
-	std::map<ecsact_system_assoc_id, std::string> assoc_view_names;
+	std::map<ecsact_system_assoc_id, std::string>               assoc_view_names;
+	std::map<ecsact_composite_id, std::vector<ecsact_field_id>> assoc_fields;
+
+	// List of composites the association needs to read from in their view/group
+	// due to indexed fields.
+	std::map<ecsact_system_assoc_id, std::set<ecsact_composite_id>>
+		assoc_composites;
 
 	auto print_other_contexts(
 		ecsact::codegen_plugin_context& ctx,
