@@ -24,6 +24,12 @@ jobs:
       - uses: jidicula/clang-format-action@v4.11.0
         with: { clang-format-version: "18" }
 
+
+  test-user:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo {{github.event.pull_request.user.login}}'
+
   test-windows:
     if: github.event_name == 'merge_group' || github.event.pull_request.user.login == 'renovatebot'
     runs-on: windows-latest
