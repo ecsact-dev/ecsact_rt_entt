@@ -95,7 +95,10 @@ auto provider::association::entity_iteration(
 			auto assoc_comp_cpp_ident = cpp_identifier(decl_full_name(assoc_comp_id));
 
 			ctx.write(std::format(
-				"{0}.storage<{1}>(::ecsact::entt::detail::hash_vals({1}::id, {2});\n",
+				"{0}.storage({3}.storage<{1}>(static_cast<::entt::id_type>(::ecsact::"
+				"entt::detail::"
+				"hash_vals({1}::"
+				"id, {2}))));\n",
 				assoc_view_names.at(assoc_id),
 				assoc_comp_cpp_ident,
 				util::comma_delim(
@@ -107,7 +110,8 @@ auto provider::association::entity_iteration(
 							ecsact::meta::field_name(assoc_comp_id, field_id)
 						);
 					})
-				)
+				),
+				names.registry_var_name
 			));
 		}
 
