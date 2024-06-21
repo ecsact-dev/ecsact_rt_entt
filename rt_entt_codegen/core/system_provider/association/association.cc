@@ -65,22 +65,16 @@ auto provider::association::context_function_header(
 	);
 }
 
+static auto push_back_unique(auto& vec, const auto& element) -> void {
+	if(std::ranges::find(vec, element) == std::end(vec)) {
+		vec.push_back(element);
+	}
+}
+
 auto provider::association::after_make_view_or_group(
 	codegen_plugin_context& ctx,
 	const common_vars&      names
 ) -> void {
-	auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
-	for(auto assoc_id : assoc_ids) {
-		auto assoc_caps =
-			ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
-		auto assoc_system_details =
-			ecsact_entt_system_details::from_capabilities(assoc_caps);
-		auto make_view_opts = util::make_view_options(assoc_system_details);
-		make_view_opts.view_var_name = assoc_view_names.at(assoc_id);
-		make_view_opts.registry_var_name = names.registry_var_name;
-
-		util::make_view(ctx, make_view_opts);
-	}
 }
 
 auto provider::association::context_function_other(
@@ -107,10 +101,23 @@ auto provider::association::entity_iteration(
 			make_view_opts.registry_var_name = names.registry_var_name;
 
 			for(auto compo_id : assoc_composites.at(assoc_id)) {
+				// TODO: At the time of writing this is safe. It's very possible we
+				// allow actions to be referenecd in association fields in the near
+				// future and at that point this must be addressed.
+				auto comp_like_id = static_cast<ecsact_component_like_id>(compo_id);
+				if(!assoc_system_details.get_comps.contains(comp_like_id)) {
+					auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_like_id));
+					push_back_unique(
+						make_view_opts.additional_components,
+						comp_cpp_ident
+					);
+				}
 			}
 
 			util::make_view(ctx, make_view_opts);
 		}
+
+		print_other_contexts(ctx, names);
 
 		for(auto&& [assoc_id, compo_ids] : assoc_composites) {
 			for(auto compo_id : compo_ids) {
@@ -177,7 +184,6 @@ auto provider::association::pre_entity_iteration(
 	codegen_plugin_context& ctx,
 	const common_vars&      names
 ) -> void {
-	print_other_contexts(ctx, names);
 }
 
 auto provider::association::pre_exec_system_impl(
