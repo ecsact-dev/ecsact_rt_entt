@@ -5,6 +5,10 @@
 
 #include "ecsact/runtime/common.h"
 
+using namespace ecsact::rt_entt_codegen;
+using ecsact::cc_lang_support::c_identifier;
+using ecsact::meta::decl_full_name;
+
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
@@ -73,4 +77,23 @@ auto ecsact::rt_entt_codegen::system_util::get_unique_view_name()
 	-> std::string {
 	static int counter = 0;
 	return "view" + std::to_string(counter++);
+}
+
+auto system_util::get_assoc_context_type_name( //
+	system_like_id_variant sys_like_id,
+	ecsact_system_assoc_id assoc_id
+) -> std::string {
+	return std::format(
+		"{}__Context__{}",
+		c_identifier(decl_full_name(sys_like_id)),
+		static_cast<int>(assoc_id)
+	);
+}
+
+auto system_util::get_assoc_context_var_name( //
+	system_like_id_variant,
+	ecsact_system_assoc_id assoc_id
+) -> std::string {
+	// sys_like_id not used here - kept for potential future use
+	return std::format("assoc_context{}_", static_cast<int>(assoc_id));
 }

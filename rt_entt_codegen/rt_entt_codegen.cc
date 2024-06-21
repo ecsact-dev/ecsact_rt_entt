@@ -234,6 +234,7 @@ void ecsact_codegen_plugin(
 	{ // Print core Ecsact API methods
 		using namespace ecsact::rt_entt_codegen;
 
+		core::print_assoc_globals(ctx, details);
 		core::print_entity_match_fn(ctx, details);
 		core::print_system_marker_add_fn(ctx, details);
 		core::print_system_marker_remove_fn(ctx, details);

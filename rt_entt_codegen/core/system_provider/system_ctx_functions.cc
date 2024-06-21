@@ -402,10 +402,23 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 		return;
 	}
 
-	ctx.write(
-		"if(other_contexts.contains(entity)) {\n",
-		"return other_contexts.at(entity);\n}\n"
-	);
+	if(details.association_details.size() == 1) {
+		ctx.write(
+			"// system has only 1 association. No other association ID should be "
+			"passed in here\n"
+		);
+		ctx.write("assert(static_cast<int>(assoc_id) == 0);\n");
+		ctx.write("return other_contexts[0];\n");
+		return;
+	}
 
-	ctx.write("return nullptr;\n");
+	ctx.write(std::format(
+		"// system as {} associations and assoc_id is assumed to be an index\n",
+		details.association_details.size()
+	));
+	ctx.write(std::format(
+		"assert(static_cast<int>(assoc_id) < {});\n",
+		details.association_details.size()
+	));
+	ctx.write("return other_contexts[static_cast<int>(assoc_id)];\n");
 }

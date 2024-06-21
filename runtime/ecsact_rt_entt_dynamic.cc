@@ -60,10 +60,9 @@ ecsact_system_like_id ecsact_system_execution_context_id(
 
 ecsact_system_execution_context* ecsact_system_execution_context_other(
 	ecsact_system_execution_context* context,
-	ecsact_entity_id                 entity_id
+	ecsact_system_assoc_id           assoc_id
 ) {
-	assert(context != nullptr);
-	return context->other(entity_id);
+	return context->other(assoc_id);
 }
 
 void ecsact_system_execution_context_add(

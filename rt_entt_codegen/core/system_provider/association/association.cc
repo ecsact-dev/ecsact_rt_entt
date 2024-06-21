@@ -1,5 +1,6 @@
 #include "association.hh"
 
+#include <algorithm>
 #include <map>
 
 #include "ecsact/lang-support/lang-cc.hh"
@@ -11,9 +12,10 @@
 using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::meta::decl_full_name;
+using ecsact::meta::system_assoc_ids;
 using ecsact::rt_entt_codegen::ecsact_entt_system_details;
-using ecsact::rt_entt_codegen::system_util::create_context_struct_name;
-using ecsact::rt_entt_codegen::system_util::create_context_var_name;
+using ecsact::rt_entt_codegen::system_util::get_assoc_context_type_name;
+using ecsact::rt_entt_codegen::system_util::get_assoc_context_var_name;
 using ecsact::rt_entt_codegen::system_util::get_unique_view_name;
 using ecsact::rt_entt_codegen::util::method_printer;
 
@@ -58,11 +60,19 @@ auto provider::association::context_function_header(
 	codegen_plugin_context& ctx,
 	const common_vars&      names
 ) -> void {
-	ctx.write(
-		"std::unordered_map<ecsact_entity_id,ecsact_system_execution_"
-		"context*> "
-		"other_contexts;\n\n"
-	);
+	auto assoc_ids = system_assoc_ids(sys_like_id);
+
+	ctx.write("// Guaranteed order: ");
+	ctx.write(cpp_codegen_plugin_util::comma_delim(
+		assoc_ids | std::views::transform([&](auto assoc_id) -> std::string {
+			return get_assoc_context_type_name(sys_like_id, assoc_id);
+		})
+	));
+	ctx.write("\n");
+	ctx.write(std::format(
+		"std::array<ecsact_system_execution_context*, {}> other_contexts;\n\n",
+		assoc_ids.size()
+	));
 }
 
 static auto push_back_unique(auto& vec, const auto& element) -> void {
@@ -90,8 +100,10 @@ auto provider::association::entity_iteration(
 	const common_vars&      names,
 	std::function<void()>   iter_func
 ) -> handle_exclusive_provide {
+	auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
+
 	block(ctx, "for(auto entity : view)", [&] {
-		for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+		for(auto assoc_id : assoc_ids) {
 			auto assoc_caps =
 				ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 			auto assoc_system_details =
@@ -146,18 +158,17 @@ auto provider::association::entity_iteration(
 			}
 		}
 
-		for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
-			auto assoc_comp_id =
-				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
-			auto assoc_field_ids =
-				ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
-			auto assoc_comp_cpp_ident = cpp_identifier(decl_full_name(assoc_comp_id));
-		}
-
-		for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+		for(auto assoc_index = 0; assoc_ids.size() > assoc_index; ++assoc_index) {
+			auto assoc_id = assoc_ids.at(assoc_index);
 			ctx.write(std::format(
 				"auto {0}_itr = {0}.begin();\n",
 				assoc_view_names.at(assoc_id)
+			));
+
+			ctx.write(std::format(
+				"context.other_contexts[{}] = &{};\n",
+				assoc_index,
+				get_assoc_context_var_name(sys_like_id, assoc_id)
 			));
 		}
 
@@ -208,8 +219,8 @@ auto provider::association::print_other_contexts(
 	for(auto assoc_id : assoc_ids) {
 		auto assoc_comp_id =
 			ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
-		auto struct_name = create_context_struct_name(assoc_comp_id);
-		auto context_name = create_context_var_name(assoc_comp_id);
+		auto struct_name = get_assoc_context_type_name(sys_like_id, assoc_id);
+		auto context_name = get_assoc_context_var_name(sys_like_id, assoc_id);
 		auto struct_header = struct_name + " : ecsact_system_execution_context ";
 		auto assoc_caps =
 			ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
@@ -375,7 +386,7 @@ auto provider::association::print_other_ctx_other(
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "other"}
-			.parameter("ecsact_entity_id", "entity")
+			.parameter("ecsact_system_assoc_id", "assoc_id")
 			.return_type("ecsact_system_execution_context* final");
 
 	context_other_impl(ctx, sys_like_id, details);

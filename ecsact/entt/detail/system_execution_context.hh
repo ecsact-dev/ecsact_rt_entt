@@ -81,6 +81,6 @@ struct ecsact_system_execution_context {
 	virtual auto parent() -> const ecsact_system_execution_context* = 0;
 
 	virtual auto other( //
-		ecsact_entity_id entity
+		ecsact_system_assoc_id assoc_id
 	) -> ecsact_system_execution_context* = 0;
 };

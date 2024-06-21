@@ -1,7 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "ecsact/entt/registry.hh"
+#include "ecsact/entt/detail/registry.hh"
 #include "ecsact/entt/wrapper/core.hh"
 #include "ecsact/entt/detail/internal_markers.hh"
 

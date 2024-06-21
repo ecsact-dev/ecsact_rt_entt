@@ -32,6 +32,7 @@ template<typename T>
 concept system_or_action =
 	std::same_as<T, ecsact_system_id> || std::same_as<T, ecsact_action_id>;
 
+using ecsact::cc_lang_support::c_identifier;
 using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::cpp_codegen_plugin_util::comma_delim;
@@ -222,7 +223,7 @@ auto print_sys_exec_ctx_other(
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "other"}
-			.parameter("ecsact_entity_id", "entity")
+			.parameter("ecsact_system_assoc_id", "assoc_id")
 			.return_type("ecsact_system_execution_context* final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -293,11 +294,8 @@ static auto print_system_execution_context(
 	system_provider_t               system_providers
 ) -> std::string {
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
-
 	auto context_type_name =
-		ecsact::rt_entt_codegen::system_util::create_context_struct_name(sys_like_id
-		);
-
+		std::format("{}__Context", c_identifier(decl_full_name(sys_like_id)));
 	auto struct_header = std::format(
 		"struct {}: ecsact_system_execution_context ",
 		context_type_name
