@@ -1,5 +1,6 @@
 #include "rt_entt_codegen/core/core.hh"
 
+#include <format>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 

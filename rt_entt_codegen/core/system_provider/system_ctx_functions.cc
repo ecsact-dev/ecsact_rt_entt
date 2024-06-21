@@ -196,7 +196,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 
 	ctx.write(std::format(
 		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, void *, {}_t&);\n",
+		"ecsact_component_like_id, void *, {}_t&, ...);\n",
 		view_type_name
 	));
 
@@ -253,7 +253,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 
 	ctx.write(std::format(
 		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, const void *, {}_t&);\n",
+		"ecsact_component_like_id, const void *, {}_t&, ...);\n",
 		view_type_name
 	));
 
@@ -408,7 +408,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 			"passed in here\n"
 		);
 		ctx.write("assert(static_cast<int>(assoc_id) == 0);\n");
-		ctx.write("return other_contexts[0];\n");
+		ctx.write("return other_contexts[0];");
 		return;
 	}
 
@@ -420,5 +420,5 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 		"assert(static_cast<int>(assoc_id) < {});\n",
 		details.association_details.size()
 	));
-	ctx.write("return other_contexts[static_cast<int>(assoc_id)];\n");
+	ctx.write("return other_contexts[static_cast<int>(assoc_id)];");
 }

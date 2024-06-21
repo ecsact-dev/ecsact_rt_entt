@@ -544,6 +544,7 @@ static auto print_execute_system_template_specialization(
 	);
 
 	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+	ctx.write("\n");
 
 	print_execute_systems(
 		ctx,
@@ -594,6 +595,7 @@ static auto print_execute_actions_template_specialization(
 	);
 
 	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+	ctx.write("\n");
 
 	ctx.write(
 		"auto actions = actions_map.as_action_span<",

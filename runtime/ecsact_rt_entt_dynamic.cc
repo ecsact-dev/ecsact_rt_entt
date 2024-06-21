@@ -76,7 +76,8 @@ void ecsact_system_execution_context_add(
 
 void ecsact_system_execution_context_remove(
 	ecsact_system_execution_context* context,
-	ecsact_component_like_id         comp_id
+	ecsact_component_like_id         comp_id,
+	...
 ) {
 	assert(context != nullptr);
 	return context->remove(comp_id);
@@ -85,7 +86,8 @@ void ecsact_system_execution_context_remove(
 void ecsact_system_execution_context_get(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
-	void*                            out_component_data
+	void*                            out_component_data,
+	...
 ) {
 	assert(context != nullptr);
 	return context->get(comp_id, out_component_data);
@@ -94,7 +96,8 @@ void ecsact_system_execution_context_get(
 void ecsact_system_execution_context_update(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
-	const void*                      component_data
+	const void*                      component_data,
+	...
 ) {
 	assert(context != nullptr);
 	return context->update(comp_id, component_data);
@@ -102,7 +105,8 @@ void ecsact_system_execution_context_update(
 
 bool ecsact_system_execution_context_has(
 	ecsact_system_execution_context* context,
-	ecsact_component_like_id         comp_id
+	ecsact_component_like_id         comp_id,
+	...
 ) {
 	assert(context != nullptr);
 	return context->has(comp_id);

@@ -1,6 +1,7 @@
 #include "system_util.hh"
 
 #include <array>
+#include <format>
 #include <unordered_map>
 
 #include "ecsact/runtime/common.h"

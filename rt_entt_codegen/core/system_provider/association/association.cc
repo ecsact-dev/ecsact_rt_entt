@@ -180,6 +180,14 @@ auto provider::association::entity_iteration(
 				));
 			}
 
+			for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+				ctx.write(std::format(
+					"{}.entity = *{}_itr;\n",
+					get_assoc_context_var_name(sys_like_id, assoc_id),
+					assoc_view_names.at(assoc_id)
+				));
+			}
+
 			iter_func();
 
 			for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
