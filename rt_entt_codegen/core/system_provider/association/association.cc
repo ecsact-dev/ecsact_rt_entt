@@ -318,6 +318,7 @@ auto provider::association::print_other_ctx_remove(
 	auto printer = //
 		method_printer{ctx, "remove"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("void final");
 
 	context_remove_impl(ctx, other_caps, details, view_type_name);
@@ -332,6 +333,7 @@ auto provider::association::print_other_ctx_get(
 		method_printer{ctx, "get"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("void*", "out_component_data")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("void final");
 
 	context_get_impl(ctx, sys_like_id, details, view_type_name);
@@ -346,6 +348,7 @@ auto provider::association::print_other_ctx_update(
 		method_printer{ctx, "update"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("const void*", "component_data")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("void final");
 
 	context_update_impl(ctx, sys_like_id, details, view_type_name);
@@ -358,6 +361,7 @@ auto provider::association::print_other_ctx_has(
 	auto printer = //
 		method_printer{ctx, "has"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("bool final");
 
 	context_has_impl(ctx, sys_like_id, details);

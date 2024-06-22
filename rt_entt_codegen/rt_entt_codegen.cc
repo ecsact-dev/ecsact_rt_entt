@@ -50,6 +50,7 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/execution.hh");
 	inc_header(ctx, "ecsact/entt/registry_util.hh");
 	inc_header(ctx, "ecsact/entt/detail/globals.hh");
+	inc_header(ctx, "ecsact/entt/detail/assoc_fields_hash.hh");
 	inc_header(ctx, "ecsact/entt/detail/apply_pending.hh");
 	inc_header(ctx, "ecsact/entt/detail/registry.hh");
 	inc_header(ctx, "ecsact/entt/detail/bytes.hh");
@@ -234,6 +235,7 @@ void ecsact_codegen_plugin(
 	{ // Print core Ecsact API methods
 		using namespace ecsact::rt_entt_codegen;
 
+		core::print_assoc_fields_hash(ctx, details);
 		core::print_assoc_globals(ctx, details);
 		core::print_entity_match_fn(ctx, details);
 		core::print_system_marker_add_fn(ctx, details);

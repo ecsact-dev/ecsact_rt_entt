@@ -55,21 +55,25 @@ struct ecsact_system_execution_context {
 	) -> void = 0;
 
 	virtual auto remove( //
-		ecsact_component_like_id component_id
+		ecsact_component_like_id component_id,
+		std::uint64_t            assoc_fields_hash
 	) -> void = 0;
 
 	virtual auto get( //
 		ecsact_component_like_id component_id,
-		void*                    out_component_data
+		void*                    out_component_data,
+		std::uint64_t            assoc_fields_hash
 	) -> void = 0;
 
 	virtual auto update( //
 		ecsact_component_like_id component_id,
-		const void*              component_data
+		const void*              component_data,
+		std::uint64_t            assoc_fields_hash
 	) -> void = 0;
 
 	virtual auto has( //
-		ecsact_component_like_id component_id
+		ecsact_component_like_id component_id,
+		std::uint64_t            assoc_fields_hash
 	) -> bool = 0;
 
 	virtual auto generate( //

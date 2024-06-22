@@ -100,6 +100,7 @@ static auto print_sys_exec_ctx_remove(
 	auto printer = //
 		method_printer{ctx, "remove"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -121,6 +122,7 @@ static auto print_sys_exec_ctx_get(
 		method_printer{ctx, "get"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("void*", "out_component_data")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -142,6 +144,7 @@ static auto print_sys_exec_ctx_update(
 		method_printer{ctx, "update"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("const void*", "component_data")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -162,6 +165,7 @@ static auto print_sys_exec_ctx_has(
 	auto printer = //
 		method_printer{ctx, "has"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("std::uint64_t", "assoc_fields_hash")
 			.return_type("bool final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
