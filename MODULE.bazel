@@ -15,14 +15,26 @@ bazel_dep(name = "ecsact_codegen", version = "0.2.0")
 bazel_dep(name = "ecsact_cli", version = "0.3.11")
 bazel_dep(name = "xxhash", version = "0.8.2")
 
-local_path_override(
-    module_name = "ecsact_lang_cpp",
-    path = "../ecsact_lang_cpp",
+# local_path_override(
+#     module_name = "ecsact_lang_cpp",
+#     path = "../ecsact_lang_cpp",
+# )
+
+git_override(
+	module_name = "ecsact_lang_cpp",
+	remote = "git@github.com:ecsact-dev/ecsact_lang_cpp.git",
+	commit = "1add2a6144776659b4f69f3b4132eefb0cb07a50",
 )
 
-local_path_override(
-    module_name = "ecsact_runtime",
-    path = "../ecsact_runtime",
+# local_path_override(
+#     module_name = "ecsact_runtime",
+#     path = "../ecsact_runtime",
+# )
+
+git_override(
+	module_name = "ecsact_runtime",
+	remote = "git@github.com:ecsact-dev/ecsact_runtime.git",
+	commit = "bb28aff1a1fbf214a0740f94ffddc35bf3f09043",
 )
 
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
