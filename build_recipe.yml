@@ -189,6 +189,12 @@ sources:
     outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/hash.hh
     outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/assoc_fields_hash.hh
+    outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/codegen_error.hh
+    outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/indexed_storage.hh
+    outdir: include/ecsact/entt/detail
   # ecsact/entt/wrapper
   - path: ./ecsact/entt/wrapper/core.hh
     outdir: include/ecsact/entt/wrapper

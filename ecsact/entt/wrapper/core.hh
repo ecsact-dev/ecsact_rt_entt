@@ -24,9 +24,8 @@ inline auto has_component( //
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
 	if constexpr(C::has_assoc_fields) {
-		auto storage =
-			reg.storage<C>(static_cast<::entt::id_type>(assoc_fields_hash));
-		return storage.contains(entity);
+		return reg.storage<C>(static_cast<::entt::id_type>(assoc_fields_hash))
+			.contains(entity);
 	} else {
 		return reg.all_of<C>(entity);
 	}
