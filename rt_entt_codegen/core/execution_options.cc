@@ -180,7 +180,10 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 	block(ctx, "for(int i = 0; i < options.update_components_length; i++)", [&] {
 		ctx.write("auto& component = options.update_components[i];\n");
 		ctx.write("auto entity = options.update_components_entities[i];\n");
-		ctx.write("auto assoc_fields_hash = std::uint64_t{}; // TODO\n\n");
+		ctx.write(
+			"auto assoc_fields_hash = ecsact::entt::detail::assoc_hash_value_t{}; // "
+			"TODO\n\n"
+		);
 
 		ctx.write(
 			"execution_update_fns.at(ecsact_id_cast<ecsact_component_like_id>("
@@ -193,7 +196,10 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 	block(ctx, "for(int i = 0; i < options.remove_components_length; i++)", [&] {
 		ctx.write("auto& component_id = options.remove_components[i];\n");
 		ctx.write("auto entity = options.remove_components_entities[i];\n\n");
-		ctx.write("auto assoc_fields_hash = std::uint64_t{}; // TODO\n\n");
+		ctx.write(
+			"auto assoc_fields_hash = ecsact::entt::detail::assoc_hash_value_t{}; // "
+			"TODO\n\n"
+		);
 
 		ctx.write(
 			"execution_remove_fns.at(ecsact_id_cast<ecsact_component_like_id>("

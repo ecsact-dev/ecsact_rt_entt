@@ -75,6 +75,13 @@ void ecsact_codegen_plugin(
 		"ecsact::entt::actions_map&>;\n\n"
 	);
 
+	ctx.write(
+		"static_assert(sizeof(::entt::id_type) == "
+		"sizeof(ecsact::entt::detail::assoc_hash_value_t),\"EnTT "
+		"storage id type must match the size of ecsact_rt_entt internal hash "
+		"algorithm size\");\n\n"
+	);
+
 	init_global(ctx, "registries");
 	init_global(ctx, "last_registry_id");
 	init_global(ctx, "system_impls");

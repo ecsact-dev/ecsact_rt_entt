@@ -59,10 +59,10 @@ extern const std::unordered_map< //
 	add_component_fns;
 
 using get_component_fn_sig_t = const void* (*)( //
-	ecsact_registry_id  reg_id,
-	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id,
-	std::uint64_t       assoc_fields_hash
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 );
 
 /**
@@ -76,11 +76,11 @@ extern const std::unordered_map< //
 	get_component_fns;
 
 using update_component_fn_sig_t = ecsact_update_error (*)(
-	ecsact_registry_id  reg_id,
-	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id,
-	const void*         component_data,
-	std::uint64_t       assoc_fields_hash
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	const void*                              component_data,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 );
 
 /**
@@ -94,10 +94,10 @@ extern const std::unordered_map< //
 	update_component_fns;
 
 using remove_component_fn_sig_t = void (*)(
-	ecsact_registry_id  reg_id,
-	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id,
-	std::uint64_t       assoc_fields_hash
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 );
 
 /**
@@ -111,10 +111,10 @@ extern const std::unordered_map< //
 	remove_component_fns;
 
 using has_component_fn_sig_t = bool (*)(
-	ecsact_registry_id  reg_id,
-	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id,
-	std::uint64_t       assoc_fields_hash
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 );
 
 /**

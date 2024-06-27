@@ -13,6 +13,11 @@ namespace ecsact::entt {
 class entity_id {
 	std::int32_t _id;
 
+	static_assert(
+		sizeof(::entt::entity) == sizeof(ecsact_entity_id),
+		"Ecsact entity ID must be same size as EnTT entity ID"
+	);
+
 public:
 	inline entity_id() {
 	}

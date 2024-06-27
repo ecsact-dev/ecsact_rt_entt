@@ -46,7 +46,7 @@ auto print_assoc_fields_hash_va_list(
 		method_printer{ctx, "ecsact::entt::detail::get_assoc_fields_hash"} //
 			.parameter("ecsact_composite_id", "compo_id")
 			.parameter("std::va_list", "indexed_field_values")
-			.return_type("std::uint64_t");
+			.return_type("ecsact::entt::detail::assoc_hash_value_t");
 
 	for(auto comp_id : details.all_components) {
 		auto compo_cpp_identifier = cpp_identifier(decl_full_name(comp_id));
@@ -75,7 +75,7 @@ auto print_assoc_fields_hash_va_list(
 
 				ctx.write(std::format(
 					"return "
-					"::ecsact::entt::detail::hash_vals(static_cast<int32_t>({}::id), "
+					"::ecsact::entt::detail::hash_vals32(static_cast<int32_t>({}::id), "
 					"{});",
 					compo_cpp_identifier,
 					comma_delim(std::views::transform(
@@ -114,11 +114,11 @@ auto print_assoc_fields_hash_spec(
 			)
 		} //
 			.parameter(std::format("const {}&", comp_cpp_ident), "comp")
-			.return_type("std::uint64_t");
+			.return_type("ecsact::entt::detail::assoc_hash_value_t");
 
 	ctx.write(std::format(
 		"return "
-		"::ecsact::entt::detail::hash_vals(static_cast<int32_t>({}::id), "
+		"::ecsact::entt::detail::hash_vals32(static_cast<int32_t>({}::id), "
 		"{});",
 		comp_cpp_ident,
 		comma_delim(std::views::transform(

@@ -101,7 +101,7 @@ static auto print_system_entity_sorting_component_struct(
 		ctx.write("\n);\n");
 
 		ctx.write(
-			"sorted.hash = ::ecsact::entt::detail::bytes_hash(bytes.data(), "
+			"sorted.hash = ::ecsact::entt::detail::bytes_hash64(bytes.data(), "
 			"bytes.size());"
 		);
 	});

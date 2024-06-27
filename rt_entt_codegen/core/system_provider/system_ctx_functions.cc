@@ -196,7 +196,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 
 	ctx.write(std::format(
 		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, void *, {}_t&, std::uint64_t);\n",
+		"ecsact_component_like_id, void *, {}_t&, "
+		"ecsact::entt::detail::assoc_hash_value_t);\n",
 		view_type_name
 	));
 
@@ -254,7 +255,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 
 	ctx.write(std::format(
 		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, const void *, {}_t&, std::uint64_t);\n",
+		"ecsact_component_like_id, const void *, {}_t&, "
+		"ecsact::entt::detail::assoc_hash_value_t);\n",
 		view_type_name
 	));
 

@@ -9,6 +9,7 @@
 #include "ecsact/entt/detail/internal_markers.hh"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 
 namespace ecsact::entt::wrapper::dynamic {
 
@@ -81,7 +82,7 @@ auto context_remove(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	auto&                                     view,
-	std::uint64_t                             assoc_fields_hash
+	ecsact::entt::detail::assoc_hash_value_t  assoc_fields_hash
 ) -> void {
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
@@ -137,7 +138,7 @@ auto context_get(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	void*                                     out_component_data,
 	auto&                                     view,
-	std::uint64_t                             assoc_fields_hash
+	ecsact::entt::detail::assoc_hash_value_t  assoc_fields_hash
 ) -> void {
 	auto entity = context->entity;
 	*static_cast<C*>(out_component_data) = view.template get<C>(entity);
@@ -149,7 +150,7 @@ auto context_update(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               in_component_data,
 	auto&                                     view,
-	std::uint64_t                             assoc_fields_hash
+	ecsact::entt::detail::assoc_hash_value_t  assoc_fields_hash
 ) -> void {
 	using ecsact::entt::detail::exec_beforechange_storage;
 	// TODO(Kelwan): for remove, beforeremove_storage
@@ -171,7 +172,7 @@ template<typename C>
 auto context_has(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
-	std::uint64_t                             assoc_fields_hash
+	ecsact::entt::detail::assoc_hash_value_t  assoc_fields_hash
 ) -> bool {
 	auto  entity = context->entity;
 	auto& registry = *context->registry;

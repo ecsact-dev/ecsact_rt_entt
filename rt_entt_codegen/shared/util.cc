@@ -79,7 +79,7 @@ auto ecsact::rt_entt_codegen::util::make_view( //
 		for(auto&& [compo_id, fields] : indexed_fields) {
 			auto compo_name = cpp_identifier(decl_full_name(compo_id));
 			auto hash_fields_str = std::format(
-				"::ecsact::entt::detail::hash_vals(static_cast<int32_t>({}::id), {})",
+				"::ecsact::entt::detail::hash_vals32(static_cast<int32_t>({}::id), {})",
 				compo_name,
 				comma_delim(std::views::transform(
 					fields,
