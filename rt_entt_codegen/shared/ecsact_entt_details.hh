@@ -52,6 +52,8 @@ struct ecsact_entt_system_details {
 	 * requirements*/
 	generate_t generate_comps;
 
+	auto get_all_writable_comps() const -> std::vector<ecsact_component_like_id>;
+
 	static auto from_system_like( //
 		ecsact_system_like_id sys_like_id
 	) -> ecsact_entt_system_details;

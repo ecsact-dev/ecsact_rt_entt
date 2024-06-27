@@ -9,6 +9,7 @@
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 
 namespace ecsact::entt::wrapper::core {
 
@@ -22,7 +23,13 @@ inline auto has_component( //
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
-	return reg.all_of<C>(entity);
+	if constexpr(C::has_assoc_fields) {
+		auto storage =
+			reg.storage<C>(static_cast<::entt::id_type>(assoc_fields_hash));
+		return storage.contains(entity);
+	} else {
+		return reg.all_of<C>(entity);
+	}
 }
 
 template<typename C>
@@ -35,9 +42,29 @@ inline auto get_component(
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
+#ifndef NDEBUG
+	if(C::id != component_id) {
+		return nullptr;
+	}
+	if(!has_component<C>(
+			 registry_id,
+			 entity_id,
+			 component_id,
+			 assoc_fields_hash
+		 )) {
+		return nullptr;
+	}
+#endif
 
-	const C& comp = reg.get<C>(entity);
-	return &comp;
+	if constexpr(C::has_assoc_fields) {
+		const C& comp =
+			reg.storage<C>(static_cast<::entt::id_type>(assoc_fields_hash))
+				.get(entity);
+		return &comp;
+	} else {
+		const C& comp = reg.get<C>(entity);
+		return &comp;
+	}
 }
 
 template<typename C>
@@ -60,13 +87,16 @@ inline auto add_component( //
 	if(err == ECSACT_ADD_OK) {
 		if constexpr(std::is_empty_v<C>) {
 			reg.emplace<C>(entity);
+		} else if constexpr(C::has_assoc_fields) {
+			auto comp = static_cast<const C*>(component_data);
+			auto assoc_fields_hash =
+				ecsact::entt::detail::get_assoc_fields_hash(*comp);
+			reg.storage<C>(static_cast<::entt::id_type>(assoc_fields_hash))
+				.emplace(entity, *comp);
 		} else {
-			reg.emplace<detail::exec_beforechange_storage<C>>(
-				entity,
-				*static_cast<const C*>(component_data),
-				false
-			);
-			reg.emplace<C>(entity, *static_cast<const C*>(component_data));
+			auto comp = static_cast<const C*>(component_data);
+			reg.emplace<detail::exec_beforechange_storage<C>>(entity, *comp, false);
+			reg.emplace<C>(entity, *comp);
 		}
 
 		ecsact::entt::detail::add_system_markers_if_needed<C>(reg, entity);
@@ -138,12 +168,12 @@ inline auto update_component( //
 		return err;
 	}
 
-	const auto& in_component = *static_cast<const C*>(component_data);
-	auto&       current_component = reg.template get<C>(entity);
+	if constexpr(C::has_assoc_fields) {
+	} else {
+		reg.template get<C>(entity) = *static_cast<const C*>(component_data);
+	}
 
-	current_component = in_component;
-
-	return err;
+	return ECSACT_UPDATE_OK;
 }
 
 using update_component_exec_options_sig_t = ecsact_update_error (*)( //

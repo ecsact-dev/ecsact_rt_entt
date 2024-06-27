@@ -55,7 +55,7 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/detail/registry.hh");
 	inc_header(ctx, "ecsact/entt/detail/bytes.hh");
 	inc_header(ctx, "ecsact/entt/detail/hash.hh");
-	inc_header(ctx, "ecsact/entt/detail/hash.hh");
+	inc_header(ctx, "ecsact/entt/detail/indexed_storage.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/core.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/dynamic.hh");
 	inc_header(ctx, "ecsact/entt/error_check.hh");
@@ -237,6 +237,7 @@ void ecsact_codegen_plugin(
 
 		core::print_assoc_fields_hash(ctx, details);
 		core::print_assoc_globals(ctx, details);
+		core::print_update_indexed_storage(ctx, details);
 		core::print_entity_match_fn(ctx, details);
 		core::print_system_marker_add_fn(ctx, details);
 		core::print_system_marker_remove_fn(ctx, details);

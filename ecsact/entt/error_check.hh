@@ -5,15 +5,11 @@
 #include <cassert>
 #include <span>
 #include <type_traits>
+#include "detail/codegen_error.hh"
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/core.h"
 #include "entt/entity/registry.hpp"
-#include "ecsact/entt/entity.hh"
-
-namespace ecsact::entt::detail {
-template<typename>
-constexpr bool error_check_unimplemented_by_codegen = false;
-}
+#include "ecsact/entt/detail/codegen_error.hh"
 
 namespace ecsact::entt {
 
@@ -23,7 +19,7 @@ auto check_add_component_error( //
 	::ecsact::entt::entity_id,
 	const C&
 ) -> ecsact_add_error {
-	static_assert(detail::error_check_unimplemented_by_codegen<C>, R"(
+	static_assert(detail::unimplemented_by_codegen<C>, R"(
  -----------------------------------------------------------------------------
 | (!) CODEGEN ERROR                                                           |
 | `check_add_component_error<>` template specialization cannot be found. This |
@@ -38,7 +34,7 @@ auto check_update_component_error( //
 	::ecsact::entt::entity_id,
 	const C&
 ) -> ecsact_update_error {
-	static_assert(detail::error_check_unimplemented_by_codegen<C>, R"(
+	static_assert(detail::unimplemented_by_codegen<C>, R"(
  -----------------------------------------------------------------------------
 | (!) CODEGEN ERROR                                                           |
 | `check_update_component_error<>` template specialization cannot be found.   |
@@ -52,7 +48,7 @@ auto check_action_error( //
 	ecsact::entt::registry_t&,
 	const A&
 ) -> ecsact_execute_systems_error {
-	static_assert(detail::error_check_unimplemented_by_codegen<A>, R"(
+	static_assert(detail::unimplemented_by_codegen<A>, R"(
  -----------------------------------------------------------------------------
 | (!) CODEGEN ERROR                                                           |
 | `check_action_error<>` template specialization cannot be found.   |

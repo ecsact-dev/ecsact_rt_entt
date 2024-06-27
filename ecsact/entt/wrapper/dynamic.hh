@@ -22,6 +22,7 @@ auto context_add(
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::exec_beforechange_storage;
+	using ecsact::entt::detail::get_assoc_fields_hash;
 	using ecsact::entt::detail::pending_add;
 
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
@@ -31,6 +32,15 @@ auto context_add(
 
 	if constexpr(std::is_empty_v<C>) {
 		registry.template emplace_or_replace<pending_add<C>>(entity);
+	} else if constexpr(C::has_assoc_fields) {
+		auto component = static_cast<const C*>(component_data);
+		auto assoc_fields_hash = get_assoc_fields_hash(*component);
+		registry.template storage<C>(assoc_fields_hash).emplace(entity, *component);
+		registry.template emplace<exec_beforechange_storage<C>>(
+			entity,
+			*component,
+			false
+		);
 	} else {
 		const C* component = static_cast<const C*>(component_data);
 		registry.template emplace_or_replace<pending_add<C>>(entity, *component);
@@ -130,7 +140,6 @@ auto context_get(
 	std::uint64_t                             assoc_fields_hash
 ) -> void {
 	auto entity = context->entity;
-
 	*static_cast<C*>(out_component_data) = view.template get<C>(entity);
 }
 

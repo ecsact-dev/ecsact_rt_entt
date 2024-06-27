@@ -1,6 +1,7 @@
 #include "spawn.hh"
 
 #include <boost/process.hpp>
+#include <cstdio>
 
 namespace bp = boost::process;
 

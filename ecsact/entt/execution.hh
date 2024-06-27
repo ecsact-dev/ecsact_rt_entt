@@ -8,11 +8,7 @@
 #include "ecsact/entt/entity.hh"
 #include "entt/entity/registry.hpp"
 #include "ecsact/entt/detail/globals.hh"
-
-namespace ecsact::entt::detail {
-template<typename>
-constexpr bool unimplemented_by_codegen = false;
-}
+#include "ecsact/entt/detail/codegen_error.hh"
 
 namespace ecsact::entt {
 

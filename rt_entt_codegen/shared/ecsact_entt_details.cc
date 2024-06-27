@@ -1,6 +1,7 @@
 #include "ecsact_entt_details.hh"
 
 #include <cassert>
+#include <set>
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -78,6 +79,30 @@ static auto collect_all_actions( //
 	for(auto id : ecsact::meta::get_action_ids(pkg_id)) {
 		details.all_actions.insert(id);
 	}
+}
+
+auto ecsact_entt_system_details::get_all_writable_comps() const
+	-> std::vector<ecsact_component_like_id> {
+	auto comp_ids = std::vector<ecsact_component_like_id>{
+		writable_comps.begin(),
+		writable_comps.end(),
+	};
+
+	for(auto assoc_details : association_details) {
+		for(auto&& [comp_id, caps] : assoc_details.capabilities) {
+			if((caps & ECSACT_SYS_CAP_WRITEONLY) != ECSACT_SYS_CAP_WRITEONLY) {
+				continue;
+			}
+
+			if(std::ranges::find(comp_ids, comp_id) != comp_ids.end()) {
+				continue;
+			}
+
+			comp_ids.emplace_back(comp_id);
+		}
+	}
+
+	return comp_ids;
 }
 
 auto ecsact_entt_system_details::fill_system_details(

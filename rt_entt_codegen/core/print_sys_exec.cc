@@ -460,6 +460,19 @@ static auto print_execute_systems(
 		}
 	}
 
+	ctx.write(
+		"// TODO: Optimize this by only going over components that can have "
+		"indexed storage\n"
+	);
+	for(auto comp_id : sys_details.get_all_writable_comps()) {
+		auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_id));
+		ctx.write(std::format(
+			"::ecsact::entt::detail::update_indexed_storage<{}>({});\n",
+			comp_cpp_ident,
+			names.registry_var_name
+		));
+	}
+
 	for(const auto& provider : system_providers) {
 		provider->post_iteration(ctx, names);
 	}

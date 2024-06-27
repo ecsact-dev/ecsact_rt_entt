@@ -7,6 +7,7 @@
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 
+using ecsact::codegen_plugin_context;
 using ecsact::cc_lang_support::c_identifier;
 using ecsact::cc_lang_support::cpp_field_type_name;
 using ecsact::cc_lang_support::cpp_identifier;
@@ -15,6 +16,7 @@ using ecsact::cpp_codegen_plugin_util::comma_delim;
 using ecsact::cpp_codegen_plugin_util::method_printer;
 using ecsact::meta::decl_full_name;
 using ecsact::meta::system_assoc_ids;
+using ecsact::rt_entt_codegen::ecsact_entt_details;
 
 template<typename CompositeID>
 static auto get_assoc_fields(CompositeID compo_id
@@ -36,7 +38,7 @@ static auto get_assoc_fields(CompositeID compo_id
 	return result;
 }
 
-auto ecsact::rt_entt_codegen::core::print_assoc_fields_hash(
+auto print_assoc_fields_hash_va_list(
 	codegen_plugin_context&    ctx,
 	const ecsact_entt_details& details
 ) -> void {
@@ -89,4 +91,54 @@ auto ecsact::rt_entt_codegen::core::print_assoc_fields_hash(
 	}
 
 	ctx.write("return 0;");
+}
+
+auto print_assoc_fields_hash_spec(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details,
+	ecsact_component_id        comp_id
+) -> void {
+	auto assoc_fields = get_assoc_fields(comp_id);
+	if(assoc_fields.empty()) {
+		return;
+	}
+
+	auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_id));
+	ctx.write("template<> ");
+	auto printer = //
+		method_printer{
+			ctx,
+			std::format(
+				"ecsact::entt::detail::get_assoc_fields_hash<{}>",
+				comp_cpp_ident
+			)
+		} //
+			.parameter(std::format("const {}&", comp_cpp_ident), "comp")
+			.return_type("std::uint64_t");
+
+	ctx.write(std::format(
+		"return "
+		"::ecsact::entt::detail::hash_vals(static_cast<int32_t>({}::id), "
+		"{});",
+		comp_cpp_ident,
+		comma_delim(std::views::transform(
+			assoc_fields,
+			[&](auto field_id) -> std::string {
+				return std::format(
+					"comp.{}",
+					ecsact::meta::field_name(comp_id, field_id)
+				);
+			}
+		))
+	));
+}
+
+auto ecsact::rt_entt_codegen::core::print_assoc_fields_hash(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void {
+	print_assoc_fields_hash_va_list(ctx, details);
+	for(auto comp_id : details.all_components) {
+		print_assoc_fields_hash_spec(ctx, details, comp_id);
+	}
 }

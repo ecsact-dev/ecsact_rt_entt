@@ -21,7 +21,6 @@ auto apply_pending_add(ecsact::entt::registry_t& registry) -> void {
 				registry
 					.emplace<exec_beforechange_storage<C>>(entity, comp.value, false);
 				add_system_markers_if_needed<C>(registry, entity);
-				// lifecycle_on_add<C>(registry, entity, comp.value);
 			}
 		);
 	}
