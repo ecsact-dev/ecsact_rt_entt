@@ -71,3 +71,33 @@ TEST(AssocCore, EntityAssoc) {
 	ASSERT_FALSE(reg.has_component<EntityAssoc>(entity1, entity2));
 	ASSERT_FALSE(reg.has_component<EntityAssoc>(entity1, entity1));
 }
+
+TEST(AssocCore, FieldAssoc) {
+	auto reg = ecsact::core::registry{"FieldAssoc"};
+
+	auto entity1 = reg.create_entity();
+	auto entity2 = reg.create_entity();
+
+	ASSERT_FALSE(reg.has_component<FieldAssoc>(entity1, 10));
+	ASSERT_FALSE(reg.has_component<FieldAssoc>(entity1, 11));
+
+	ASSERT_EQ(reg.add_component(entity1, FieldAssoc{10, 44}), ECSACT_ADD_OK);
+	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 10));
+	ASSERT_FALSE(reg.has_component<FieldAssoc>(entity1, 11));
+
+	ASSERT_EQ(reg.add_component(entity1, FieldAssoc{11, 44}), ECSACT_ADD_OK);
+	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 10));
+	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 11));
+
+	ASSERT_EQ(
+		reg.update_component(entity1, FieldAssoc{9, 44}, 10),
+		ECSACT_UPDATE_OK
+	);
+	ASSERT_FALSE(reg.has_component<FieldAssoc>(entity1, 10));
+	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 9));
+	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 11));
+
+	reg.remove_component<FieldAssoc>(entity1, 9);
+	ASSERT_FALSE(reg.has_component<FieldAssoc>(entity1, 9));
+	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 11));
+}
