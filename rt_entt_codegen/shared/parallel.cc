@@ -7,7 +7,6 @@
 
 #include "ecsact/lang-support/lang-cc.hh"
 #include "rt_entt_codegen/shared/system_variant.hh"
-#include "system_variant.hh"
 #include "ecsact/runtime/meta.hh"
 
 using ecsact::rt_entt_codegen::system_like_id_variant;
@@ -162,15 +161,13 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 			return false;
 		}
 
-		auto other_fields =
-			ecsact::meta::system_association_fields(sys_like_id, comp_id);
+		auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
 
-		for(auto field_id : other_fields) {
-			auto other_capabilities = ecsact::meta::system_association_capabilities(
-				sys_like_id,
-				comp_id,
-				field_id
-			);
+		for(auto assoc_id : assoc_ids) {
+			auto assoc_comp_id =
+				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+			auto other_capabilities =
+				ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 
 			// NOTE(Kelwan): Association is currently not compatible with executing
 			// entities in parallel.
@@ -253,6 +250,7 @@ static auto loop_iterator(
 						loop_iterator(system_list, iterator, parallel_system_cluster);
 						return;
 					} else {
+						// TODO: check if capability safe
 						child_unsafe_comps.insert(child_comp_id);
 					}
 				}
@@ -280,27 +278,27 @@ static auto loop_iterator(
 					return;
 				}
 			}
+		}
 
-			auto other_fields =
-				ecsact::meta::system_association_fields(sys_like_id, comp_id);
+		auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
+		for(auto assoc_id : assoc_ids) {
+			auto assoc_comp_id =
+				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+			auto assoc_field_ids =
+				ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
+			auto assoc_capabilities =
+				ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 
-			for(auto field_id : other_fields) {
-				auto other_capabilities = ecsact::meta::system_association_capabilities(
-					sys_like_id,
-					comp_id,
-					field_id
-				);
-
-				for(const auto [other_comp_id, other_capability] : other_capabilities) {
-					auto cpp_name = decl_full_name(other_comp_id);
-					if(!is_capability_safe(other_capability)) {
-						if(!unsafe_comps.contains(other_comp_id)) {
-							unsafe_comps.insert(other_comp_id);
-						} else {
-							parallel_system_cluster.push_back(parallel_system_list);
-							loop_iterator(system_list, iterator, parallel_system_cluster);
-							return;
-						}
+			for(const auto [other_comp_id, other_capability] : assoc_capabilities) {
+				auto cpp_name = decl_full_name(other_comp_id);
+				if(!is_capability_safe(other_capability)) {
+					if(!unsafe_comps.contains(other_comp_id)) {
+						unsafe_comps.insert(other_comp_id);
+					} else {
+						assert(!parallel_system_list.empty());
+						parallel_system_cluster.push_back(parallel_system_list);
+						loop_iterator(system_list, iterator, parallel_system_cluster);
+						return;
 					}
 				}
 			}

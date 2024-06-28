@@ -118,7 +118,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id), *view);\n"
+			"::id), *view, assoc_fields_hash);\n"
 		);
 		return;
 	}
@@ -148,7 +148,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 
 		ctx.write("return result;\n");
 	});
-	ctx.write("();\n");
+	ctx.write("(assoc_fields_hash);\n");
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
@@ -196,7 +196,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 
 	ctx.write(std::format(
 		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, void *, {}_t&);\n",
+		"ecsact_component_like_id, void *, {}_t&, "
+		"ecsact::entt::detail::assoc_hash_value_t);\n",
 		view_type_name
 	));
 
@@ -223,7 +224,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	ctx.write("();\n");
 
 	ctx.write(
-		"get_fns.at(component_id)(this, component_id, out_component_data, *view);\n"
+		"get_fns.at(component_id)(this, component_id, out_component_data, *view, "
+		"assoc_fields_hash);\n"
 	);
 }
 
@@ -246,14 +248,15 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
 			"::id),",
-			"component_data, *view); \n"
+			"component_data, *view, assoc_fields_hash); \n"
 		);
 		return;
 	}
 
 	ctx.write(std::format(
 		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, const void *, {}_t&);\n",
+		"ecsact_component_like_id, const void *, {}_t&, "
+		"ecsact::entt::detail::assoc_hash_value_t);\n",
 		view_type_name
 	));
 
@@ -281,7 +284,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 
 	ctx.write(
 		"update_fns.at(component_id)(this, component_id, component_data, "
-		"*view);\n"
+		"*view, assoc_fields_hash);\n"
 	);
 }
 
@@ -303,14 +306,15 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id));\n"
+			"::id), assoc_fields_hash);"
 		);
+		return;
 	}
 	block(
 		ctx,
 		"static const auto has_fns = "
 		"std::unordered_map<ecsact_component_like_id, "
-		"decltype(&ecsact_system_execution_context_has)>",
+		"decltype(&wrapper::dynamic::context_has<void>)>",
 		[&] {
 			for(const auto comp_id : details.readable_comps) {
 				auto type_name = cpp_identifier(decl_full_name(comp_id));
@@ -326,7 +330,9 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 	);
 	ctx.write(";\n");
 
-	ctx.write("return has_fns.at(component_id)(this, component_id);\n");
+	ctx.write(
+		"return has_fns.at(component_id)(this, component_id, assoc_fields_hash);"
+	);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
@@ -402,10 +408,23 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 		return;
 	}
 
-	ctx.write(
-		"if(other_contexts.contains(entity)) {\n",
-		"return other_contexts.at(entity);\n}\n"
-	);
+	if(details.association_details.size() == 1) {
+		ctx.write(
+			"// system has only 1 association. No other association ID should be "
+			"passed in here\n"
+		);
+		ctx.write("assert(static_cast<int>(assoc_id) == 0);\n");
+		ctx.write("return other_contexts[0];");
+		return;
+	}
 
-	ctx.write("return nullptr;\n");
+	ctx.write(std::format(
+		"// system as {} associations and assoc_id is assumed to be an index\n",
+		details.association_details.size()
+	));
+	ctx.write(std::format(
+		"assert(static_cast<int>(assoc_id) < {});\n",
+		details.association_details.size()
+	));
+	ctx.write("return other_contexts[static_cast<int>(assoc_id)];");
 }

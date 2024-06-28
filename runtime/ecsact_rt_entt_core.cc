@@ -6,10 +6,20 @@
  * derived from the input Ecsact files they will not be defined here.
  */
 
+#include <cstdarg>
 #include "ecsact/runtime/core.h"
 #include "ecsact/entt/detail/globals.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/entity.hh"
+
+#ifdef __clang__
+static_assert(true, "workaround https://github.com/clangd/clangd/issues/1167");
+#	pragma clang diagnostic push
+#	pragma clang diagnostic ignored "-Winconsistent-dllimport"
+#endif
+
+using ecsact::entt::detail::get_assoc_fields_hash;
 
 void ecsact_destroy_registry(ecsact_registry_id reg_id) {
 	auto& reg = ecsact::entt::get_registry(reg_id);
@@ -109,23 +119,39 @@ ecsact_add_error ecsact_add_component(
 bool ecsact_has_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id
+	ecsact_component_id component_id,
+	...
 ) {
 	using ecsact::entt::detail::globals::has_component_fns;
+	std::va_list indexed_fields;
+	va_start(indexed_fields, component_id);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(component_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
 	auto fn_itr = has_component_fns.find(component_id);
 	assert(fn_itr != has_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id);
+	return fn_itr->second(reg_id, entity_id, component_id, assoc_fields_hash);
 }
 
 const void* ecsact_get_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id
+	ecsact_component_id component_id,
+	...
 ) {
 	using ecsact::entt::detail::globals::get_component_fns;
+	std::va_list indexed_fields;
+	va_start(indexed_fields, component_id);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(component_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
 	auto fn_itr = get_component_fns.find(component_id);
 	assert(fn_itr != get_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id);
+	return fn_itr->second(reg_id, entity_id, component_id, assoc_fields_hash);
 }
 
 int ecsact_count_components(
@@ -195,21 +221,47 @@ ecsact_update_error ecsact_update_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	const void*         component_data
+	const void*         component_data,
+	...
 ) {
 	using ecsact::entt::detail::globals::update_component_fns;
+	std::va_list indexed_fields;
+	va_start(indexed_fields, component_data);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(component_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
 	auto fn_itr = update_component_fns.find(component_id);
 	assert(fn_itr != update_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id, component_data);
+	return fn_itr->second(
+		reg_id,
+		entity_id,
+		component_id,
+		component_data,
+		assoc_fields_hash
+	);
 }
 
 void ecsact_remove_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id
+	ecsact_component_id component_id,
+	...
 ) {
 	using ecsact::entt::detail::globals::remove_component_fns;
+	std::va_list indexed_fields;
+	va_start(indexed_fields, component_id);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(component_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
 	auto fn_itr = remove_component_fns.find(component_id);
 	assert(fn_itr != remove_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id);
+	return fn_itr->second(reg_id, entity_id, component_id, assoc_fields_hash);
 }
+
+#ifdef __clang__
+#	pragma clang diagnostic pop
+#endif

@@ -32,8 +32,10 @@ template<typename T>
 concept system_or_action =
 	std::same_as<T, ecsact_system_id> || std::same_as<T, ecsact_action_id>;
 
+using ecsact::cc_lang_support::c_identifier;
 using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::cpp_codegen_plugin_util::block;
+using ecsact::cpp_codegen_plugin_util::comma_delim;
 using ecsact::meta::decl_full_name;
 using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 using ecsact::rt_entt_codegen::system_comps_with_caps;
@@ -41,8 +43,11 @@ using ecsact::rt_entt_codegen::system_like_id_variant;
 using ecsact::rt_entt_codegen::core::provider::handle_exclusive_provide;
 using ecsact::rt_entt_codegen::core::provider::system_provider;
 using ecsact::rt_entt_codegen::system_util::is_trivial_system;
+using ecsact::rt_entt_codegen::util::make_view;
+using ecsact::rt_entt_codegen::util::make_view_options;
 using ecsact::rt_entt_codegen::util::method_printer;
 using namespace ecsact::rt_entt_codegen::core;
+using namespace std::string_literals;
 
 using system_provider_t = std::vector<std::shared_ptr<system_provider>>;
 
@@ -95,6 +100,10 @@ static auto print_sys_exec_ctx_remove(
 	auto printer = //
 		method_printer{ctx, "remove"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter(
+				"ecsact::entt::detail::assoc_hash_value_t",
+				"assoc_fields_hash"
+			)
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -116,6 +125,10 @@ static auto print_sys_exec_ctx_get(
 		method_printer{ctx, "get"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("void*", "out_component_data")
+			.parameter(
+				"ecsact::entt::detail::assoc_hash_value_t",
+				"assoc_fields_hash"
+			)
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -137,6 +150,10 @@ static auto print_sys_exec_ctx_update(
 		method_printer{ctx, "update"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("const void*", "component_data")
+			.parameter(
+				"ecsact::entt::detail::assoc_hash_value_t",
+				"assoc_fields_hash"
+			)
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -157,6 +174,10 @@ static auto print_sys_exec_ctx_has(
 	auto printer = //
 		method_printer{ctx, "has"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter(
+				"ecsact::entt::detail::assoc_hash_value_t",
+				"assoc_fields_hash"
+			)
 			.return_type("bool final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -218,7 +239,7 @@ auto print_sys_exec_ctx_other(
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "other"}
-			.parameter("ecsact_entity_id", "entity")
+			.parameter("ecsact_system_assoc_id", "assoc_id")
 			.return_type("ecsact_system_execution_context* final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -289,11 +310,8 @@ static auto print_system_execution_context(
 	system_provider_t               system_providers
 ) -> std::string {
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
-
 	auto context_type_name =
-		ecsact::rt_entt_codegen::system_util::create_context_struct_name(sys_like_id
-		);
-
+		std::format("{}__Context", c_identifier(decl_full_name(sys_like_id)));
 	auto struct_header = std::format(
 		"struct {}: ecsact_system_execution_context ",
 		context_type_name
@@ -377,25 +395,25 @@ static auto print_execute_systems(
 ) -> void {
 	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 	auto system_providers = setup_system_providers(sys_like_id);
+	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
+	auto make_view_opts = make_view_options(sys_details);
+	make_view_opts.registry_var_name = names.registry_var_name;
+	make_view_opts.view_var_name = "view";
+	make_view_opts.sys_like_id = sys_like_id;
 
 	for(const auto& provider : system_providers) {
 		provider->initialization(ctx, names);
 	}
 
-	auto additional_view_components = std::vector<std::string>{};
 	for(const auto& provider : system_providers) {
-		provider->before_make_view_or_group(ctx, names, additional_view_components);
+		provider->before_make_view_or_group(
+			ctx,
+			names,
+			make_view_opts.additional_components
+		);
 	}
 
-	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
-
-	ecsact::rt_entt_codegen::util::make_view(
-		ctx,
-		"view",
-		names.registry_var_name,
-		sys_details,
-		additional_view_components
-	);
+	make_view(ctx, make_view_opts);
 
 	ctx.write("using view_t = decltype(view);\n");
 
@@ -452,6 +470,19 @@ static auto print_execute_systems(
 		if(result == handle_exclusive_provide::HANDLED) {
 			break;
 		}
+	}
+
+	ctx.write(
+		"// TODO: Optimize this by only going over components that can have "
+		"indexed storage\n"
+	);
+	for(auto comp_id : sys_details.get_all_writable_comps()) {
+		auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_id));
+		ctx.write(std::format(
+			"::ecsact::entt::detail::update_indexed_storage<{}>({});\n",
+			comp_cpp_ident,
+			names.registry_var_name
+		));
 	}
 
 	for(const auto& provider : system_providers) {
@@ -542,6 +573,7 @@ static auto print_execute_system_template_specialization(
 	);
 
 	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+	ctx.write("\n");
 
 	print_execute_systems(
 		ctx,
@@ -592,6 +624,7 @@ static auto print_execute_actions_template_specialization(
 	);
 
 	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+	ctx.write("\n");
 
 	ctx.write(
 		"auto actions = actions_map.as_action_span<",

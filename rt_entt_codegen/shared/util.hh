@@ -11,6 +11,7 @@
 #include "ecsact/runtime/meta.h"
 #include "ecsact/runtime/meta.hh"
 #include "ecsact_entt_details.hh"
+#include "rt_entt_codegen/shared/system_variant.hh"
 
 namespace ecsact::rt_entt_codegen::util {
 
@@ -271,7 +272,31 @@ auto comma_delim(auto&& range) -> std::string {
 	return result;
 }
 
+struct make_view_options {
+	std::string_view                      view_var_name;
+	std::string_view                      registry_var_name;
+	std::vector<std::string>              additional_components;
+	std::vector<std::string>              additional_exclude_components;
+	std::optional<system_like_id_variant> sys_like_id;
+
+	const ecsact_entt_system_details& details;
+
+	inline make_view_options(const ecsact_entt_system_details& details)
+		: details(details) {
+	}
+
+	inline make_view_options(make_view_options&&) = default;
+	inline make_view_options(const make_view_options&) = default;
+	inline ~make_view_options() = default;
+};
+
 auto make_view( //
+	ecsact::codegen_plugin_context& ctx,
+	make_view_options               opts
+) -> void;
+
+[[deprecated("use make_view() overload that uses make_view_options instead")]]
+inline auto make_view( //
 	ecsact::codegen_plugin_context&                            ctx,
 	auto&&                                                     view_var_name,
 	auto&&                                                     registry_var_name,
@@ -279,51 +304,12 @@ auto make_view( //
 	std::vector<std::string> additional_components = {},
 	std::vector<std::string> additional_exclude_components = {}
 ) -> void {
-	using namespace std::string_literals;
-	using ecsact::rt_entt_codegen::util::comma_delim;
-	using ecsact::rt_entt_codegen::util::decl_cpp_ident;
-	using std::views::transform;
-
-	ctx.write("auto ", view_var_name, " = ", registry_var_name, ".view<");
-
-	ctx.write(comma_delim(
-		details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
-	));
-
-	for(auto comp_id : details.writable_comps) {
-		auto comp_name = decl_cpp_ident(comp_id);
-
-		additional_components.push_back(std::format(
-			"ecsact::entt::detail::exec_beforechange_storage<{}>",
-			comp_name
-		));
-	}
-
-	if(!additional_components.empty()) {
-		ctx.write(", ");
-		ctx.write(comma_delim(additional_components));
-	}
-
-	ctx.write(">(");
-
-	auto exclude_comps = details.exclude_comps |
-		transform(decl_cpp_ident<ecsact_component_like_id>);
-
-	additional_exclude_components.insert(
-		additional_exclude_components.end(),
-		exclude_comps.begin(),
-		exclude_comps.end()
-	);
-
-	if(!additional_exclude_components.empty()) {
-		ctx.write(
-			"::entt::exclude<",
-			comma_delim(additional_exclude_components),
-			">"
-		);
-	}
-
-	ctx.write(");\n");
+	auto opts = make_view_options{details};
+	opts.registry_var_name = registry_var_name;
+	opts.view_var_name = view_var_name;
+	opts.additional_components = additional_components;
+	opts.additional_exclude_components = additional_exclude_components;
+	return make_view(ctx, opts);
 }
 
 } // namespace ecsact::rt_entt_codegen::util

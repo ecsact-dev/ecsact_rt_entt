@@ -57,10 +57,6 @@ sources:
     outdir: include/entt/entity
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/sparse_set.hpp
     outdir: include/entt/entity
-  - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/group.hpp
-    outdir: include/entt/entity
-  - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/storage.hpp
-    outdir: include/entt/entity
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/component.hpp
     outdir: include/entt/entity
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/mixin.hpp
@@ -188,6 +184,12 @@ sources:
   - path: ./ecsact/entt/detail/bytes.hh
     outdir: include/ecsact/entt/detail
   - path: ./ecsact/entt/detail/hash.hh
+    outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/assoc_fields_hash.hh
+    outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/codegen_error.hh
+    outdir: include/ecsact/entt/detail
+  - path: ./ecsact/entt/detail/indexed_storage.hh
     outdir: include/ecsact/entt/detail
   # ecsact/entt/wrapper
   - path: ./ecsact/entt/wrapper/core.hh

@@ -11,6 +11,8 @@ cc_library(
 
 # keep sorted
 _CORE_CODEGEN_METHODS = {
+    "assoc_fields_hash": [],
+    "update_indexed_storage": [],
     "execute_systems": [
         "//rt_entt_codegen/shared:parallel",
         "//rt_entt_codegen/shared:system_variant",
@@ -33,7 +35,6 @@ _CORE_CODEGEN_METHODS = {
         "//rt_entt_codegen/core/system_provider:basic",
         "//rt_entt_codegen/core/system_provider:parallel",
         "//rt_entt_codegen/core/system_provider",
-        "@entt//:entt",
         "@ecsact_rt_entt//:lib",
     ],
     "check_error": [],
@@ -47,6 +48,7 @@ _CORE_CODEGEN_METHODS = {
     ],
     "system_notify": ["//rt_entt_codegen/shared:system_util"],
     "update_beforechange": [],
+    "assoc_globals": [],
 }
 
 [cc_library(

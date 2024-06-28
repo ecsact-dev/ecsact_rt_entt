@@ -11,6 +11,7 @@
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/entity.hh"
 #include "ecsact/entt/detail/registry.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 
 namespace ecsact::entt {
 /**
@@ -55,21 +56,25 @@ struct ecsact_system_execution_context {
 	) -> void = 0;
 
 	virtual auto remove( //
-		ecsact_component_like_id component_id
+		ecsact_component_like_id                 component_id,
+		ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 	) -> void = 0;
 
 	virtual auto get( //
-		ecsact_component_like_id component_id,
-		void*                    out_component_data
+		ecsact_component_like_id                 component_id,
+		void*                                    out_component_data,
+		ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 	) -> void = 0;
 
 	virtual auto update( //
-		ecsact_component_like_id component_id,
-		const void*              component_data
+		ecsact_component_like_id                 component_id,
+		const void*                              component_data,
+		ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 	) -> void = 0;
 
 	virtual auto has( //
-		ecsact_component_like_id component_id
+		ecsact_component_like_id                 component_id,
+		ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 	) -> bool = 0;
 
 	virtual auto generate( //
@@ -81,6 +86,6 @@ struct ecsact_system_execution_context {
 	virtual auto parent() -> const ecsact_system_execution_context* = 0;
 
 	virtual auto other( //
-		ecsact_entity_id entity
+		ecsact_system_assoc_id assoc_id
 	) -> ecsact_system_execution_context* = 0;
 };

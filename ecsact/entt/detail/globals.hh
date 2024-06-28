@@ -41,6 +41,13 @@ extern std::unordered_map< //
  */
 extern const std::unordered_set<ecsact_component_id> all_component_ids;
 
+using add_component_fn_sig_t = ecsact_add_error (*)(
+	ecsact_registry_id  reg_id,
+	ecsact_entity_id    entity_id,
+	ecsact_component_id component_id,
+	const void*         component_data
+);
+
 /**
  * ecsact_add_component fn pointers
  *
@@ -48,8 +55,15 @@ extern const std::unordered_set<ecsact_component_id> all_component_ids;
  */
 extern const std::unordered_map< //
 	ecsact_component_id,
-	decltype(&ecsact_add_component)>
+	add_component_fn_sig_t>
 	add_component_fns;
+
+using get_component_fn_sig_t = const void* (*)( //
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
+);
 
 /**
  * ecsact_get_component fn pointers
@@ -58,8 +72,16 @@ extern const std::unordered_map< //
  */
 extern const std::unordered_map< //
 	ecsact_component_id,
-	decltype(&ecsact_get_component)>
+	get_component_fn_sig_t>
 	get_component_fns;
+
+using update_component_fn_sig_t = ecsact_update_error (*)(
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	const void*                              component_data,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
+);
 
 /**
  * ecsact_update_component fn pointers
@@ -68,8 +90,15 @@ extern const std::unordered_map< //
  */
 extern const std::unordered_map< //
 	ecsact_component_id,
-	decltype(&ecsact_update_component)>
+	update_component_fn_sig_t>
 	update_component_fns;
+
+using remove_component_fn_sig_t = void (*)(
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
+);
 
 /**
  * ecsact_remove_component fn pointers
@@ -78,8 +107,15 @@ extern const std::unordered_map< //
  */
 extern const std::unordered_map< //
 	ecsact_component_id,
-	decltype(&ecsact_remove_component)>
+	remove_component_fn_sig_t>
 	remove_component_fns;
+
+using has_component_fn_sig_t = bool (*)(
+	ecsact_registry_id                       reg_id,
+	ecsact_entity_id                         entity_id,
+	ecsact_component_id                      component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
+);
 
 /**
  * ecsact_has_component fn pointers
@@ -88,78 +124,8 @@ extern const std::unordered_map< //
  */
 extern const std::unordered_map< //
 	ecsact_component_id,
-	decltype(&ecsact_has_component)>
+	has_component_fn_sig_t>
 	has_component_fns;
-
-/**
- * ecsact_system_execution_context_get fn pointers
- *
- * NOTE: This gets is filled in by ecsact_rt_entt_codegen
- */
-extern const std::unordered_map< //
-	ecsact_system_like_id,
-	std::unordered_map<
-		ecsact::entt::assoc_index,
-		std::unordered_map< //
-			ecsact_component_like_id,
-			decltype(&ecsact_system_execution_context_get)>>>
-	exec_ctx_get_fns;
-
-/**
- * ecsact_system_execution_context_add fn pointers
- *
- * NOTE: This adds is filled in by ecsact_rt_entt_codegen
- */
-extern const std::unordered_map< //
-	ecsact_system_like_id,
-	std::unordered_map<
-		ecsact::entt::assoc_index,
-		std::unordered_map< //
-			ecsact_component_like_id,
-			decltype(&ecsact_system_execution_context_add)>>>
-	exec_ctx_add_fns;
-
-/**
- * ecsact_system_execution_context_update fn pointers
- *
- * NOTE: This updates is filled in by ecsact_rt_entt_codegen
- */
-extern const std::unordered_map< //
-	ecsact_system_like_id,
-	std::unordered_map<
-		ecsact::entt::assoc_index,
-		std::unordered_map< //
-			ecsact_component_like_id,
-			decltype(&ecsact_system_execution_context_update)>>>
-	exec_ctx_update_fns;
-
-/**
- * ecsact_system_execution_context_remove fn pointers
- *
- * NOTE: This removes is filled in by ecsact_rt_entt_codegen
- */
-extern const std::unordered_map< //
-	ecsact_system_like_id,
-	std::unordered_map<
-		ecsact::entt::assoc_index,
-		std::unordered_map< //
-			ecsact_component_like_id,
-			decltype(&ecsact_system_execution_context_remove)>>>
-	exec_ctx_remove_fns;
-
-/**
- * ecsact_system_execution_context_has fn pointers
- *
- * NOTE: This has is filled in by ecsact_rt_entt_codegen
- */
-extern const std::unordered_map< //
-	ecsact_system_like_id,
-	std::unordered_map<
-		ecsact::entt::assoc_index,
-		std::unordered_map< //
-			ecsact_component_like_id,
-			decltype(&ecsact_system_execution_context_has)>>>
-	exec_ctx_has_fns;
 
 /**
  * ecsact_system_execution_context_action fn pointers

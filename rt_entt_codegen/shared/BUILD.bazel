@@ -32,10 +32,12 @@ cc_library(
 cc_library(
     name = "util",
     hdrs = ["util.hh"],
+    srcs = ["util.cc"],
     copts = copts,
     defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
     deps = [
         ":comps_with_caps",
+        ":system_variant",
         "@ecsact_codegen//:plugin",
         "@ecsact_lang_cpp//:support",
         "@ecsact_runtime//:common",

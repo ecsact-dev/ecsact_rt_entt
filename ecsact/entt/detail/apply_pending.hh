@@ -1,6 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include "ecsact/entt/detail/registry.hh"
 #include "ecsact/entt/wrapper/core.hh"
 #include "ecsact/entt/detail/internal_markers.hh"
 
@@ -11,6 +12,7 @@ auto apply_pending_add(ecsact::entt::registry_t& registry) -> void {
 	if constexpr(std::is_empty_v<C>) {
 		registry.view<pending_add<C>>().each([&](auto entity) {
 			registry.emplace<C>(entity);
+			// lifecycle_on_add<C>(registry, entity, comp);
 		});
 	} else {
 		registry.view<pending_add<C>>().each( //

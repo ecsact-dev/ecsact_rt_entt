@@ -117,12 +117,12 @@ auto provider::lazy::post_iteration(
 			">([](const auto& a, const auto& b) { return a.hash < b.hash; });\n"
 		);
 
-		ecsact::rt_entt_codegen::util::make_view(
-			ctx,
-			"view_no_pending_lazy_",
-			names.registry_var_name,
-			system_details
-		);
+		auto make_view_opts = util::make_view_options(system_details);
+		make_view_opts.view_var_name = "view_no_pending_lazy_";
+		make_view_opts.registry_var_name = names.registry_var_name;
+		make_view_opts.sys_like_id = sys_like_id;
+
+		ecsact::rt_entt_codegen::util::make_view(ctx, make_view_opts);
 
 		ctx.write("auto view_no_pending_lazy_count_ = 0;\n");
 

@@ -9,33 +9,61 @@
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 
 namespace ecsact::entt::wrapper::core {
 
 template<typename C>
 inline auto has_component( //
-	ecsact_registry_id                   registry_id,
-	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 ) -> bool {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
-	return reg.all_of<C>(entity);
+	if constexpr(C::has_assoc_fields) {
+		auto storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
+		return reg.storage<C>(storage_id).contains(entity);
+	} else {
+		return reg.storage<C>().contains(entity);
+	}
 }
 
 template<typename C>
 inline auto get_component(
-	ecsact_registry_id                   registry_id,
-	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 ) -> const void* {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
+#ifndef NDEBUG
+	if(C::id != component_id) {
+		return nullptr;
+	}
+	if(!has_component<C>(
+			 registry_id,
+			 entity_id,
+			 component_id,
+			 assoc_fields_hash
+		 )) {
+		return nullptr;
+	}
+#endif
 
-	const C& comp = reg.get<C>(entity);
-	return &comp;
+	if constexpr(C::has_assoc_fields) {
+		const C& comp =
+			reg.storage<C>(static_cast<::entt::id_type>(assoc_fields_hash))
+				.get(entity);
+		return &comp;
+	} else {
+		const C& comp = reg.get<C>(entity);
+		return &comp;
+	}
 }
 
 template<typename C>
@@ -58,13 +86,16 @@ inline auto add_component( //
 	if(err == ECSACT_ADD_OK) {
 		if constexpr(std::is_empty_v<C>) {
 			reg.emplace<C>(entity);
+		} else if constexpr(C::has_assoc_fields) {
+			auto comp = static_cast<const C*>(component_data);
+			auto assoc_fields_hash =
+				ecsact::entt::detail::get_assoc_fields_hash(*comp);
+			auto storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
+			reg.storage<C>(storage_id).emplace(entity, *comp);
 		} else {
-			reg.emplace<detail::exec_beforechange_storage<C>>(
-				entity,
-				*static_cast<const C*>(component_data),
-				false
-			);
-			reg.emplace<C>(entity, *static_cast<const C*>(component_data));
+			auto comp = static_cast<const C*>(component_data);
+			reg.emplace<detail::exec_beforechange_storage<C>>(entity, *comp, false);
+			reg.emplace<C>(entity, *comp);
 		}
 
 		ecsact::entt::detail::add_system_markers_if_needed<C>(reg, entity);
@@ -113,10 +144,11 @@ inline auto add_component_exec_options( //
 
 template<typename C>
 inline auto update_component( //
-	ecsact_registry_id                   registry_id,
-	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id,
-	const void*                          component_data
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	const void*                              component_data,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 ) -> ecsact_update_error {
 	using ecsact::entt::detail::exec_beforechange_storage;
 
@@ -135,20 +167,43 @@ inline auto update_component( //
 		return err;
 	}
 
-	const auto& in_component = *static_cast<const C*>(component_data);
-	auto&       current_component = reg.template get<C>(entity);
+	auto new_comp = static_cast<const C*>(component_data);
 
-	current_component = in_component;
+	if constexpr(C::has_assoc_fields) {
+		auto new_assoc_fields_hash =
+			ecsact::entt::detail::get_assoc_fields_hash(*new_comp);
 
-	return err;
+		if(new_assoc_fields_hash == assoc_fields_hash) {
+			auto storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
+			reg.template storage<C>(storage_id).get(entity) = *new_comp;
+		} else {
+			auto new_storage_id = static_cast<::entt::id_type>(new_assoc_fields_hash);
+			auto old_storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
+			reg.template storage<C>(old_storage_id).erase(entity);
+			reg.template storage<C>(new_storage_id).emplace(entity, *new_comp);
+		}
+	} else {
+		reg.template get<C>(entity) = *new_comp;
+	}
+
+	return ECSACT_UPDATE_OK;
 }
+
+using update_component_exec_options_sig_t = ecsact_update_error (*)( //
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	const void*                              component_data,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
+);
 
 template<typename C>
 inline auto update_component_exec_options( //
-	ecsact_registry_id                   registry_id,
-	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id,
-	const void*                          component_data
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	const void*                              component_data,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 ) -> ecsact_update_error {
 	using ecsact::entt::detail::exec_beforechange_storage;
 
@@ -180,30 +235,48 @@ inline auto update_component_exec_options( //
 	return err;
 }
 
+static_assert(std::is_same_v<
+							update_component_exec_options_sig_t,
+							decltype(&update_component_exec_options<void>)>);
+
 template<typename C>
 auto remove_component(
-	ecsact_registry_id                   registry_id,
-	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 ) -> void {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
 
-	reg.remove<C>(entity);
-	if constexpr(!std::is_empty_v<C>) {
-		reg.remove<detail::exec_beforechange_storage<C>>(entity);
+	if constexpr(C::has_assoc_fields) {
+		auto storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
+		reg.storage<C>(storage_id).erase(entity);
+	} else {
+		reg.remove<C>(entity);
+		if constexpr(!std::is_empty_v<C>) {
+			reg.remove<detail::exec_beforechange_storage<C>>(entity);
+		}
+		reg.template remove<component_added<C>>(entity);
+		reg.template emplace_or_replace<component_removed<C>>(entity);
+		ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
 	}
-	reg.template remove<component_added<C>>(entity);
-	reg.template emplace_or_replace<component_removed<C>>(entity);
-	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
 }
+
+using remove_component_exec_options_sig_t = void (*)( //
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
+);
 
 template<typename C>
 auto remove_component_exec_options(
-	ecsact_registry_id                   registry_id,
-	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	ecsact_registry_id                       registry_id,
+	ecsact_entity_id                         entity_id,
+	[[maybe_unused]] ecsact_component_id     component_id,
+	ecsact::entt::detail::assoc_hash_value_t assoc_fields_hash
 ) -> void {
 	using ecsact::entt::detail::pending_remove;
 
@@ -228,6 +301,10 @@ auto remove_component_exec_options(
 
 	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
 }
+
+static_assert(std::is_same_v<
+							remove_component_exec_options_sig_t,
+							decltype(&remove_component_exec_options<void>)>);
 
 inline auto _trigger_create_entity_events(
 	ecsact_registry_id                                registry_id,

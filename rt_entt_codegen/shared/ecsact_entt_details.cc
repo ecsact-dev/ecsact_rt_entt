@@ -1,6 +1,7 @@
 #include "ecsact_entt_details.hh"
 
 #include <cassert>
+#include <set>
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -80,6 +81,30 @@ static auto collect_all_actions( //
 	}
 }
 
+auto ecsact_entt_system_details::get_all_writable_comps() const
+	-> std::vector<ecsact_component_like_id> {
+	auto comp_ids = std::vector<ecsact_component_like_id>{
+		writable_comps.begin(),
+		writable_comps.end(),
+	};
+
+	for(auto assoc_details : association_details) {
+		for(auto&& [comp_id, caps] : assoc_details.capabilities) {
+			if((caps & ECSACT_SYS_CAP_WRITEONLY) != ECSACT_SYS_CAP_WRITEONLY) {
+				continue;
+			}
+
+			if(std::ranges::find(comp_ids, comp_id) != comp_ids.end()) {
+				continue;
+			}
+
+			comp_ids.emplace_back(comp_id);
+		}
+	}
+
+	return comp_ids;
+}
+
 auto ecsact_entt_system_details::fill_system_details(
 	ecsact_entt_system_details& out_details,
 	const std::unordered_map<ecsact_component_like_id, ecsact_system_capability>&
@@ -140,24 +165,22 @@ auto ecsact_entt_system_details::from_system_like( //
 
 	fill_system_details(details, caps);
 
-	for(auto comp_id : details.readable_comps) {
-		auto fields = ecsact::meta::system_association_fields(sys_like_id, comp_id);
-		for(auto field_id : fields) {
-			auto assoc_comps = ecsact::meta::system_association_capabilities(
-				sys_like_id,
-				comp_id,
-				field_id
-			);
+	for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+		auto assoc_comp_id =
+			ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+		auto assoc_fields =
+			ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
+		auto assoc_capabilities =
+			ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 
-			details.association_details.insert(
-				details.association_details.end(),
-				association_info{
-					.component_id = comp_id,
-					.field_id = field_id,
-					.capabilities = assoc_comps,
-				}
-			);
-		}
+		details.association_details.insert(
+			details.association_details.end(),
+			association_info{
+				assoc_comp_id,
+				assoc_fields,
+				assoc_capabilities,
+			}
+		);
 	}
 
 	auto generate_ids = ecsact::meta::get_system_generates_ids(sys_like_id);
@@ -180,6 +203,13 @@ auto ecsact_entt_system_details::from_capabilities( //
 	fill_system_details(details, caps);
 
 	return details;
+}
+
+auto ecsact_entt_system_details::from_capabilities(
+	std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>
+		caps
+) -> ecsact_entt_system_details {
+	return from_capabilities(std::unordered_map{caps.begin(), caps.end()});
 }
 
 auto ecsact_entt_details::from_package( //

@@ -9,7 +9,7 @@
 namespace ecsact::entt::detail {
 
 template<typename T>
-	requires(std::integral<T> || std::floating_point<T>)
+	requires(std::integral<T> || std::floating_point<T> || std::is_enum_v<T>)
 constexpr auto bytes_sizeof() -> int {
 	using value_type = std::remove_cvref_t<T>;
 
@@ -43,7 +43,7 @@ template<typename T>
 using unsigned_bit_size_equivalent_t = unsigned_bit_size_equivalent<T>::type;
 
 template<typename T>
-	requires(std::integral<T> || std::floating_point<T>)
+	requires(std::integral<T> || std::floating_point<T> || std::is_enum_v<T>)
 auto bytes_copy_into( //
 	T     v,
 	auto& out_bytes,

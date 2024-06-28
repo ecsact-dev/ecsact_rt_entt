@@ -2,7 +2,7 @@
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/lang-support/lang-cc.hh"
-#include "rt_entt_codegen/shared/system_variant.hh"
+#include "system_variant.hh"
 
 namespace ecsact::rt_entt_codegen::system_util {
 
@@ -19,24 +19,14 @@ auto is_trivial_system(ecsact_system_like_id system_id) -> bool;
 
 auto get_unique_view_name() -> std::string;
 
-template<typename ComponentLikeID>
-static auto create_context_struct_name( //
-	ComponentLikeID component_like_id
-) -> std::string {
-	using ecsact::cc_lang_support::c_identifier;
-	auto full_name =
-		c_identifier(ecsact::meta::decl_full_name(component_like_id));
-	return full_name + "Struct";
-}
+auto get_assoc_context_type_name( //
+	system_like_id_variant sys_like_id,
+	ecsact_system_assoc_id assoc_id
+) -> std::string;
 
-template<typename ComponentLikeID>
-static auto create_context_var_name( //
-	ComponentLikeID component_like_id
-) -> std::string {
-	using ecsact::cc_lang_support::c_identifier;
-	auto full_name =
-		c_identifier(ecsact::meta::decl_full_name(component_like_id));
-	return full_name + "_context";
-}
+auto get_assoc_context_var_name( //
+	system_like_id_variant sys_like_id,
+	ecsact_system_assoc_id assoc_id
+) -> std::string;
 
 } // namespace ecsact::rt_entt_codegen::system_util

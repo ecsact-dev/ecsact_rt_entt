@@ -6,11 +6,21 @@
  * derived from the input Ecsact files they will not be defined here.
  */
 
+#include <cstdarg>
 #include "ecsact/runtime/core.h"
 #include "ecsact/entt/detail/globals.hh"
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/entity.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
+
+#ifdef __clang__
+static_assert(true, "workaround https://github.com/clangd/clangd/issues/1167");
+#	pragma clang diagnostic push
+#	pragma clang diagnostic ignored "-Winconsistent-dllimport"
+#endif
+
+using ecsact::entt::detail::get_assoc_fields_hash;
 
 bool ecsact_system_execution_context_same(
 	const ecsact_system_execution_context* a,
@@ -60,10 +70,9 @@ ecsact_system_like_id ecsact_system_execution_context_id(
 
 ecsact_system_execution_context* ecsact_system_execution_context_other(
 	ecsact_system_execution_context* context,
-	ecsact_entity_id                 entity_id
+	ecsact_system_assoc_id           assoc_id
 ) {
-	assert(context != nullptr);
-	return context->other(entity_id);
+	return context->other(assoc_id);
 }
 
 void ecsact_system_execution_context_add(
@@ -77,36 +86,68 @@ void ecsact_system_execution_context_add(
 
 void ecsact_system_execution_context_remove(
 	ecsact_system_execution_context* context,
-	ecsact_component_like_id         comp_id
+	ecsact_component_like_id         comp_id,
+	...
 ) {
 	assert(context != nullptr);
-	return context->remove(comp_id);
+	std::va_list indexed_fields;
+	va_start(indexed_fields, comp_id);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(comp_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
+	return context->remove(comp_id, assoc_fields_hash);
 }
 
 void ecsact_system_execution_context_get(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
-	void*                            out_component_data
+	void*                            out_component_data,
+	...
 ) {
 	assert(context != nullptr);
-	return context->get(comp_id, out_component_data);
+	std::va_list indexed_fields;
+	va_start(indexed_fields, out_component_data);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(comp_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
+	return context->get(comp_id, out_component_data, assoc_fields_hash);
 }
 
 void ecsact_system_execution_context_update(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
-	const void*                      component_data
+	const void*                      component_data,
+	...
 ) {
 	assert(context != nullptr);
-	return context->update(comp_id, component_data);
+	std::va_list indexed_fields;
+	va_start(indexed_fields, component_data);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(comp_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
+	return context->update(comp_id, component_data, assoc_fields_hash);
 }
 
 bool ecsact_system_execution_context_has(
 	ecsact_system_execution_context* context,
-	ecsact_component_like_id         comp_id
+	ecsact_component_like_id         comp_id,
+	...
 ) {
 	assert(context != nullptr);
-	return context->has(comp_id);
+	std::va_list indexed_fields;
+	va_start(indexed_fields, comp_id);
+	auto assoc_fields_hash = get_assoc_fields_hash(
+		ecsact_id_cast<ecsact_composite_id>(comp_id),
+		indexed_fields
+	);
+	va_end(indexed_fields);
+	return context->has(comp_id, assoc_fields_hash);
 }
 
 void ecsact_system_execution_context_action(
@@ -123,3 +164,7 @@ const ecsact_system_execution_context* ecsact_system_execution_context_parent(
 	assert(context != nullptr);
 	return context->parent_ctx;
 }
+
+#ifdef __clang__
+#	pragma clang diagnostic pop
+#endif
