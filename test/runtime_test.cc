@@ -778,7 +778,7 @@ TEST(Core, DynamicSystemImpl) {
 	EXPECT_EQ(comp_get.a, comp.a);
 }
 
-TEST(Core, GeneratesCreateEvent) {
+TEST(Core, GeneratesCreateAndInitEvent) {
 	SET_SYSTEM_IMPL(MakeAnother);
 
 	auto reg = ecsact::core::registry("GeneratesCreateEvent");
@@ -800,9 +800,16 @@ TEST(Core, GeneratesCreateEvent) {
 		}
 	);
 
+	auto init_event_happened = false;
+
+	evc.set_init_callback<runtime_test::ComponentA>(
+		[&](auto entity_id, auto component) { init_event_happened = true; }
+	);
+
 	auto exec_err = reg.execute_systems(std::array{options}, evc);
 	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
 	EXPECT_EQ(created_event_count, 1);
+	EXPECT_EQ(init_event_happened, true);
 	EXPECT_EQ(2, reg.count_entities());
 }
 

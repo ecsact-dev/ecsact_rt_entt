@@ -179,6 +179,7 @@ auto context_generate_add(
 
 	const auto& component = *static_cast<const C*>(component_data);
 	registry.template emplace<pending_add<C>>(entity, component);
+	registry.template emplace_or_replace<component_added<C>>(entity);
 }
 
 } // namespace ecsact::entt::wrapper::dynamic
