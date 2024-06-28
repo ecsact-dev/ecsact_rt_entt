@@ -125,8 +125,14 @@ auto provider::association::system_impl(
 		ctx,
 		"if(found_assoc_entities == " + std::to_string(other_view_names.size()) +
 			")",
-		[&] { ctx.write("system_impl(&context);\n"); }
+		[&] {
+			auto child_ids = ecsact::meta::get_child_system_ids(sys_like_id);
+			if(child_ids.empty()) {
+				ctx.write("system_impl(&context);\n");
+			}
+		}
 	);
+
 	return HANDLED;
 }
 

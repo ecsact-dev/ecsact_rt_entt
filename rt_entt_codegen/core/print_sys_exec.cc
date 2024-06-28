@@ -419,40 +419,72 @@ static auto print_execute_systems(
 		}
 	}
 
-	for(auto provider : system_providers) {
-		auto result = provider->entity_iteration(ctx, names, [&] {
-			for(const auto& provider : system_providers) {
-				provider->pre_exec_system_impl(ctx, names);
-			}
+	auto child_ids = ecsact::meta::get_child_system_ids(sys_like_id);
 
-			context_init_provider
-				->pre_exec_system_impl_context_init(ctx, names, context_type_name);
+	block(ctx, "if(system_impl == nullptr)", [&]() {
+		for(auto provider : system_providers) {
+			auto result = provider->entity_iteration(ctx, names, [&] {
+				for(const auto& provider : system_providers) {
+					provider->pre_exec_system_impl(ctx, names);
+				}
 
-			ecsact::rt_entt_codegen::core::print_child_systems(
-				ctx,
-				names,
-				sys_like_id
-			);
+				context_init_provider
+					->pre_exec_system_impl_context_init(ctx, names, context_type_name);
 
-			auto result = std::ranges::find_if(system_providers, [&](auto provider) {
-				return provider->system_impl(ctx, names) ==
-					handle_exclusive_provide::HANDLED;
+				ecsact::rt_entt_codegen::core::print_child_systems(
+					ctx,
+					names,
+					sys_like_id
+				);
+
+				for(const auto& provider : system_providers) {
+					provider->post_exec_system_impl(ctx, names);
+				}
+
+				ctx.write("\n");
 			});
-
-			if(result == system_providers.end()) {
-				throw std::logic_error("system_impl was not handled by providers");
+			if(result == handle_exclusive_provide::HANDLED) {
+				break;
 			}
-
-			for(const auto& provider : system_providers) {
-				provider->post_exec_system_impl(ctx, names);
-			}
-
-			ctx.write("\n");
-		});
-		if(result == handle_exclusive_provide::HANDLED) {
-			break;
 		}
-	}
+	});
+	block(ctx, "else", [&] {
+		for(auto provider : system_providers) {
+			auto result = provider->entity_iteration(ctx, names, [&] {
+				for(const auto& provider : system_providers) {
+					provider->pre_exec_system_impl(ctx, names);
+				}
+
+				context_init_provider
+					->pre_exec_system_impl_context_init(ctx, names, context_type_name);
+
+				ecsact::rt_entt_codegen::core::print_child_systems(
+					ctx,
+					names,
+					sys_like_id
+				);
+
+				auto result =
+					std::ranges::find_if(system_providers, [&](auto provider) {
+						return provider->system_impl(ctx, names) ==
+							handle_exclusive_provide::HANDLED;
+					});
+
+				if(result == system_providers.end()) {
+					throw std::logic_error("system_impl was not handled by providers");
+				}
+
+				for(const auto& provider : system_providers) {
+					provider->post_exec_system_impl(ctx, names);
+				}
+
+				ctx.write("\n");
+			});
+			if(result == handle_exclusive_provide::HANDLED) {
+				break;
+			}
+		}
+	});
 
 	for(const auto& provider : system_providers) {
 		provider->post_iteration(ctx, names);
@@ -541,7 +573,11 @@ static auto print_execute_system_template_specialization(
 		">();\n"
 	);
 
-	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+	auto child_ids = ecsact::meta::get_child_system_ids(system_id);
+	if(child_ids.empty()) {
+		block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+		ctx.write("\n");
+	}
 
 	print_execute_systems(
 		ctx,
@@ -591,7 +627,11 @@ static auto print_execute_actions_template_specialization(
 		">();\n"
 	);
 
-	block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+	auto child_ids = ecsact::meta::get_child_system_ids(action_id);
+	if(child_ids.empty()) {
+		block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
+		ctx.write("\n");
+	}
 
 	ctx.write(
 		"auto actions = actions_map.as_action_span<",

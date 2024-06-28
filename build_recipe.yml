@@ -2,8 +2,8 @@ name: RT EnTT Recipe
 
 sources:
   - codegen:
-      - ../ecsact_lang_cpp~/cpp_header_codegen/ecsact_cpp_header_codegen
-      - ../ecsact_rt_entt~/rt_entt_codegen/ecsact_rt_entt_codegen
+      - cpp_header
+      - bazel-bin/rt_entt_codegen/ecsact_rt_entt_codegen
     outdir: _rt_entt_codegen_outdir
   # entt
   - fetch: https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entt.hpp
