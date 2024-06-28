@@ -1,10 +1,30 @@
 #include "gtest/gtest.h"
 
+#include <atomic>
 #include "entt/entt.hpp"
 #include "ecsact/runtime/core.hh"
+#include "ecsact/runtime/dynamic.h"
 #include "assoc_test.ecsact.hh"
+#include "assoc_test.ecsact.systems.hh"
 
 using namespace assoc_test;
+
+#define SET_SYSTEM_IMPL(SystemName)                        \
+	ASSERT_TRUE(ecsact_set_system_execution_impl(            \
+		ecsact_id_cast<ecsact_system_like_id>(SystemName::id), \
+		&assoc_test__##SystemName                              \
+	))
+#define CLEAR_SYSTEM_IMPL(SystemName)                      \
+	ASSERT_TRUE(ecsact_set_system_execution_impl(            \
+		ecsact_id_cast<ecsact_system_like_id>(SystemName::id), \
+		nullptr                                                \
+	))
+
+static std::atomic_int FieldAssocSystem_exec_count = 0;
+
+auto FieldAssocSystem::impl(context& ctx) -> void {
+	FieldAssocSystem_exec_count += 1;
+}
 
 TEST(Assoc, EnttSanityChecks) {
 	using namespace entt::literals;
@@ -100,4 +120,31 @@ TEST(AssocCore, FieldAssoc) {
 	reg.remove_component<FieldAssoc>(entity1, 9);
 	ASSERT_FALSE(reg.has_component<FieldAssoc>(entity1, 9));
 	ASSERT_TRUE(reg.has_component<FieldAssoc>(entity1, 11));
+}
+
+TEST(AssocCore, FieldAssocExecutionCount) {
+	SET_SYSTEM_IMPL(FieldAssocSystem);
+
+	auto reg = ecsact::core::registry{"FieldAssocExecutionCount"};
+
+	auto entity1 = reg.create_entity();
+	auto entity2 = reg.create_entity();
+
+	reg.add_component(entity1, FieldAssoc{10, 22});
+	reg.add_component(entity1, FieldAssoc{11, 30});
+	reg.add_component(entity1, FieldAssoc{16, 48});
+
+	reg.execute_systems();
+	EXPECT_EQ(FieldAssocSystem_exec_count, 0);
+	FieldAssocSystem_exec_count = 0;
+
+	reg.add_component(entity2, FieldAssoc{10, 55});
+	reg.add_component(entity2, A{57});
+
+	__debugbreak();
+	reg.execute_systems();
+	EXPECT_EQ(FieldAssocSystem_exec_count, 1);
+	FieldAssocSystem_exec_count = 0;
+
+	CLEAR_SYSTEM_IMPL(FieldAssocSystem);
 }

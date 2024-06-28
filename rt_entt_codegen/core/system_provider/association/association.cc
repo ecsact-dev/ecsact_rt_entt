@@ -81,6 +81,30 @@ static auto push_back_unique(auto& vec, const auto& element) -> void {
 	}
 }
 
+auto provider::association::before_make_view_or_group(
+	codegen_plugin_context&   ctx,
+	const common_vars&        names,
+	std::vector<std::string>& additional_view_components
+) -> void {
+	// for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+	// 	auto assoc_caps =
+	// 		ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
+	// 	auto assoc_system_details =
+	// 		ecsact_entt_system_details::from_capabilities(assoc_caps);
+	//
+	// 	for(auto compo_id : assoc_composites.at(assoc_id)) {
+	// 		// TODO: At the time of writing this is safe. It's very possible we
+	// 		// allow actions to be referenecd in association fields in the near
+	// 		// future and at that point this must be addressed.
+	// 		auto comp_like_id = static_cast<ecsact_component_like_id>(compo_id);
+	// 		if(!assoc_system_details.get_comps.contains(comp_like_id)) {
+	// 			auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_like_id));
+	// 			push_back_unique(additional_view_components, comp_cpp_ident);
+	// 		}
+	// 	}
+	// }
+}
+
 auto provider::association::after_make_view_or_group(
 	codegen_plugin_context& ctx,
 	const common_vars&      names
@@ -104,6 +128,9 @@ auto provider::association::entity_iteration(
 
 	block(ctx, "for(auto entity : view)", [&] {
 		for(auto assoc_id : assoc_ids) {
+			auto assoc_comp =
+				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+			auto assoc_comp_cpp_ident = cpp_identifier(decl_full_name(assoc_comp));
 			auto assoc_caps =
 				ecsact::meta::system_assoc_capabilities(sys_like_id, assoc_id);
 			auto assoc_system_details =
@@ -112,50 +139,41 @@ auto provider::association::entity_iteration(
 			make_view_opts.view_var_name = assoc_view_names.at(assoc_id);
 			make_view_opts.registry_var_name = names.registry_var_name;
 
-			for(auto compo_id : assoc_composites.at(assoc_id)) {
-				// TODO: At the time of writing this is safe. It's very possible we
-				// allow actions to be referenecd in association fields in the near
-				// future and at that point this must be addressed.
-				auto comp_like_id = static_cast<ecsact_component_like_id>(compo_id);
-				if(!assoc_system_details.get_comps.contains(comp_like_id)) {
-					auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_like_id));
-					push_back_unique(
-						make_view_opts.additional_components,
-						comp_cpp_ident
-					);
-				}
-			}
+			push_back_unique(
+				make_view_opts.additional_components,
+				assoc_comp_cpp_ident
+			);
 
 			util::make_view(ctx, make_view_opts);
 		}
 
 		print_other_contexts(ctx, names);
 
-		for(auto&& [assoc_id, compo_ids] : assoc_composites) {
-			for(auto compo_id : compo_ids) {
-				auto field_ids = assoc_fields.at(compo_id);
-				auto compo_cpp_ident = cpp_identifier(decl_full_name(compo_id));
+		for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+			auto assoc_comp_id =
+				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+			auto assoc_comp_cpp_ident = cpp_identifier(decl_full_name(assoc_comp_id));
+			auto assoc_comp_field_ids =
+				ecsact::meta::system_assoc_fields(sys_like_id, assoc_id);
 
-				ctx.write(std::format(
-					"{0}.storage({3}.storage<{1}>(static_cast<::entt::id_type>(::ecsact::"
-					"entt::detail::"
-					"hash_vals32({1}::"
-					"id, {2}))));\n",
-					assoc_view_names.at(assoc_id),
-					compo_cpp_ident,
-					util::comma_delim(
-						field_ids |
-						std::views::transform([&](auto field_id) -> std::string {
-							return std::format(
-								"view.get<{}>(entity).{}",
-								compo_cpp_ident,
-								ecsact::meta::field_name(compo_id, field_id)
-							);
-						})
-					),
-					names.registry_var_name
-				));
-			}
+			ctx.write(std::format(
+				"{0}.storage({1}.storage<{2}>(static_cast<::entt::id_type>("
+				"::ecsact::entt::detail::hash_vals32({2}::id, {3})"
+				")));\n",
+				assoc_view_names.at(assoc_id),
+				names.registry_var_name,
+				assoc_comp_cpp_ident,
+				util::comma_delim(
+					assoc_comp_field_ids |
+					std::views::transform([&](auto field_id) -> std::string {
+						return std::format(
+							"view.get<{}>(entity).{}",
+							assoc_comp_cpp_ident,
+							ecsact::meta::field_name(assoc_comp_id, field_id)
+						);
+					})
+				)
+			));
 		}
 
 		for(auto assoc_index = 0; assoc_ids.size() > assoc_index; ++assoc_index) {

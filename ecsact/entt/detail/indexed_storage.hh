@@ -1,10 +1,17 @@
 #pragma once
 
+#include <vector>
 #include "codegen_error.hh"
 #include "ecsact/entt/detail/registry.hh"
+#include "ecsact/entt/detail/assoc_fields_hash.hh"
 #include "ecsact/entt/detail/codegen_error.hh"
 
 namespace ecsact::entt::detail {
+
+template<typename C>
+struct multi_storage {
+	std::vector<assoc_hash_value_t> storage_hash_value_ids;
+};
 
 template<typename C>
 auto update_indexed_storage(ecsact::entt::registry_t& registry) -> void {

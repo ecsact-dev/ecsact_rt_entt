@@ -23,6 +23,12 @@ public:
 		std::function<void()>   iter_func
 	) -> handle_exclusive_provide final;
 
+	auto before_make_view_or_group(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names,
+		std::vector<std::string>&                         additional_view_components
+	) -> void final;
+
 	auto after_make_view_or_group(
 		codegen_plugin_context& ctx,
 		const common_vars&      names
