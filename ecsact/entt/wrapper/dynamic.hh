@@ -36,12 +36,8 @@ auto context_add(
 	} else if constexpr(C::has_assoc_fields) {
 		auto component = static_cast<const C*>(component_data);
 		auto assoc_fields_hash = get_assoc_fields_hash(*component);
-		registry.template storage<C>(assoc_fields_hash).emplace(entity, *component);
-		registry.template emplace<exec_beforechange_storage<C>>(
-			entity,
-			*component,
-			false
-		);
+		auto storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
+		registry.template storage<C>(storage_id).emplace(entity, *component);
 	} else {
 		const C* component = static_cast<const C*>(component_data);
 		registry.template emplace_or_replace<pending_add<C>>(entity, *component);

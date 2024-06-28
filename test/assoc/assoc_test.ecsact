@@ -3,4 +3,3 @@ main package assoc_test;
 component EntityAssoc { entity e; i32 n; }
 component Unique { i32 my_id; }
 component FieldAssoc { Unique.my_id unique_id; i32 num; }
-
