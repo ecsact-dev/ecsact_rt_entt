@@ -141,7 +141,6 @@ TEST(AssocCore, FieldAssocExecutionCount) {
 	reg.add_component(entity2, FieldAssoc{10, 55});
 	reg.add_component(entity2, A{57});
 
-	__debugbreak();
 	reg.execute_systems();
 	EXPECT_EQ(FieldAssocSystem_exec_count, 1);
 	FieldAssocSystem_exec_count = 0;

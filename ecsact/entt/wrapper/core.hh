@@ -10,6 +10,7 @@
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
 #include "ecsact/entt/detail/assoc_fields_hash.hh"
+#include "ecsact/entt/detail/indexed_storage.hh"
 
 namespace ecsact::entt::wrapper::core {
 
@@ -73,6 +74,7 @@ inline auto add_component( //
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data
 ) -> ecsact_add_error {
+	using ecsact::entt::detail::multi_assoc_storage;
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -92,6 +94,12 @@ inline auto add_component( //
 				ecsact::entt::detail::get_assoc_fields_hash(*comp);
 			auto storage_id = static_cast<::entt::id_type>(assoc_fields_hash);
 			reg.storage<C>(storage_id).emplace(entity, *comp);
+			if(!reg.all_of<multi_assoc_storage<C>>(entity)) {
+				reg.emplace<multi_assoc_storage<C>>(entity).ensure(assoc_fields_hash);
+			} else {
+				auto& multi_storage = reg.get<multi_assoc_storage<C>>(entity);
+				multi_storage.ensure(assoc_fields_hash);
+			}
 		} else {
 			auto comp = static_cast<const C*>(component_data);
 			reg.emplace<detail::exec_beforechange_storage<C>>(entity, *comp, false);

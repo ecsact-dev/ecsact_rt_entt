@@ -8,6 +8,12 @@ namespace ecsact::rt_entt_codegen::core::provider {
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
+auto context_view_storage_struct_impl( //
+	ecsact::codegen_plugin_context& ctx,
+	std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>
+		caps
+) -> void;
+
 auto context_action_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id

@@ -19,11 +19,51 @@ auto ecsact::rt_entt_codegen::util::make_view( //
 		".view<"
 	);
 
+	// components that may have multiple instances
+	auto multi_components = std::vector<ecsact_component_like_id>{};
+	auto is_multi_component = [&](auto id) {
+		auto itr = std::ranges::find( //
+			multi_components,
+			ecsact_id_cast<ecsact_component_like_id>(id)
+		);
+		return itr != multi_components.end();
+	};
+
+	if(!opts.without_multi_component_storage) {
+		for(auto assoc_info : opts.details.association_details) {
+			if(!is_multi_component(assoc_info.component_id)) {
+				multi_components.push_back(assoc_info.component_id);
+			}
+		}
+	}
+
+	auto exclude_multi_components = [&] {
+		return std::views::filter([&](auto id) -> bool {
+			return !is_multi_component(id);
+		});
+	};
+
 	ctx.write(comma_delim(
-		opts.details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
+		opts.details.get_comps | exclude_multi_components() |
+		transform(decl_cpp_ident<ecsact_component_like_id>)
 	));
 
-	for(auto comp_id : opts.details.writable_comps) {
+	if(!multi_components.empty() &&
+		 !(opts.details.get_comps | exclude_multi_components()).empty()) {
+		ctx.write(", ");
+	}
+
+	ctx.write(comma_delim(
+		multi_components | //
+		transform([](auto id) -> std::string {
+			return std::format(
+				"ecsact::entt::detail::multi_assoc_storage<{}>",
+				decl_cpp_ident(id)
+			);
+		})
+	));
+
+	for(auto comp_id : opts.details.writable_comps | exclude_multi_components()) {
 		auto comp_name = decl_cpp_ident(comp_id);
 
 		opts.additional_components.push_back(std::format(
@@ -79,7 +119,8 @@ auto ecsact::rt_entt_codegen::util::make_view( //
 		for(auto&& [compo_id, fields] : indexed_fields) {
 			auto compo_name = cpp_identifier(decl_full_name(compo_id));
 			auto hash_fields_str = std::format(
-				"::ecsact::entt::detail::hash_vals32(static_cast<int32_t>({}::id), {})",
+				"::ecsact::entt::detail::hash_vals32(static_cast<int32_t>({}::id), "
+				"{})",
 				compo_name,
 				comma_delim(std::views::transform(
 					fields,

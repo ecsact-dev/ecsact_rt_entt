@@ -9,8 +9,22 @@
 namespace ecsact::entt::detail {
 
 template<typename C>
-struct multi_storage {
+struct multi_assoc_storage {
 	std::vector<assoc_hash_value_t> storage_hash_value_ids;
+
+	auto ensure(assoc_hash_value_t id) -> void {
+		if(std::ranges::find(storage_hash_value_ids, id) ==
+			 storage_hash_value_ids.end()) {
+			storage_hash_value_ids.emplace_back(id);
+		}
+	}
+
+	auto erase(assoc_hash_value_t id) -> void {
+		auto itr = std::ranges::find(storage_hash_value_ids, id);
+		if(itr != storage_hash_value_ids.end()) {
+			storage_hash_value_ids.erase(itr);
+		}
+	}
 };
 
 template<typename C>

@@ -35,11 +35,13 @@ concept system_or_action =
 using ecsact::cc_lang_support::c_identifier;
 using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::cpp_codegen_plugin_util::block;
+using ecsact::cpp_codegen_plugin_util::block_printer;
 using ecsact::cpp_codegen_plugin_util::comma_delim;
 using ecsact::meta::decl_full_name;
 using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 using ecsact::rt_entt_codegen::system_comps_with_caps;
 using ecsact::rt_entt_codegen::system_like_id_variant;
+using ecsact::rt_entt_codegen::core::provider::context_view_storage_struct_impl;
 using ecsact::rt_entt_codegen::core::provider::handle_exclusive_provide;
 using ecsact::rt_entt_codegen::core::provider::system_provider;
 using ecsact::rt_entt_codegen::system_util::is_trivial_system;
@@ -316,9 +318,12 @@ static auto print_system_execution_context(
 		"struct {}: ecsact_system_execution_context ",
 		context_type_name
 	);
+	auto system_capabilities =
+		ecsact::meta::system_capabilities_list(sys_like_id);
 
 	block(ctx, struct_header, [&] {
 		ctx.write("view_t* view;\n");
+		context_view_storage_struct_impl(ctx, system_capabilities);
 
 		for(const auto& provider : system_providers) {
 			provider->context_function_header(ctx, names);
@@ -388,18 +393,56 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 	return system_providers;
 }
 
+static auto get_assoc_comps( //
+	system_like_id_variant sys_like_id
+) -> std::vector<ecsact_component_like_id> {
+	auto assoc_comps = std::vector<ecsact_component_like_id>{};
+	for(auto assoc_id : ecsact::meta::system_assoc_ids(sys_like_id)) {
+		auto assoc_comp_id =
+			ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
+		if(std::ranges::find(assoc_comps, assoc_comp_id) == assoc_comps.end()) {
+			assoc_comps.push_back(assoc_comp_id);
+		}
+	}
+
+	return assoc_comps;
+}
+
 static auto print_execute_systems(
 	ecsact::codegen_plugin_context& ctx,
 	system_like_id_variant          sys_like_id,
 	const common_vars               names
 ) -> void {
+	auto assoc_comps = get_assoc_comps(sys_like_id);
+	auto assoc_view_block = std::optional<block_printer>{};
+
+	// if(!assoc_comps.empty()) {
+	// 	ctx.write(std::format(
+	// 		"auto assoc_multi_storage_view = {}.view<{}>();\n",
+	// 		names.registry_var_name,
+	// 		comma_delim(
+	// 			assoc_comps | std::views::transform([](auto comp_id) -> std::string {
+	// 				auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_id));
+	// 				return std::format(
+	// 					"ecsact::entt::detail::multi_assoc_storage<{}>",
+	// 					comp_cpp_ident
+	// 				);
+	// 			})
+	// 		)
+	// 	));
+	//
+	// 	ctx.write("for(auto assoc_multi_entity : assoc_multi_storage_view)");
+	// 	assoc_view_block.emplace(ctx);
+	// }
+
 	auto sys_caps = ecsact::meta::system_capabilities(sys_like_id);
 	auto system_providers = setup_system_providers(sys_like_id);
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 	auto make_view_opts = make_view_options(sys_details);
 	make_view_opts.registry_var_name = names.registry_var_name;
-	make_view_opts.view_var_name = "view";
 	make_view_opts.sys_like_id = sys_like_id;
+	make_view_opts.without_multi_component_storage = false;
+	make_view_opts.view_var_name = "view";
 
 	for(const auto& provider : system_providers) {
 		provider->initialization(ctx, names);

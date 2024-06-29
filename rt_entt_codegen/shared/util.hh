@@ -278,6 +278,7 @@ struct make_view_options {
 	std::vector<std::string>              additional_components;
 	std::vector<std::string>              additional_exclude_components;
 	std::optional<system_like_id_variant> sys_like_id;
+	bool                                  without_multi_component_storage;
 
 	const ecsact_entt_system_details& details;
 

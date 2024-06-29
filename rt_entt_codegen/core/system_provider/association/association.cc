@@ -119,6 +119,47 @@ auto provider::association::context_function_other(
 	return HANDLED;
 }
 
+template<typename CompositeID>
+static auto get_assoc_fields(CompositeID compo_id
+) -> std::vector<ecsact_field_id> {
+	auto result = std::vector<ecsact_field_id>{};
+
+	for(auto field_id : ecsact::meta::get_field_ids(compo_id)) {
+		auto field_type = ecsact::meta::get_field_type(compo_id, field_id);
+		if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
+			 field_type.type.builtin == ECSACT_ENTITY_TYPE) {
+			result.push_back(field_id);
+		}
+
+		if(field_type.kind == ECSACT_TYPE_KIND_FIELD_INDEX) {
+			result.push_back(field_id);
+		}
+	}
+
+	return result;
+}
+
+static auto has_assoc_fields(ecsact::rt_entt_codegen::system_like_id_variant id
+) -> bool {
+	for(auto&& [comp_id, _] : ecsact::meta::system_capabilities_list(id)) {
+		if(!get_assoc_fields(comp_id).empty()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static auto get_first_assoc_comp(
+	ecsact::rt_entt_codegen::system_like_id_variant id
+) -> std::optional<ecsact_component_like_id> {
+	for(auto&& [comp_id, _] : ecsact::meta::system_capabilities_list(id)) {
+		if(!get_assoc_fields(comp_id).empty()) {
+			return comp_id;
+		}
+	}
+	return {};
+}
+
 auto provider::association::entity_iteration(
 	codegen_plugin_context& ctx,
 	const common_vars&      names,
@@ -126,7 +167,26 @@ auto provider::association::entity_iteration(
 ) -> handle_exclusive_provide {
 	auto assoc_ids = ecsact::meta::system_assoc_ids(sys_like_id);
 
+	auto assoc_multi_view_block =
+		std::optional<cpp_codegen_plugin_util::block_printer>{};
 	block(ctx, "for(auto entity : view)", [&] {
+		if(has_assoc_fields(sys_like_id)) {
+			ctx.write(std::format( //
+				"for(auto storage_id : "
+				"view.get<ecsact::entt::detail::multi_assoc_storage<{}>>(entity)."
+				"storage_hash_value_ids)",
+				cpp_identifier(decl_full_name(get_first_assoc_comp(sys_like_id).value())
+				)
+			));
+			assoc_multi_view_block.emplace(ctx);
+			ctx.write(std::format(
+				"context.storage.c{} = &registry.storage<{}>(storage_id);",
+				static_cast<int>(get_first_assoc_comp(sys_like_id).value()),
+				cpp_identifier(decl_full_name(get_first_assoc_comp(sys_like_id).value())
+				)
+			));
+		}
+
 		for(auto assoc_id : assoc_ids) {
 			auto assoc_comp =
 				ecsact::meta::system_assoc_component_id(sys_like_id, assoc_id);
@@ -167,8 +227,8 @@ auto provider::association::entity_iteration(
 					assoc_comp_field_ids |
 					std::views::transform([&](auto field_id) -> std::string {
 						return std::format(
-							"view.get<{}>(entity).{}",
-							assoc_comp_cpp_ident,
+							"context.storage.c{}->get(entity).{}",
+							static_cast<int>(assoc_comp_id),
 							ecsact::meta::field_name(assoc_comp_id, field_id)
 						);
 					})
@@ -264,6 +324,7 @@ auto provider::association::print_other_contexts(
 			using std::views::transform;
 
 			ctx.write(std::format("{}_t* view;\n", assoc_view_names.at(assoc_id)));
+			context_view_storage_struct_impl(ctx, assoc_caps);
 			ctx.write("\n");
 			print_other_ctx_action(ctx);
 			print_other_ctx_add(
@@ -297,6 +358,16 @@ auto provider::association::print_other_contexts(
 		ctx.write(struct_name, " ", context_name, ";\n\n");
 
 		ctx.write(context_name, ".view = &", assoc_view_names.at(assoc_id), ";\n");
+		for(auto&& [comp_id, _] : assoc_caps) {
+			auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_id));
+			ctx.write(std::format(
+				"{}.storage.c{} = {}.storage<{}>();\n",
+				context_name,
+				static_cast<int>(comp_id),
+				assoc_view_names.at(assoc_id),
+				comp_cpp_ident
+			));
+		}
 		ctx.write(context_name, ".parent_ctx = nullptr;\n\n");
 		ctx.write(context_name, ".registry = &", names.registry_var_name, ";\n");
 	}

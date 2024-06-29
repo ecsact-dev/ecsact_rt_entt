@@ -5,10 +5,10 @@ component Unique { i32 my_id; }
 component FieldAssoc { Unique.my_id unique_id; i32 num; }
 
 component A { i32 a; }
+component B;
 
 system FieldAssocSystem {
-	readonly FieldAssoc with unique_id {
-		readwrite A;
-	}
+	readonly FieldAssoc;
+	adds B;
 }
 

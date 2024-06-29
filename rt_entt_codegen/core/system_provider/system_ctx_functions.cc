@@ -10,6 +10,25 @@ using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::meta::decl_full_name;
 using ecsact::rt_entt_codegen::util::is_transient_component;
 
+auto ecsact::rt_entt_codegen::core::provider::context_view_storage_struct_impl(
+	ecsact::codegen_plugin_context& ctx,
+	std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>
+		system_caps
+) -> void {
+	block(ctx, "struct", [&] {
+		for(auto i = 0; system_caps.size() > i; ++i) {
+			auto comp_id = system_caps.at(i).first;
+			auto comp_cpp_ident = cpp_identifier(decl_full_name(comp_id));
+			ctx.write(std::format(
+				"::entt::basic_storage<{}>* c{} = nullptr;\n",
+				comp_cpp_ident,
+				static_cast<int>(comp_id)
+			));
+		}
+	});
+	ctx.write(" storage;\n");
+}
+
 auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id
@@ -184,13 +203,12 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 			cpp_comp_full_name,
 			"::id) == component_id);\n"
 		);
-		ctx.write(
-			"*static_cast<::",
+		ctx.write(std::format(
+			"*static_cast<::{}*>(out_component_data) = "
+			"storage.c{}->get(entity);",
 			cpp_comp_full_name,
-			"*>(out_component_data) = view->get<::",
-			cpp_comp_full_name,
-			">(entity);"
-		);
+			static_cast<int>(comp_id)
+		));
 		return;
 	}
 
