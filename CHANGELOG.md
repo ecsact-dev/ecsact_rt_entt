@@ -2,6 +2,42 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.3 - 2024-07-02
+#### Bug Fixes
+- generate add events not calling, parent trivial systems children systems not running (#136) - (4d596c3) - Austin Kelway
+- dynamic view gets (#123) - (f45ca6c) - Austin Kelway
+- proper internal comparor (#121) - (39b0505) - Ezekiel Warren
+- generates missing internal sorting (#115) - (e4440d3) - Ezekiel Warren
+- update events happening too often (#119) - (fa98277) - Ezekiel Warren
+- generates invalid callback (#113) - (5ed2115) - Ezekiel Warren
+- entity created callback called too often (#111) - (f5b8693) - Ezekiel Warren
+#### Features
+- respect parallel system parameter (#127) - (9845dd5) - Ezekiel Warren
+- new assoc api placeholder (#139) - (4cdd656) - Ezekiel Warren
+- parallel entities (#129) - (10c39a7) - Austin Kelway
+- parallel execution (#124) - (dee2b1e) - Austin Kelway
+- adding onchange for systems (#114) - (eff4582) - Austin Kelway
+- add reactive systems with init, update and remove as initial features (#110) - (5223bcf) - Austin Kelway
+- add ecsact bazel build recipe (#104) - (f0484dc) - Ezekiel Warren
+- enable all features with ecsact build (#105) - (b1ce5cc) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update rules_ecsact to 0.5.2 (#107) - (effe481) - Ezekiel Warren
+- **(deps)** update dependency googletest to v1.14.0.bcr.1 (#103) - (1730aca) - renovate[bot]
+- **(deps)** update dependency bazel_skylib to v1.6.1 (#98) - (c781778) - renovate[bot]
+- **(deps)** update dependency bazel to v7.1.2 (#99) - (280a007) - renovate[bot]
+- sync with ecsact_common (#137) - (7bda631) - seaubot
+- sync with ecsact_common (#135) - (c46a61c) - seaubot
+- sync with ecsact_common (#112) - (f946a24) - seaubot
+- exception for renovate bot (#133) - (01155ad) - Ezekiel Warren
+- system providers (#126) - (d324920) - Austin Kelway
+- Cleanup print_sys_exec (#125) - (6a5d6fc) - Austin Kelway
+- add some convenient system impl macros - (0f71d39) - Ezekiel Warren
+- sync with ecsact_common (#109) - (09e842e) - seaubot
+- faster ci with conditionals (#108) - (3dba899) - Ezekiel Warren
+- faster ci + no lock file (#106) - (28bf8e7) - Ezekiel Warren
+
+- - -
+
 ## 0.3.2 - 2024-05-13
 #### Features
 - add build recipe and tests (#100) - (2fb7f19) - Austin Kelway
