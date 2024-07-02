@@ -62,7 +62,7 @@ static auto print_sys_exec_ctx_action(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context action was not handled by providers");
+		ctx.fatal("INTERNAL: print context action was not handled by providers");
 	}
 }
 
@@ -83,7 +83,7 @@ static auto print_sys_exec_ctx_add(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context add was not handled by providers");
+		ctx.fatal("INTERNAL: print context add was not handled by providers");
 	}
 }
 
@@ -103,7 +103,7 @@ static auto print_sys_exec_ctx_remove(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context remove was not handled by providers");
+		ctx.fatal("INTERNAL: print context remove was not handled by providers");
 	}
 }
 
@@ -124,7 +124,7 @@ static auto print_sys_exec_ctx_get(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context get was not handled by providers");
+		ctx.fatal("INTERNAL: print context get was not handled by providers");
 	}
 }
 
@@ -145,7 +145,7 @@ static auto print_sys_exec_ctx_update(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context update was not handled by providers");
+		ctx.fatal("INTERNAL: print context update was not handled by providers");
 	}
 }
 
@@ -165,7 +165,7 @@ static auto print_sys_exec_ctx_has(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context has was not handled by providers");
+		ctx.fatal("INTERNAL: print context has was not handled by providers");
 	}
 }
 
@@ -187,8 +187,7 @@ static auto print_sys_exec_ctx_generate(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context generate was not handled by providers"
-		);
+		ctx.fatal("INTERNAL: print context generate was not handled by providers");
 	}
 }
 
@@ -207,7 +206,7 @@ static auto print_sys_exec_ctx_parent( //
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context parent was not handled by providers");
+		ctx.fatal("INTERNAL: print context parent was not handled by providers");
 	}
 }
 
@@ -218,7 +217,7 @@ auto print_sys_exec_ctx_other(
 ) -> void {
 	auto printer = //
 		method_printer{ctx, "other"}
-			.parameter("ecsact_entity_id", "entity")
+			.parameter("ecsact_system_assoc_id", "assoc_id")
 			.return_type("ecsact_system_execution_context* final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -227,7 +226,7 @@ auto print_sys_exec_ctx_other(
 	});
 
 	if(result == system_providers.end()) {
-		throw std::logic_error("print context other was not handled by providers");
+		ctx.fatal("INTERNAL: print context other was not handled by providers");
 	}
 }
 
@@ -353,10 +352,6 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 		system_providers.push_back(std::make_shared<lazy>(sys_like_id));
 	}
 
-	if(!sys_details.association_details.empty()) {
-		system_providers.push_back(std::make_shared<association>(sys_like_id));
-	}
-
 	if(can_entities_parallel(sys_like_id)) {
 		system_providers.push_back(std::make_shared<parallel>(sys_like_id));
 	}
@@ -443,7 +438,7 @@ static auto print_execute_systems(
 						});
 
 					if(result == system_providers.end()) {
-						throw std::logic_error("system_impl was not handled by providers");
+						ctx.fatal("INTERNAL: system_impl was not handled by providers");
 					}
 				}
 

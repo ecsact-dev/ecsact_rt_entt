@@ -109,7 +109,8 @@ ecsact_add_error ecsact_add_component(
 bool ecsact_has_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id
+	ecsact_component_id component_id,
+	...
 ) {
 	using ecsact::entt::detail::globals::has_component_fns;
 	auto fn_itr = has_component_fns.find(component_id);
@@ -120,7 +121,8 @@ bool ecsact_has_component(
 const void* ecsact_get_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id
+	ecsact_component_id component_id,
+	...
 ) {
 	using ecsact::entt::detail::globals::get_component_fns;
 	auto fn_itr = get_component_fns.find(component_id);
@@ -195,7 +197,8 @@ ecsact_update_error ecsact_update_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	const void*         component_data
+	const void*         component_data,
+	...
 ) {
 	using ecsact::entt::detail::globals::update_component_fns;
 	auto fn_itr = update_component_fns.find(component_id);
@@ -206,7 +209,8 @@ ecsact_update_error ecsact_update_component(
 void ecsact_remove_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id
+	ecsact_component_id component_id,
+	...
 ) {
 	using ecsact::entt::detail::globals::remove_component_fns;
 	auto fn_itr = remove_component_fns.find(component_id);

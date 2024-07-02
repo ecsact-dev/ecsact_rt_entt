@@ -7,13 +7,6 @@
 
 namespace ecsact::rt_entt_codegen {
 
-struct association_info {
-	ecsact_component_like_id component_id;
-	ecsact_field_id          field_id;
-	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
-		capabilities;
-};
-
 struct other_key {
 	ecsact_component_like_id component_like_id;
 	ecsact_field_id          field_id;
@@ -23,8 +16,6 @@ struct other_key {
 
 using generate_t =
 	std::vector<std::unordered_map<ecsact_component_id, ecsact_system_generate>>;
-
-using association_t = std::vector<association_info>;
 
 struct ecsact_entt_system_details {
 	/** Components/transients included in EnTT view/group */
@@ -44,9 +35,6 @@ struct ecsact_entt_system_details {
 
 	/** Components this system is allowed to remove */
 	std::unordered_set<ecsact_component_like_id> removable_comps;
-
-	/** Components with an entity association*/
-	association_t association_details;
 
 	/** A map containing this system's generated component ids and its
 	 * requirements*/

@@ -196,7 +196,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 
 	ctx.write(std::format(
 		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, void *, {}_t&);\n",
+		"ecsact_component_like_id, void *, {}_t&, ...);\n",
 		view_type_name
 	));
 
@@ -394,18 +394,4 @@ auto ecsact::rt_entt_codegen::core::provider::context_other_impl(
 	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
-	if(details.association_details.size() == 0) {
-		// TODO(Kelwan): Handle undefined behaviour
-		// Attempt to access other without association
-
-		ctx.write("return nullptr;\n");
-		return;
-	}
-
-	ctx.write(
-		"if(other_contexts.contains(entity)) {\n",
-		"return other_contexts.at(entity);\n}\n"
-	);
-
-	ctx.write("return nullptr;\n");
 }

@@ -14,7 +14,6 @@
 #include "runtime_test.ecsact.systems.hh"
 
 using runtime_test::ComponentA;
-using runtime_test::OtherEntityComponent;
 
 #define SET_SYSTEM_IMPL(SystemName)                                      \
 	ASSERT_TRUE(ecsact_set_system_execution_impl(                          \
@@ -31,17 +30,6 @@ void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
 	comp.a += 2;
 	ctx.update(comp);
-}
-
-void runtime_test::OtherEntitySystem::impl(context& ctx) {
-	auto comp = ctx.get<OtherEntityComponent>();
-	auto other = ctx._ctx.other(comp.target);
-	auto other_comp = other.get<ComponentA>();
-
-	comp.num += -other_comp.a;
-
-	ctx.update(comp);
-	other.update(other_comp);
 }
 
 void runtime_test::MakeAnother::impl(context& ctx) {
@@ -79,33 +67,6 @@ void imported::test_pkg::ImportedSystem::impl(context& ctx) {
 	auto incrementer = ctx.get<Incrementer>();
 	comp.local_num += incrementer.increment_value;
 	ctx.update(comp);
-}
-
-static std::atomic_bool AssocTestAction_ran = false;
-
-void runtime_test::AssocTestAction::impl(context& ctx) {
-	AssocTestAction_ran = true;
-	ctx.add(OtherEntityComponent{
-		.num = 42,
-		.target = ctx.action().assoc_entity,
-	});
-}
-
-void runtime_test::AttackDamage::impl(context& ctx) {
-	// auto attacking = ctx.get<Attacking>();
-	// auto target_ctx = ctx._ctx.other(attacking.target);
-	// auto target_health = target_ctx.get<Health>();
-	// target_health.value -= 1.f;
-	// target_ctx.update(target_health);
-}
-
-void runtime_test::AttackDamageWeakened::impl(context& ctx) {
-	// auto attacking = ctx.get<Attacking>();
-	// auto target_ctx = ctx._ctx.other(attacking.target);
-	// auto target_health = target_ctx.get<Health>();
-	// auto target_weakened = target_ctx.get<Weakened>();
-	// target_health.value -= 1.f * target_weakened.value;
-	// target_ctx.update(target_health);
 }
 
 void runtime_test::AddsAutoRemovedTag::impl(context& ctx) {
@@ -148,29 +109,6 @@ auto runtime_test::LazyUpdateGeneratedEntity::impl(context& ctx) -> void {
 	auto comp = ctx.get<ComponentA>();
 	comp.a += 1;
 	ctx.update(comp);
-}
-
-static std::atomic_bool AddAssocTest_ran = false;
-
-void runtime_test::AddAssocTest::impl(context& ctx) {
-	AddAssocTest_ran = true;
-	auto other_entity = ctx.get<OtherEntityComponent>();
-
-	// Get Target other context from OtherEntityComponent
-	auto target_ctx = ctx._ctx.other(other_entity.target);
-	assert(target_ctx._ctx != nullptr);
-	target_ctx.add(AddAssocTestComponent{.num = 10});
-}
-
-static std::atomic_bool RemoveAssocTest_ran = false;
-
-void runtime_test::RemoveAssocTest::impl(context& ctx) {
-	RemoveAssocTest_ran = true;
-	auto other_entity = ctx.get<OtherEntityComponent>();
-
-	// Get Target other context from OtherEntityComponent
-	auto target_ctx = ctx._ctx.other(other_entity.target);
-	target_ctx.remove<RemoveAssocTestComponent>();
 }
 
 void runtime_test::TestTwoAdds::impl(context& ctx) {
@@ -317,24 +255,6 @@ TEST(Core, AddComponent) {
 	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
 }
 
-TEST(Core, AddComponentError) {
-	auto             reg = ecsact::core::registry("AddComponentError");
-	auto             entity = reg.create_entity();
-	ecsact_entity_id invalid_entity =
-		static_cast<ecsact_entity_id>((int)entity + 1);
-
-	OtherEntityComponent comp{.num = 42, .target = invalid_entity};
-
-	auto add_err = reg.add_component(entity, comp);
-	// We tried to add a component with an invalid entity ID. We should get an
-	// invalid entity error.
-	EXPECT_EQ(add_err, ECSACT_ADD_ERR_ENTITY_INVALID);
-
-	// When we receive an error when adding a component our component will not
-	// be added to the registry.
-	EXPECT_FALSE(reg.has_component<OtherEntityComponent>(entity));
-}
-
 TEST(Core, HasComponent) {
 	auto reg_id = ecsact_create_registry("HasComponent");
 	auto entity = ecsact_create_entity(reg_id);
@@ -377,27 +297,6 @@ TEST(Core, UpdateComponent) {
 	);
 
 	EXPECT_EQ(*comp_get, upped_comp);
-}
-
-TEST(Core, UpdateComponentError) {
-	auto             reg = ecsact::core::registry("UpdateComponentError");
-	auto             entity = reg.create_entity();
-	auto             other_entity = reg.create_entity();
-	ecsact_entity_id invalid_entity =
-		static_cast<ecsact_entity_id>((int)other_entity + 1);
-
-	OtherEntityComponent comp{.num = 42, .target = other_entity};
-
-	auto add_err = reg.add_component(entity, comp);
-	ASSERT_EQ(add_err, ECSACT_ADD_OK);
-
-	comp.num = 43;
-	comp.target = invalid_entity;
-	auto update_err = reg.update_component(entity, comp);
-
-	// We tried to update the component with an invalid entity ID. We should get
-	// an invalid entity error.
-	EXPECT_EQ(update_err, ECSACT_UPDATE_ERR_ENTITY_INVALID);
 }
 
 TEST(Core, RemoveComponent) {
@@ -496,272 +395,20 @@ TEST(Core, EventCollector) {
 	}
 }
 
-TEST(Core, ExecuteSystemsErrors) {
-	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
-	auto options = ecsact::core::execution_options{};
-	auto test_action = runtime_test::AssocTestAction{
-		.assoc_entity = static_cast<ecsact_entity_id>(4000),
-	};
-	options.push_action(&test_action);
-
-	auto exec_err = reg.execute_systems(std::array{options});
-
-	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID);
-}
-
-TEST(Core, ExecuteSystemsAssocActionOk) {
-	auto reg = ecsact::core::registry("ExecuteSystemsErrors");
-	auto test_entity = reg.create_entity();
-
-	auto options = ecsact::core::execution_options{};
-	auto test_action = runtime_test::AssocTestAction{
-		.assoc_entity = test_entity,
-	};
-
-	options.push_action(&test_action);
-
-	auto exec_err = reg.execute_systems(std::array{options});
-	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
-}
-
-TEST(Core, AddAssocOk) {
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AssocTestAction::id),
-		&runtime_test__AssocTestAction
-	);
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AddAssocTest::id),
-		&runtime_test__AddAssocTest
-	);
-
-	auto reg = ecsact::core::registry("AddAssocOk");
-	auto test_entity1 = reg.create_entity();
-	reg.add_component(
-		test_entity1,
-		runtime_test::ComponentA{
-			.a = 42,
-		}
-	);
-
-	auto test_entity2 = reg.create_entity();
-	reg.add_component<runtime_test::AddAssocTestTag>(test_entity2);
-
-	auto options = ecsact::core::execution_options{};
-	auto test_action = runtime_test::AssocTestAction{
-		.assoc_entity = test_entity2,
-	};
-
-	options.push_action(&test_action);
-	AddAssocTest_ran = false;
-	AssocTestAction_ran = false;
-	auto exec_err = reg.execute_systems(std::array{options});
-	EXPECT_TRUE(AddAssocTest_ran) << "AddAssocTest Impl Didn't Execute";
-	EXPECT_TRUE(AssocTestAction_ran) << "AssocTestAction Impl Didn't Execute";
-	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
-
-	exec_err = ecsact_execute_systems(reg.id(), 1, nullptr, nullptr);
-	EXPECT_EQ(exec_err, ECSACT_EXEC_SYS_OK);
-}
-
-TEST(Core, RemoveAssocOk) {
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::AssocTestAction::id),
-		&runtime_test__AssocTestAction
-	);
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::RemoveAssocTest::id),
-		&runtime_test__RemoveAssocTest
-	);
-
-	auto reg = ecsact::core::registry("RemoveAssocOk");
-	auto test_entity2 = reg.create_entity();
-	reg.add_component<runtime_test::RemoveAssocTestTag>(test_entity2);
-	reg.add_component(
-		test_entity2,
-		runtime_test::RemoveAssocTestComponent{
-			.num = 42,
-		}
-	);
-
-	auto test_entity1 = reg.create_entity();
-	reg.add_component(
-		test_entity1,
-		runtime_test::OtherEntityComponent{
-			.target = test_entity2,
-		}
-	);
-
-	auto test_entity3 = reg.create_entity();
-	reg.add_component(
-		test_entity3,
-		runtime_test::OtherEntityComponent{
-			.target = test_entity2,
-		}
-	);
-
-	RemoveAssocTest_ran = false;
-	reg.execute_systems();
-	EXPECT_TRUE(RemoveAssocTest_ran) << "RemoveAssocTest Impl Didn't Executed";
-
-	ASSERT_FALSE(
-		reg.has_component<runtime_test::RemoveAssocTestComponent>(test_entity2)
-	);
-
-	reg.execute_systems();
-
-	reg.add_component(
-		test_entity2,
-		runtime_test::RemoveAssocTestComponent{
-			.num = 42,
-		}
-	);
-
-	reg.execute_systems();
-
-	ASSERT_FALSE(
-		reg.has_component<runtime_test::RemoveAssocTestComponent>(test_entity2)
-	);
-}
-
-TEST(Core, AssociationEntityCorrectness) {
-	using runtime_test::AttackDamage;
-	using runtime_test::AttackDamageWeakened;
-
-	static auto reg = ecsact::core::registry("AssociationEntityCorrectness");
-	static auto attacker_entities = std::unordered_set{
-		reg.create_entity(),
-		reg.create_entity(),
-		reg.create_entity(),
-	};
-	static auto weakened_target_entities = std::unordered_set{
-		reg.create_entity(),
-		reg.create_entity(),
-	};
-	static auto target_entities = std::unordered_set{
-		reg.create_entity(),
-	};
-
-	static auto all_target_entities = []() {
-		std::unordered_set all_target_entities(
-			weakened_target_entities.begin(),
-			weakened_target_entities.end()
-		);
-		all_target_entities.insert(target_entities.begin(), target_entities.end());
-		return all_target_entities;
-	}();
-
-	for(auto target : all_target_entities) {
-		ASSERT_EQ(
-			ECSACT_ADD_OK,
-			reg.add_component(target, runtime_test::Health{0.5f})
-		);
-	}
-
-	for(auto target : weakened_target_entities) {
-		ASSERT_EQ(
-			ECSACT_ADD_OK,
-			reg.add_component(target, runtime_test::Weakened{0.5f})
-		);
-	}
-
-	{
-		assert(attacker_entities.size() == all_target_entities.size());
-		auto attacker_itr = attacker_entities.begin();
-		auto target_itr = all_target_entities.begin();
-		for(; attacker_itr != attacker_entities.end();
-				++attacker_itr, ++target_itr) {
-			ASSERT_EQ(
-				ECSACT_ADD_OK,
-				reg.add_component(*attacker_itr, runtime_test::Attacking{*target_itr})
-			);
-		}
-	}
-
-	auto print_attack_targets = [&] {
-		for(auto attacker : attacker_entities) {
-			auto attacking = reg.get_component<runtime_test::Attacking>(attacker);
-			std::cout << (int)attacker << " is attacking " << (int)attacking.target
-								<< "\n";
-		}
-	};
-
-	print_attack_targets();
-
-	static std::atomic_int attack_damage_exec_count = 0;
-	static std::atomic_int attack_damage_weakened_exec_count = 0;
-
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(AttackDamageWeakened::id),
-		[](ecsact_system_execution_context* cctx) {
-			++attack_damage_weakened_exec_count;
-			ecsact::execution_context ctx{cctx};
-			ASSERT_TRUE(attacker_entities.contains(ctx.entity()));
-			auto target_ctx = ctx.other(ctx.get<runtime_test::Attacking>().target);
-			ASSERT_TRUE(weakened_target_entities.contains(target_ctx.entity()));
-		}
-	);
-
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(AttackDamage::id),
-		[](ecsact_system_execution_context* cctx) {
-			++attack_damage_exec_count;
-			ecsact::execution_context ctx{cctx};
-			ASSERT_TRUE(attacker_entities.contains(ctx.entity()));
-
-			// Sanity check - no exception
-			ctx.other(ctx.get<runtime_test::Attacking>().target);
-		}
-	);
-
-	attack_damage_exec_count = 0;
-	attack_damage_weakened_exec_count = 0;
-	reg.execute_systems();
-	EXPECT_EQ(attack_damage_exec_count, all_target_entities.size());
-	EXPECT_EQ(attack_damage_weakened_exec_count, weakened_target_entities.size());
-
-	for(auto target_entity : target_entities) {
-		for(auto attack_entity : attacker_entities) {
-			reg.update_component(
-				attack_entity,
-				runtime_test::Attacking{target_entity}
-			);
-		}
-
-		attack_damage_exec_count = 0;
-		attack_damage_weakened_exec_count = 0;
-		reg.execute_systems();
-		EXPECT_EQ(attack_damage_exec_count, attacker_entities.size());
-	}
-}
-
 TEST(Core, DynamicSystemImpl) {
 	auto reg = ecsact::core::registry("DynamicSystemImpl");
 	auto entity = reg.create_entity();
-	auto other_entity = reg.create_entity();
 
 	ComponentA comp{.a = 42};
 	reg.add_component(entity, comp);
-	reg.add_component(other_entity, comp);
-
-	OtherEntityComponent other_comp{.num = 3, .target = other_entity};
-	ASSERT_EQ(reg.add_component(entity, other_comp), ECSACT_ADD_OK);
 
 	// Sanity check
 	ASSERT_TRUE(reg.has_component<ComponentA>(entity));
 	ASSERT_EQ(reg.get_component<ComponentA>(entity), comp);
-	ASSERT_TRUE(reg.has_component<ComponentA>(other_entity));
-	ASSERT_EQ(reg.get_component<ComponentA>(other_entity), comp);
-	ASSERT_TRUE(reg.has_component<OtherEntityComponent>(entity));
-	ASSERT_EQ(reg.get_component<OtherEntityComponent>(entity), other_comp);
 
 	ecsact_set_system_execution_impl(
 		ecsact_id_cast<ecsact_system_like_id>(runtime_test::SimpleSystem::id),
 		&runtime_test__SimpleSystem
-	);
-
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::OtherEntitySystem::id),
-		&runtime_test__OtherEntitySystem
 	);
 
 	reg.execute_systems();
@@ -1216,8 +863,6 @@ TEST(Core, LazyUpdateGeneratedEntity) {
 	// these systems mess with ComponentA
 	CLEAR_SYSTEM_IMPL(AddsAutoRemovedTag);
 	CLEAR_SYSTEM_IMPL(SimpleSystem);
-	CLEAR_SYSTEM_IMPL(OtherEntitySystem);
-	CLEAR_SYSTEM_IMPL(AssocTestAction);
 	CLEAR_SYSTEM_IMPL(TestAction);
 
 	auto reg = ecsact::core::registry{"Core_LazyUpdateGeneratedEntity"};

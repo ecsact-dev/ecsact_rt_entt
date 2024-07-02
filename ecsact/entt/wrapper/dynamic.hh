@@ -70,7 +70,8 @@ template<typename C>
 auto context_remove(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
-	auto&                                     view
+	auto&                                     view,
+	...
 ) -> void {
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
@@ -125,7 +126,8 @@ auto context_get(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	void*                                     out_component_data,
-	auto&                                     view
+	auto&                                     view,
+	...
 ) -> void {
 	auto entity = context->entity;
 
@@ -158,7 +160,8 @@ auto context_update(
 template<typename C>
 auto context_has(
 	ecsact_system_execution_context*          context,
-	[[maybe_unused]] ecsact_component_like_id component_id
+	[[maybe_unused]] ecsact_component_like_id component_id,
+	...
 ) -> bool {
 	auto  entity = context->entity;
 	auto& registry = *context->registry;

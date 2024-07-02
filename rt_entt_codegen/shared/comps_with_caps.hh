@@ -21,22 +21,6 @@ auto get_all_deep_capabilities( //
 		all_capabilities[comp_id] = static_cast<ecsact_system_capability>(
 			capability | all_capabilities[comp_id]
 		);
-
-		auto fields =
-			ecsact::meta::system_association_fields(system_like_id, comp_id);
-		for(auto field_id : fields) {
-			auto assoc_comps = ecsact::meta::system_association_capabilities(
-				system_like_id,
-				comp_id,
-				field_id
-			);
-
-			for(auto&& [assoc_comp_id, assoc_comp_cap] : assoc_comps) {
-				all_capabilities[assoc_comp_id] = static_cast<ecsact_system_capability>(
-					assoc_comp_cap | all_capabilities[assoc_comp_id]
-				);
-			}
-		}
 	}
 
 	return all_capabilities;
