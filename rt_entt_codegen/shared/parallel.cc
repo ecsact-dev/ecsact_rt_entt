@@ -4,7 +4,6 @@
 #include <vector>
 #include <type_traits>
 #include <format>
-
 #include "ecsact/lang-support/lang-cc.hh"
 #include "rt_entt_codegen/shared/system_variant.hh"
 #include "system_variant.hh"
@@ -184,7 +183,7 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
  */
 static auto should_run_independently(ecsact_system_like_id id) -> bool {
 	// User has explicitly marked a system as not parallel; respect that.
-	if(ecsact_meta_get_system_parallel_execution(id) == ECSACT_PARA_EXEC_DENY) {
+	if(ecsact_meta_get_system_parallel_execution(id) == ECSACT_PAR_EXEC_DENY) {
 		return true;
 	}
 
