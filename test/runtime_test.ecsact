@@ -10,21 +10,8 @@ component ComponentB {
 	i32 b;
 }
 
-component OtherEntityComponent {
-	i32 num;
-	entity target;
-}
-
 component Health {
 	f32 value;
-}
-
-component Weakened {
-	f32 value;
-}
-
-component Attacking {
-	entity target;
 }
 
 component EmptyComponent;
@@ -44,12 +31,6 @@ system TrivialRemove {
 	removes TrivialRemoveComponent;
 }
 
-system OtherEntitySystem {
-	readwrite OtherEntityComponent with target {
-		readwrite ComponentA;
-	}
-}
-
 system AlwaysRemove {
 	removes AlwaysRemoveMe;
 }
@@ -63,54 +44,8 @@ action MakeAnother {
 	}
 }
 
-action AssocTestAction {
-	entity assoc_entity;
-	readwrite ComponentA;
-	adds OtherEntityComponent;
-}
-
 action TestAction {
 	readwrite ComponentA;
-}
-
-component AddAssocTestComponent {
-	i32 num;
-}
-
-component AddAssocTestTag;
-
-system AddAssocTest {
-	readwrite ComponentA;
-	readwrite OtherEntityComponent with target {
-		include AddAssocTestTag;
-		adds AddAssocTestComponent;
-	}
-}
-
-component RemoveAssocTestComponent {
-	i32 num;
-}
-
-component RemoveAssocTestTag;
-
-system RemoveAssocTest {
-	readwrite OtherEntityComponent with target {
-		include RemoveAssocTestTag;
-		removes RemoveAssocTestComponent;
-	}
-}
-
-system AttackDamage {
-	readwrite Attacking with target {
-		readwrite Health;
-	}
-}
-
-system AttackDamageWeakened {
-	readwrite Attacking with target {
-		readwrite Health;
-		readonly Weakened;
-	}
 }
 
 component EntityTesting {

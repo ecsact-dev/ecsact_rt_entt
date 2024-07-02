@@ -12,24 +12,6 @@
 #include "ecsact/entt/entity.hh"
 #include "ecsact/entt/detail/registry.hh"
 
-namespace ecsact::entt {
-/**
- * Opaque index representing a system-likes association where `0` means no
- * association.
- */
-enum class assoc_index : unsigned;
-
-constexpr auto empty_assoc_index(assoc_index n) -> bool {
-	return n == assoc_index{};
-}
-
-constexpr auto underlying_assoc_index(assoc_index n) -> unsigned {
-	assert(!empty_assoc_index(n));
-	return static_cast<unsigned>(n);
-}
-
-} // namespace ecsact::entt
-
 struct ecsact_system_execution_context {
 	ecsact_system_like_id     id;
 	ecsact::entt::entity_id   entity;
@@ -81,6 +63,6 @@ struct ecsact_system_execution_context {
 	virtual auto parent() -> const ecsact_system_execution_context* = 0;
 
 	virtual auto other( //
-		ecsact_entity_id entity
+		ecsact_system_assoc_id assoc_id
 	) -> ecsact_system_execution_context* = 0;
 };

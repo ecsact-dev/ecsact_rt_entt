@@ -11,9 +11,6 @@
 void parallel_test::ActionParallelA::impl(context& ctx) {
 }
 
-void parallel_test::EntityAssociationConflictA::impl(context& ctx) {
-}
-
 void parallel_test::ParentSystemConflictA::impl(context& ctx) {
 }
 

@@ -6,18 +6,9 @@ component ParallelA {
 component ParallelB {
     i32 val;
 }
-component ParallelC {
-    entity target;
-}
 
 action ActionParallelA {
     readonly ParallelA;
-}
-
-system EntityAssociationConflictA {
-    readonly ParallelC with target {
-        readwrite ParallelA;
-    }
 }
 
 system ParentSystemConflictA {

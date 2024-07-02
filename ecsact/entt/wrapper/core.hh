@@ -16,7 +16,8 @@ template<typename C>
 inline auto has_component( //
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	[[maybe_unused]] ecsact_component_id component_id,
+	...
 ) -> bool {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
@@ -28,7 +29,8 @@ template<typename C>
 inline auto get_component(
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	[[maybe_unused]] ecsact_component_id component_id,
+	...
 ) -> const void* {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
@@ -116,7 +118,8 @@ inline auto update_component( //
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
-	const void*                          component_data
+	const void*                          component_data,
+	...
 ) -> ecsact_update_error {
 	using ecsact::entt::detail::exec_beforechange_storage;
 
@@ -148,7 +151,8 @@ inline auto update_component_exec_options( //
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
-	const void*                          component_data
+	const void*                          component_data,
+	...
 ) -> ecsact_update_error {
 	using ecsact::entt::detail::exec_beforechange_storage;
 
@@ -184,7 +188,8 @@ template<typename C>
 auto remove_component(
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	[[maybe_unused]] ecsact_component_id component_id,
+	...
 ) -> void {
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
@@ -203,7 +208,8 @@ template<typename C>
 auto remove_component_exec_options(
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
-	[[maybe_unused]] ecsact_component_id component_id
+	[[maybe_unused]] ecsact_component_id component_id,
+	...
 ) -> void {
 	using ecsact::entt::detail::pending_remove;
 

@@ -33,25 +33,3 @@ entt::basic_view<entt::entity, entt::get_t<example::Health>, entt::exclude_t<exa
 // EnTT view for StopHealing
 entt::basic_view<entt::entity, entt::get_t<example::Health, example::Healing>, entt::exclude_t<>>
 ```
-
-As soon as system association occurs there now requires multiple views to be iterated at the same time.
-
-```ecsact
-package example;
-component Health { f32 value; }
-component Attacking { entity target; }
-action Attack {
-  entity target;
-  adds Attacking;
-}
-system AttackDamage {
-  readonly Attacking with target {
-    readwrite Health;
-  }
-}
-```
-
-```cpp
-entt::basic_view<entt::entity, entt:get_t<example::Attacking>, entt::exclude_t<>>
-entt::basic_view<entt::entity, entt:get_t<example::Health, ecsact::entt::association<example::Attacking, 0/*target*/>>, entt::exclude_t<>>
-```

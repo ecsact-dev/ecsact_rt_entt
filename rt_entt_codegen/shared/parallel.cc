@@ -162,27 +162,6 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 			return false;
 		}
 
-		auto other_fields =
-			ecsact::meta::system_association_fields(sys_like_id, comp_id);
-
-		for(auto field_id : other_fields) {
-			auto other_capabilities = ecsact::meta::system_association_capabilities(
-				sys_like_id,
-				comp_id,
-				field_id
-			);
-
-			// NOTE(Kelwan): Association is currently not compatible with executing
-			// entities in parallel.
-			for([[maybe_unused]] const auto [other_comp_id, other_capability] :
-					other_capabilities) {
-				return false;
-				// if(!is_capability_safe_entities(sys_like_id, other_capability)) {
-				// 	return false;
-				// }
-			}
-		}
-
 		if(sys_like_id.is_system()) {
 			int lazy_iteration_rate =
 				ecsact_meta_get_lazy_iteration_rate(sys_like_id.as_system());
@@ -278,30 +257,6 @@ static auto loop_iterator(
 					parallel_system_cluster.push_back(parallel_system_list);
 					loop_iterator(system_list, iterator, parallel_system_cluster);
 					return;
-				}
-			}
-
-			auto other_fields =
-				ecsact::meta::system_association_fields(sys_like_id, comp_id);
-
-			for(auto field_id : other_fields) {
-				auto other_capabilities = ecsact::meta::system_association_capabilities(
-					sys_like_id,
-					comp_id,
-					field_id
-				);
-
-				for(const auto [other_comp_id, other_capability] : other_capabilities) {
-					auto cpp_name = decl_full_name(other_comp_id);
-					if(!is_capability_safe(other_capability)) {
-						if(!unsafe_comps.contains(other_comp_id)) {
-							unsafe_comps.insert(other_comp_id);
-						} else {
-							parallel_system_cluster.push_back(parallel_system_list);
-							loop_iterator(system_list, iterator, parallel_system_cluster);
-							return;
-						}
-					}
 				}
 			}
 		}
