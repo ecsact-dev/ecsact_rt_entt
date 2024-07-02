@@ -15,6 +15,8 @@ bazel_dep(name = "ecsact_codegen", version = "0.3.1")
 bazel_dep(name = "ecsact_cli", version = "0.3.13")
 bazel_dep(name = "xxhash", version = "0.8.2")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
+bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2")
+bazel_dep(name = "boost.process", version = "1.83.0.bzl.2")
 
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
@@ -31,11 +33,16 @@ git_override(
     remote = "https://github.com/zaucy/libarchive.git",
 )
 
+ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)
+ecsact.toolchain(use_ecsact_cli = True)
+use_repo(ecsact, "ecsact_toolchain")
+
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
 llvm.toolchain(llvm_version = "17.0.6")
 use_repo(llvm, "llvm_toolchain")
 
 register_toolchains(
     "@llvm_toolchain//:all",
+    "@ecsact_toolchain//:all",
     dev_dependency = True,
 )

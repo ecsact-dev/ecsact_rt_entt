@@ -15,3 +15,8 @@ common:ci --announce_rc
 common:ci --verbose_failures
 common:ci --keep_going
 common:ci --disk_cache=~/.cache/bazel-disk-cache
+
+build --@boost.dll//:use_std_fs
+query --@boost.dll//:use_std_fs
+build --@boost.process//:use_std_fs
+query --@boost.process//:use_std_fs
