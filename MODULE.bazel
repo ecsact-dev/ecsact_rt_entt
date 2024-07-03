@@ -6,13 +6,13 @@ module(
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.6.1")
-bazel_dep(name = "rules_ecsact", version = "0.5.2")
+bazel_dep(name = "rules_ecsact", version = "0.5.3")
 bazel_dep(name = "ecsact_runtime", version = "0.6.7")
 bazel_dep(name = "ecsact_lang_cpp", version = "0.4.5")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "ecsact_codegen", version = "0.3.1")
-bazel_dep(name = "ecsact_cli", version = "0.3.12")
+bazel_dep(name = "ecsact_cli", version = "0.3.13")
 bazel_dep(name = "xxhash", version = "0.8.2")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
 
