@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.4 - 2024-07-03
+#### Miscellaneous Chores
+- **(deps)** update ecsact repositories (#134) - (2f3f565) - renovate[bot]
+- add build recipe for rt entt to be used (#140) - (c0cbe43) - Austin Kelway
+
+- - -
+
 ## 0.3.3 - 2024-07-02
 #### Bug Fixes
 - generate add events not calling, parent trivial systems children systems not running (#136) - (4d596c3) - Austin Kelway
