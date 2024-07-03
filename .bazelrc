@@ -1,3 +1,8 @@
 import %workspace%/bazel/common.bazelrc
 
 try-import %workspace%/user.bazelrc
+
+build --@boost.dll//:use_std_fs
+query --@boost.dll//:use_std_fs
+build --@boost.process//:use_std_fs
+query --@boost.process//:use_std_fs
