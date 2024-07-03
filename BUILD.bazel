@@ -16,7 +16,7 @@ cc_library(
 )
 
 ecsact_build_recipe(
-    name = "ecsact_rt_entt",
+    name = "ecsact_rt_entt_recipe",
     srcs = [
         ":headers",
         "//runtime:sources",
@@ -168,6 +168,6 @@ ecsact_build_recipe(
 exports_files(["build_recipe.yml"])
 
 ecsact_build_recipe_bundle(
-    name = "ecsact_rt_entt_recipe_bundle",
-    recipes = ["ecsact_rt_entt"],
+    name = "ecsact_rt_entt",
+    recipes = [":ecsact_rt_entt_recipe"],
 )
