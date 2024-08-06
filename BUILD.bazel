@@ -60,8 +60,6 @@ ecsact_build_recipe(
             "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/group.hpp",
             "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/fwd.hpp",
             "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/sparse_set.hpp",
-            "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/group.hpp",
-            "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/storage.hpp",
             "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/component.hpp",
             "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/mixin.hpp",
             "https://raw.githubusercontent.com/skypjack/entt/v3.12.2/src/entt/entity/view.hpp",
@@ -164,8 +162,6 @@ ecsact_build_recipe(
         "ecsact_system_execution_context_action",
     ],
 )
-
-exports_files(["build_recipe.yml"])
 
 ecsact_build_recipe_bundle(
     name = "ecsact_rt_entt",
