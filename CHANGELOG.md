@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.5 - 2024-08-07
+#### Bug Fixes
+- remove duplicate recipe source files (#143) - (6307675) - Ezekiel Warren
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_cli to v0.3.14 (#142) - (6056028) - renovate[bot]
+- update readme logo - (1625505) - Ezekiel Warren
+
+- - -
+
 ## 0.3.4 - 2024-07-03
 #### Miscellaneous Chores
 - **(deps)** update ecsact repositories (#134) - (2f3f565) - renovate[bot]
