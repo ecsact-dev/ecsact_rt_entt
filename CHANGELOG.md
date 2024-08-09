@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.6 - 2024-08-09
+#### Bug Fixes
+- Let tag components call get_component, add missing export (#145) - (f30e725) - Austin Kelway
+#### Miscellaneous Chores
+- **(deps)** update dependency ecsact_cli to v0.3.15 (#144) - (c88cc16) - renovate[bot]
+
+- - -
+
 ## 0.3.5 - 2024-08-07
 #### Bug Fixes
 - remove duplicate recipe source files (#143) - (6307675) - Ezekiel Warren
