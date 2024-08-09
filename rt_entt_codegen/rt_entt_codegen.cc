@@ -109,7 +109,7 @@ void ecsact_codegen_plugin(
 	using ecsact::rt_entt_codegen::util::inc_package_header;
 	using ecsact::rt_entt_codegen::util::init_global;
 
-	ecsact::codegen_plugin_context ctx{package_id, write_fn, report_fn};
+	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
 	ctx.write(GENERATED_FILE_DISCLAIMER);
 
