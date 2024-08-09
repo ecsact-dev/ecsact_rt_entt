@@ -195,19 +195,13 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		auto non_tag_component_ids =
-			details.all_components |
-			std::views::filter([&](ecsact_component_id comp_id) -> bool {
-				return !ecsact::meta::get_field_ids(comp_id).empty();
-			});
-
 		ctx.write(
 			"result.reserve(",
-			std::ranges::distance(non_tag_component_ids),
+			std::ranges::distance(details.all_components),
 			");\n"
 		);
 
-		for(auto comp_id : non_tag_component_ids) {
+		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.write(
 				"result.insert({::",

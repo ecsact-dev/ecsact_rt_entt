@@ -132,6 +132,7 @@ ecsact_build_recipe(
     exports = [
         # core
         "ecsact_execute_systems",
+        "ecsact_create_registry",
         "ecsact_destroy_registry",
         "ecsact_clear_registry",
         "ecsact_create_entity",
@@ -162,6 +163,8 @@ ecsact_build_recipe(
         "ecsact_system_execution_context_action",
     ],
 )
+
+exports_files(["build_recipe.yml"])
 
 ecsact_build_recipe_bundle(
     name = "ecsact_rt_entt",
