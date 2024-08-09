@@ -32,6 +32,10 @@ inline auto get_component(
 	[[maybe_unused]] ecsact_component_id component_id,
 	...
 ) -> const void* {
+	if constexpr(std::is_empty_v<C>) {
+		static C emptyVal;
+		return &emptyVal;
+	}
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
