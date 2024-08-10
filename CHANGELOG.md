@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.7 - 2024-08-10
+#### Miscellaneous Chores
+- refactor to use new codegen api (#146) - (fb7b0d9) - Ezekiel Warren
+
+- - -
+
 ## 0.3.6 - 2024-08-09
 #### Bug Fixes
 - Let tag components call get_component, add missing export (#145) - (f30e725) - Austin Kelway
