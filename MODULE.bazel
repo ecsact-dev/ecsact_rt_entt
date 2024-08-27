@@ -6,9 +6,9 @@ module(
 
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.6.1")
-bazel_dep(name = "rules_ecsact", version = "0.5.6")
-bazel_dep(name = "ecsact_runtime", version = "0.6.8")
-bazel_dep(name = "ecsact_lang_cpp", version = "0.4.6")
+bazel_dep(name = "rules_ecsact", version = "0.5.7")
+bazel_dep(name = "ecsact_runtime", version = "0.6.9")
+bazel_dep(name = "ecsact_lang_cpp", version = "0.4.7")
 bazel_dep(name = "boost.mp11", version = "1.83.0.bzl.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "ecsact_codegen", version = "0.4.1")
