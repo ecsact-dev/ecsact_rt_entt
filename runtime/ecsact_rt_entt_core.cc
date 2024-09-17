@@ -217,3 +217,13 @@ void ecsact_remove_component(
 	assert(fn_itr != remove_component_fns.end());
 	return fn_itr->second(reg_id, entity_id, component_id);
 }
+
+ecsact_stream_error ecsact_stream(
+	ecsact_registry_id         registry_id,
+	int32_t                    count,
+	const ecsact_entity_id*    entities,
+	const ecsact_component_id* component_ids,
+	const void**               components_data
+) {
+	return ECSACT_STREAM_OK;
+}
