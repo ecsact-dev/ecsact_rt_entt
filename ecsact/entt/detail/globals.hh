@@ -92,6 +92,16 @@ extern const std::unordered_map< //
 	has_component_fns;
 
 /**
+ * ecsact_stream fn pointers
+ *
+ * NOTE: This gets is filled in by ecsact_rt_entt_codegen
+ */
+extern const std::unordered_map< //
+	ecsact_component_id,
+	decltype(&ecsact_stream)>
+	ecsact_stream_fns;
+
+/**
  * ecsact_system_execution_context_action fn pointers
  *
  * NOTE: This action is filled in by ecsact_rt_entt_codegen

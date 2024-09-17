@@ -15,6 +15,9 @@
 #include "ecsact/entt/registry_util.hh" // IWYU pragma: keep
 #include "ecsact/entt/wrapper/core.hh" // IWYU pragma: keep
 #include "ecsact/entt/wrapper/dynamic.hh" // IWYU pragma: keep
+#include "ecsact/entt/stream_registries.hh" // IWYU pragma: keep
+#include "ecsact/runtime/common.h" // IWYU pragma: keep
+#include "entt/entity/registry.hpp" // IWYU pragma: keep
 
 // default assign some global vars for the sake of compiling only
 #define MOCK_DEF_GLOBAL(Name)                  \
@@ -30,6 +33,7 @@ MOCK_DEF_GLOBAL(has_component_fns);
 MOCK_DEF_GLOBAL(update_component_fns);
 MOCK_DEF_GLOBAL(remove_component_fns);
 MOCK_DEF_GLOBAL(exec_ctx_action_fns);
+MOCK_DEF_GLOBAL(ecsact_stream_fns);
 
 auto main() -> int {
 	// This is only here to get compile commands working

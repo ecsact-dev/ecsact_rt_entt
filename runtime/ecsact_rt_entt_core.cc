@@ -219,11 +219,15 @@ void ecsact_remove_component(
 }
 
 ecsact_stream_error ecsact_stream(
-	ecsact_registry_id  registry_id,
-	ecsact_entity_id    entity,
+	ecsact_registry_id  reg_id,
+	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
 	const void*         component_data,
 	...
 ) {
-	return ECSACT_STREAM_OK;
+	using ecsact::entt::detail::globals::ecsact_stream_fns;
+	auto fn_itr = ecsact_stream_fns.find(component_id);
+	assert(fn_itr != ecsact_stream_fns.end());
+
+	return fn_itr->second(reg_id, entity_id, component_id, component_data);
 }

@@ -284,6 +284,26 @@ void ecsact_codegen_plugin(
 		}
 	});
 
+	init_global(ctx, "ecsact_stream_fns", [&] {
+		if(details.all_components.empty()) {
+			return;
+		}
+
+		ctx.write("result.reserve(", details.all_components.size(), ");\n");
+
+		for(auto comp_id : details.all_components) {
+			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
+			ctx.write(
+				"result.insert({::",
+				cpp_comp_name,
+				"::id, ",
+				"&ecsact::entt::wrapper::core::ecsact_stream<::",
+				cpp_comp_name,
+				">});\n"
+			);
+		}
+	});
+
 	ctx.write("\n");
 
 	for(auto comp_id : details.all_components) {

@@ -475,4 +475,14 @@ auto update_exec_itr_beforechange(
 	beforechange_comp.value = comp;
 }
 
+template<typename C>
+auto ecsact_stream(
+	ecsact_registry_id                   registry_id,
+	ecsact_entity_id                     entity_id,
+	[[maybe_unused]] ecsact_component_id component_id,
+	const void*                          component_data
+) {
+	auto component = static_cast<C>(component_data);
+}
+
 } // namespace ecsact::entt::wrapper::core
