@@ -36,6 +36,9 @@ struct ecsact_entt_system_details {
 	/** Components this system is allowed to remove */
 	std::unordered_set<ecsact_component_like_id> removable_comps;
 
+	/** Streaming components on the system */
+	std::unordered_set<ecsact_component_like_id> stream_comps;
+
 	/** A map containing this system's generated component ids and its
 	 * requirements*/
 	generate_t generate_comps;

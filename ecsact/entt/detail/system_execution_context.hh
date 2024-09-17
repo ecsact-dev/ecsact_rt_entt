@@ -60,6 +60,11 @@ struct ecsact_system_execution_context {
 		const void**         components_data
 	) -> void = 0;
 
+	virtual auto toggle( //
+		ecsact_component_id component_id,
+		bool                enable_stream
+	) -> void = 0;
+
 	virtual auto parent() -> const ecsact_system_execution_context* = 0;
 
 	virtual auto other( //

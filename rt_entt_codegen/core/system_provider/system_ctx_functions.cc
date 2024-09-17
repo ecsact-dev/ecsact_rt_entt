@@ -382,6 +382,49 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 	});
 }
 
+auto ecsact::rt_entt_codegen::core::provider::context_toggle_impl(
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+) -> void {
+	auto stream_comps = details.stream_comps;
+	if(stream_comps.empty()) {
+		// TODO(Kelwan): Handle unexpected behaviour
+		return;
+	} else if(stream_comps.size() == 1) {
+		const auto& comp_id = stream_comps.begin();
+		auto        type_name = cpp_identifier(decl_full_name(*comp_id));
+		ctx.write(
+			"wrapper::dynamic::context_toggle<::",
+			type_name,
+			">(this, ecsact_id_cast<ecsact_component_like_id>(",
+			type_name,
+			"::id); \n"
+		);
+		return;
+	}
+	block(
+		ctx,
+		"static const auto toggle_fns = "
+		"std::unordered_map<ecsact_component_like_id, "
+		"decltype(&ecsact_system_execution_context_toggle)>",
+		[&] {
+			for(const auto comp_id : stream_comps) {
+				auto type_name = cpp_identifier(decl_full_name(comp_id));
+				ctx.write(
+					"{",
+					"ecsact_id_cast<ecsact_component_like_id>(",
+					type_name,
+					"::id), ",
+					"&wrapper::dynamic::context_toggle<::",
+					type_name,
+					"> },"
+				);
+			}
+		}
+	);
+}
+
 auto ecsact::rt_entt_codegen::core::provider::context_parent_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id
