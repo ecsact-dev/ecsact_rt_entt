@@ -19,6 +19,10 @@ cc_test(
     name = "test",
     visibility = ["//visibility:private"],
     copts = copts,
+    defines = [
+        "ECSACT_CORE_API=",
+        "ECSACT_DYNAMIC_API=",
+    ],
     srcs = [
         "build_test.cc",
         "//runtime:sources",
