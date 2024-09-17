@@ -219,11 +219,11 @@ void ecsact_remove_component(
 }
 
 ecsact_stream_error ecsact_stream(
-	ecsact_registry_id         registry_id,
-	int32_t                    count,
-	const ecsact_entity_id*    entities,
-	const ecsact_component_id* component_ids,
-	const void**               components_data
+	ecsact_registry_id  registry_id,
+	ecsact_entity_id    entity,
+	ecsact_component_id component_id,
+	const void*         component_data,
+	...
 ) {
 	return ECSACT_STREAM_OK;
 }
