@@ -365,6 +365,25 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 	return system_providers;
 }
 
+static auto add_stream_component_if_needed(
+	system_like_id_variant    sys_like_id,
+	std::vector<std::string>& additional_view_components
+) -> void {
+	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
+
+	for(auto comp_id : sys_details.writable_comps) {
+		auto comp_type = ecsact_meta_component_type(comp_id);
+
+		if(comp_type == ecsact_component_type::ECSACT_COMPONENT_TYPE_STREAM ||
+			 comp_type == ecsact_component_type::ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
+			auto comp_name = ecsact::meta::decl_full_name(comp_id);
+			auto run_on_stream_str =
+				std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_name);
+			additional_view_components.push_back("run_on_stream");
+		}
+	}
+}
+
 static auto print_execute_systems(
 	ecsact::codegen_plugin_context& ctx,
 	system_like_id_variant          sys_like_id,
@@ -383,6 +402,8 @@ static auto print_execute_systems(
 	}
 
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
+
+	add_stream_component_if_needed(sys_like_id, additional_view_components);
 
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,

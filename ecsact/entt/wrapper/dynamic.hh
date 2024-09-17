@@ -170,6 +170,21 @@ auto context_has(
 }
 
 template<typename C>
+auto context_toggle(
+	ecsact_system_execution_context*          context,
+	[[maybe_unused]] ecsact_component_like_id component_id
+) {
+	auto  entity = context->entity;
+	auto& registry = *context->registry;
+
+	if(registry.template any_of<C>(entity)) {
+		registry.template remove<C>(entity);
+	} else {
+		registry.template emplace<C>(entity);
+	}
+}
+
+template<typename C>
 auto context_generate_add(
 	ecsact_system_execution_context* context,
 	ecsact_component_id              component_id,

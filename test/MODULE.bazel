@@ -50,3 +50,13 @@ register_toolchains(
     "@ecsact_toolchain//:all",
     dev_dependency = True,
 )
+
+local_path_override(
+    module_name = "ecsact_runtime",
+    path = "../../ecsact_runtime",
+)
+
+local_path_override(
+    module_name = "ecsact_interpret",
+    path = "../../ecsact_interpret",
+)
