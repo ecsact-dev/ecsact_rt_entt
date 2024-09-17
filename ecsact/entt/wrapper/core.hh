@@ -9,6 +9,7 @@
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
+#include "ecsact/entt/detail/globals.hh"
 
 namespace ecsact::entt::wrapper::core {
 
@@ -483,6 +484,13 @@ auto ecsact_stream(
 	const void*                          component_data
 ) {
 	auto component = static_cast<C>(component_data);
-}
+  
+  using ecsact::entt::detail::globals::stream_registries;
 
+  stream_registries.handle_stream<C>(
+    registry_id,
+    entity_id,
+    component
+  );
+}
 } // namespace ecsact::entt::wrapper::core

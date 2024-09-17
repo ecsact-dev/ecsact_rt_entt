@@ -8,12 +8,16 @@
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/entt/detail/system_execution_context.hh"
 #include "ecsact/entt/detail/registry.hh"
+#include "ecsact/entt/stream_registries.hh"
 
 /**
  * A small set of globals expected to be available the ecsact_rt_entt_codegen
  * generated source.
  */
 namespace ecsact::entt::detail::globals {
+
+
+extern stream::stream_registries stream_registries;
 
 /**
  * Ecsact registry ID mapped to EnTT registry instance.
