@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <type_traits>
 #include "entt/entt.hpp"
+#include "ecsact/entt/detail/registry.hh"
 #include "ecsact/entt/entity.hh"
 #include "ecsact/runtime/common.h"
 

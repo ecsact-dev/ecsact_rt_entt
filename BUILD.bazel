@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("@rules_ecsact//ecsact:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
 load("//bazel:copts.bzl", "copts")
 
@@ -13,6 +13,24 @@ cc_library(
     name = "lib",
     hdrs = glob(["ecsact/**/*.hh"]),
     copts = copts,
+)
+
+cc_test(
+    name = "test",
+    visibility = ["//visibility:private"],
+    copts = copts,
+    srcs = [
+        "build_test.cc",
+        "//runtime:sources",
+    ],
+    deps = [
+        ":lib",
+        "@ecsact_runtime//:common",
+        "@ecsact_runtime//:core",
+        "@ecsact_runtime//:dynamic",
+        "@entt",
+        "@xxhash",
+    ],
 )
 
 ecsact_build_recipe(
