@@ -1300,12 +1300,49 @@ TEST(Core, StreamComponent) {
 	exec_options.add_component(entity, &stream_component);
 
 	auto error = reg.execute_systems(std::array{exec_options});
+	int  prev_val = 0;
 
+	for(int i = 0; i < 100; i++) {
+		stream_component.val += 10;
+		ecsact_stream(reg.id(), entity, StreamTest::id, &stream_component);
+		reg.execute_systems();
 
-  for(int i = 0; i < 10000; ++i) {
-	  stream_component.val += 10;
-	  ecsact_stream(reg.id(), entity, StreamTest::id, &stream_component);
-	  reg.execute_systems();
-  }
+		stream_component = reg.get_component<StreamTest>(entity);
+		ASSERT_EQ(stream_component.val, prev_val + 10);
+		prev_val = stream_component.val;
+	}
+}
 
+TEST(Core, StreamComponentMultiThreadedOneEntity) {
+	using runtime_test::StreamTest;
+
+	auto reg = ecsact::core::registry("Stream");
+	auto entity = reg.create_entity();
+	auto exec_options = ecsact::core::execution_options{};
+
+	auto thread_pool = std::array<std::thread, 4>{};
+
+	auto stream_component = StreamTest{.val = 0};
+
+	exec_options.add_component(entity, &stream_component);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	int  prev_val = 0;
+
+	for(auto& thread : thread_pool) {
+		thread = std::thread([&, reg_id = reg.id(), entity] {
+			auto stream_component = StreamTest{.val = 0};
+			for(int i = 0; i < 10; ++i) {
+				ecsact_stream(reg_id, entity, StreamTest::id, &stream_component);
+			}
+		});
+	}
+
+	for(int i = 0; i < 5; i++) {
+		reg.execute_systems();
+	}
+
+	for(auto& thread : thread_pool) {
+		thread.join();
+	}
 }

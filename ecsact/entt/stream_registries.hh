@@ -33,34 +33,30 @@ public:
 		const C&           component
 	) -> void {
 		// Add to map if new threads/registries are introduced
-		auto thread_id = std::this_thread::get_id();
+
+		std::unique_lock lk(stream_mutex);
+		auto             thread_id = std::this_thread::get_id();
 
 		auto reg_threads_itr = registry_stream_threads.find(registry_id);
 		auto reg_thread_itr = detail::child_reg_thread_map::iterator();
 
 		if(reg_threads_itr == registry_stream_threads.end()) {
-			std::unique_lock lk(stream_mutex);
-
 			auto thread_map = detail::child_reg_thread_map{};
 
 			reg_thread_itr = thread_map.emplace_hint(
-        thread_map.end(),
-        std::pair(thread_id, std::make_unique<::entt::registry>())
-      );
+				thread_map.end(),
+				std::pair(thread_id, std::make_unique<::entt::registry>())
+			);
 
 			reg_threads_itr = registry_stream_threads.insert(
 				registry_stream_threads.end(),
-				std::pair(
-					registry_id,
-          std::move(thread_map)
-				)
+				std::pair(registry_id, std::move(thread_map))
 			);
 		} else {
 			auto& reg_threads = reg_threads_itr->second;
 			reg_thread_itr = reg_threads.find(thread_id);
 
 			if(reg_thread_itr == reg_threads.end()) {
-				std::unique_lock lk(stream_mutex);
 				reg_thread_itr = reg_threads.insert(
 					reg_threads.end(),
 					std::pair(thread_id, std::make_unique<::entt::registry>())
@@ -69,10 +65,15 @@ public:
 		}
 
 		auto& registry = reg_thread_itr->second;
-		registry->template emplace_or_replace<C>(
-			::ecsact::entt::entity_id{entity_id},
-			component
-		);
+
+		auto entity = ::ecsact::entt::entity_id(entity_id);
+
+		if(!registry->valid(entity)) {
+			auto new_entity = registry->create(entity);
+			assert(new_entity == entity.as_entt());
+		}
+
+		registry->template emplace_or_replace<C>(entity, component);
 	}
 
 	auto get_stream_registries()
