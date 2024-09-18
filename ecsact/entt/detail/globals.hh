@@ -16,7 +16,10 @@
  */
 namespace ecsact::entt::detail::globals {
 
-
+/**
+ * Holds and handles the individual registries for each thread that's passed in
+ * from ecsact_stream.
+ */
 extern stream::stream_registries stream_registries;
 
 /**

@@ -230,6 +230,26 @@ auto print_sys_exec_ctx_other(
 	}
 }
 
+auto print_sys_exec_ctx_toggle(
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
+) -> void {
+	method_printer{ctx, "toggle"}
+		.parameter("ecsact_component_id", "component_id")
+		.parameter("bool", "streaming_enabled")
+		.return_type("void");
+
+	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
+		return provider->context_function_toggle(ctx, names) ==
+			handle_exclusive_provide::HANDLED;
+	});
+
+	if(result == system_providers.end()) {
+		ctx.fatal("INTERNAL: print context other was not handled by providers");
+	}
+}
+
 template<typename SystemLikeID>
 static auto print_apply_pendings(
 	ecsact::codegen_plugin_context&                            ctx,
@@ -315,6 +335,7 @@ static auto print_system_execution_context(
 		print_sys_exec_ctx_generate(ctx, names, system_providers);
 		print_sys_exec_ctx_parent(ctx, names, system_providers);
 		print_sys_exec_ctx_other(ctx, names, system_providers);
+		print_sys_exec_ctx_toggle(ctx, names, system_providers);
 	});
 	ctx.write(";\n\n");
 
@@ -371,16 +392,11 @@ static auto add_stream_component_if_needed(
 ) -> void {
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
-	for(auto comp_id : sys_details.writable_comps) {
-		auto comp_type = ecsact_meta_component_type(comp_id);
-
-		if(comp_type == ecsact_component_type::ECSACT_COMPONENT_TYPE_STREAM ||
-			 comp_type == ecsact_component_type::ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
-			auto comp_name = ecsact::meta::decl_full_name(comp_id);
-			auto run_on_stream_str =
-				std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_name);
-			additional_view_components.push_back("run_on_stream");
-		}
+	for(auto comp_id : sys_details.stream_comps) {
+		auto comp_name = ecsact::meta::decl_full_name(comp_id);
+		auto run_on_stream_str =
+			std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_name);
+		additional_view_components.push_back("run_on_stream");
 	}
 }
 

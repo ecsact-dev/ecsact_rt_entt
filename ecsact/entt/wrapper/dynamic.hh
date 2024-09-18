@@ -172,16 +172,19 @@ auto context_has(
 template<typename C>
 auto context_toggle(
 	ecsact_system_execution_context*          context,
-	[[maybe_unused]] ecsact_component_like_id component_id
+	[[maybe_unused]] ecsact_component_like_id component_id,
+	bool                                      streaming_enabled
 ) {
+	using ecsact::entt::detail::run_on_stream;
+
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
 
-	if(registry.template any_of<C>(entity)) {
-		registry.template remove<C>(entity);
+	if(streaming_enabled) {
+		registry.template remove<run_on_stream<C>(entity)>;
 	} else {
-		registry.template emplace<C>(entity);
-	}
+		registry.template emplace<run_on_stream<C>(entity)>;
+  }
 }
 
 template<typename C>

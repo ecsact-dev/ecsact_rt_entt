@@ -8,6 +8,7 @@
 #include "ecsact/entt/detail/internal_markers.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/registry.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/system_execution_context.hh" // IWYU pragma: keep
+#include "ecsact/entt/detail/apply_component_stream_data.hh" // IWYU pragma: keep
 #include "ecsact/entt/entity.hh" // IWYU pragma: keep
 #include "ecsact/entt/error_check.hh" // IWYU pragma: keep
 #include "ecsact/entt/event_markers.hh" // IWYU pragma: keep

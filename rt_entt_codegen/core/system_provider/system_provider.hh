@@ -77,6 +77,10 @@ public:
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
+	[[nodiscard]] virtual auto context_function_toggle(
+		ecsact::codegen_plugin_context&                   ctx,
+		const ecsact::rt_entt_codegen::core::common_vars& names
+	) -> handle_exclusive_provide;
 
 	virtual auto pre_entity_iteration(
 		ecsact::codegen_plugin_context&                   ctx,

@@ -2,17 +2,27 @@
 
 #include <thread>
 #include <map>
-#include <mutex> 
+#include <mutex>
+#include <vector>
+#include <ranges>
+#include <memory>
 #include <entt/entt.hpp>
-#include "ecsact/runtime/common.h" 
+#include "ecsact/runtime/common.h"
+#include "ecsact/entt/entity.hh"
 
 namespace ecsact::entt::stream::detail {
-  using child_reg_thread_map = std::map<std::thread::id, ::entt::registry>;
-  using reg_thread_map = std::map<ecsact_registry_id, child_reg_thread_map>;
-}
+using child_reg_thread_map =
+	std::unordered_map<std::thread::id, std::unique_ptr<::entt::registry>>;
+using reg_thread_map =
+	std::unordered_map<ecsact_registry_id, child_reg_thread_map>;
+} // namespace ecsact::entt::stream::detail
 
 namespace ecsact::entt::stream {
 class stream_registries {
+private:
+	detail::reg_thread_map registry_stream_threads;
+	std::mutex             stream_mutex;
+
 public:
 	stream_registries() = default;
 
@@ -26,33 +36,46 @@ public:
 		auto thread_id = std::this_thread::get_id();
 
 		auto reg_threads_itr = registry_stream_threads.find(registry_id);
+		auto reg_thread_itr = detail::child_reg_thread_map::iterator();
 
 		if(reg_threads_itr == registry_stream_threads.end()) {
-			::entt::registry registry();
+			std::unique_lock lk(stream_mutex);
 
-			stream_mutex.lock();
-			reg_threads_itr = registry_stream_threads.insert(std::pair(
-				registry_id,
-				detail::child_reg_thread_map{thread_id, registry.create()}
-			));
+			auto thread_map = detail::child_reg_thread_map{};
+
+			reg_thread_itr = thread_map.emplace_hint(
+        thread_map.end(),
+        std::pair(thread_id, std::make_unique<::entt::registry>())
+      );
+
+			reg_threads_itr = registry_stream_threads.insert(
+				registry_stream_threads.end(),
+				std::pair(
+					registry_id,
+          std::move(thread_map)
+				)
+			);
 		} else {
-			// Registry is in! Now find thread
 			auto& reg_threads = reg_threads_itr->second;
-			auto  reg_thread_itr = reg_threads.find(thread_id);
+			reg_thread_itr = reg_threads.find(thread_id);
+
 			if(reg_thread_itr == reg_threads.end()) {
-				::entt::registry registry();
-				stream_mutex.lock();
-				reg_thread_itr =
-					reg_threads.insert(std::pair(thread_id, registry.create()));
+				std::unique_lock lk(stream_mutex);
+				reg_thread_itr = reg_threads.insert(
+					reg_threads.end(),
+					std::pair(thread_id, std::make_unique<::entt::registry>())
+				);
 			}
 		}
 
-		auto& registry = reg_threads_itr->second->second;
-		registry.template emplace_or_replace<C>(entity_id, component);
+		auto& registry = reg_thread_itr->second;
+		registry->template emplace_or_replace<C>(
+			::ecsact::entt::entity_id{entity_id},
+			component
+		);
 	}
 
-private:
-  detail::reg_thread_map registry_stream_threads;
-	std::mutex     stream_mutex;
+	auto get_stream_registries()
+		-> std::vector<std::unique_ptr<::entt::registry>>;
 };
 } // namespace ecsact::entt::stream

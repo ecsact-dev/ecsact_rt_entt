@@ -2,6 +2,7 @@
 #include <format>
 #include "core/core.hh"
 #include "ecsact/runtime/meta.hh"
+#include "ecsact/runtime/meta.h"
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -132,7 +133,7 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/detail/apply_pending.hh");
 	inc_header(ctx, "ecsact/entt/detail/registry.hh");
 	inc_header(ctx, "ecsact/entt/detail/bytes.hh");
-	inc_header(ctx, "ecsact/entt/detail/hash.hh");
+	inc_header(ctx, "ecsact/entt/detail/apply_component_stream_data.hh");
 	inc_header(ctx, "ecsact/entt/detail/hash.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/core.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/dynamic.hh");
@@ -289,9 +290,22 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		ctx.write("result.reserve(", details.all_components.size(), ");\n");
+		std::unordered_set<ecsact_component_id> stream_components;
 
 		for(auto comp_id : details.all_components) {
+			auto comp_type = ecsact_meta_component_type(
+				ecsact_id_cast<ecsact_component_like_id>(comp_id)
+			);
+
+			if(comp_type == ECSACT_COMPONENT_TYPE_STREAM ||
+				 comp_type == ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
+				stream_components.insert(comp_id);
+			}
+		}
+
+		ctx.write("result.reserve(", stream_components.size(), ");\n");
+
+		for(auto comp_id : stream_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.write(
 				"result.insert({::",
@@ -337,6 +351,7 @@ void ecsact_codegen_plugin(
 		core::print_execute_system_like_template_specializations(ctx, details);
 		core::print_init_registry_storage(ctx, details);
 		core::print_create_registry(ctx, details);
+		core::print_apply_streaming_data(ctx, details);
 		core::print_trigger_ecsact_events_minimal(ctx, details);
 		core::print_trigger_ecsact_events_all(ctx, details);
 		core::print_cleanup_ecsact_component_events(ctx, details);

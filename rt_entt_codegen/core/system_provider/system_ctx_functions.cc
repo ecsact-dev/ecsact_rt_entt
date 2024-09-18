@@ -399,7 +399,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_toggle_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id); \n"
+			"::id, streaming_enabled); \n"
 		);
 		return;
 	}

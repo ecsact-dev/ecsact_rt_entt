@@ -38,6 +38,10 @@ _CORE_CODEGEN_METHODS = {
     ],
     "check_error": [],
     "execution_options": [],
+    "apply_streaming_data": [
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
     "sorting_components": [
         "//rt_entt_codegen/shared:sorting",
     ],

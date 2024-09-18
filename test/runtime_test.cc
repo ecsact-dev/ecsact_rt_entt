@@ -1287,3 +1287,25 @@ TEST(Core, NotifyMixed) {
 	counter = reg.get_component<Counter>(entity);
 	ASSERT_EQ(counter.val, 3);
 }
+
+TEST(Core, StreamComponent) {
+	using runtime_test::StreamTest;
+
+	auto reg = ecsact::core::registry("Stream");
+	auto entity = reg.create_entity();
+	auto exec_options = ecsact::core::execution_options{};
+
+	auto stream_component = StreamTest{.val = 0};
+
+	exec_options.add_component(entity, &stream_component);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+
+
+  for(int i = 0; i < 10000; ++i) {
+	  stream_component.val += 10;
+	  ecsact_stream(reg.id(), entity, StreamTest::id, &stream_component);
+	  reg.execute_systems();
+  }
+
+}
