@@ -28,6 +28,8 @@ inline auto create_registry()
 	);
 	auto& registry = registries[registry_id];
 
+	ecsact::entt::detail::globals::stream_registries.add_registry(registry_id);
+
 	return {registry_id, std::ref(registry)};
 }
 
