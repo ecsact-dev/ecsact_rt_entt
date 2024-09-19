@@ -235,10 +235,11 @@ auto print_sys_exec_ctx_toggle(
 	const common_vars               names,
 	system_provider_t               system_providers
 ) -> void {
-	method_printer{ctx, "toggle"}
-		.parameter("ecsact_component_id", "component_id")
-		.parameter("bool", "streaming_enabled")
-		.return_type("void");
+	auto printer = //
+		method_printer{ctx, "toggle"}
+			.parameter("ecsact_component_id", "component_id")
+			.parameter("bool", "streaming_enabled")
+			.return_type("void");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
 		return provider->context_function_toggle(ctx, names) ==
@@ -246,7 +247,7 @@ auto print_sys_exec_ctx_toggle(
 	});
 
 	if(result == system_providers.end()) {
-		ctx.fatal("INTERNAL: print context other was not handled by providers");
+		ctx.fatal("INTERNAL: print context toggle was not handled by providers");
 	}
 }
 
@@ -392,7 +393,16 @@ static auto add_stream_component_if_needed(
 ) -> void {
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
-	for(auto comp_id : sys_details.stream_comps) {
+	auto comp_caps = ecsact::meta::system_capabilities(sys_like_id);
+	for(auto [comp_id, capability] : comp_caps) {
+		auto comp_type = ecsact_meta_component_type(comp_id);
+		if(comp_type != ECSACT_COMPONENT_TYPE_STREAM ||
+			 comp_type != ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
+			continue;
+		}
+		if(capability == ECSACT_SYS_CAP_STREAM_TOGGLE) {
+			continue;
+		}
 		auto comp_name = ecsact::meta::decl_full_name(comp_id);
 		auto run_on_stream_str =
 			std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_name);

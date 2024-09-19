@@ -168,6 +168,9 @@ void runtime_test::MixedNotify::impl(context& ctx) {
 	ctx.update(comp);
 }
 
+void runtime_test::StreamTestSystem::impl(context& ctx) {
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);

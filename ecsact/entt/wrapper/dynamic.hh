@@ -181,10 +181,10 @@ auto context_toggle(
 	auto& registry = *context->registry;
 
 	if(streaming_enabled) {
-		registry.template remove<run_on_stream<C>(entity)>;
+		registry.template remove<run_on_stream<C>>(entity);
 	} else {
-		registry.template emplace<run_on_stream<C>(entity)>;
-  }
+		registry.template emplace<run_on_stream<C>>(entity);
+	}
 }
 
 template<typename C>

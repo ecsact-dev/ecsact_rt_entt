@@ -207,6 +207,10 @@ system MixedNotify {
 }
 
 component StreamTest(stream) {
-    i32 val;
+  i32 val;
+}
+
+system StreamTestSystem {
+  stream_toggle StreamTest;
 }
 

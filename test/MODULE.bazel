@@ -60,3 +60,8 @@ local_path_override(
     module_name = "ecsact_interpret",
     path = "../../ecsact_interpret",
 )
+
+local_path_override(
+    module_name = "ecsact_parse",
+    path = "../../ecsact_parse",
+)

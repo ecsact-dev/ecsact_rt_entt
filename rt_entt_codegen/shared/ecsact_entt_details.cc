@@ -121,6 +121,7 @@ auto ecsact_entt_system_details::fill_system_details(
 				out_details.addable_comps.insert(comp_id);
 				break;
 			case ECSACT_SYS_CAP_STREAM_TOGGLE:
+				out_details.get_comps.insert(comp_id);
 				out_details.stream_comps.insert(comp_id);
 		}
 	}
