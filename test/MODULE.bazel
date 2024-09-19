@@ -65,3 +65,9 @@ local_path_override(
     module_name = "ecsact_parse",
     path = "../../ecsact_parse",
 )
+
+local_path_override(
+    module_name = "ecsact_lang_cpp",
+    path = "../../ecsact_lang_cpp",
+)
+

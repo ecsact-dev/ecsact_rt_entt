@@ -99,7 +99,7 @@ auto system_provider::context_function_other(
 	return NOT_HANDLED;
 }
 
-auto system_provider::context_function_toggle(
+auto system_provider::context_function_stream_toggle(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> handle_exclusive_provide {

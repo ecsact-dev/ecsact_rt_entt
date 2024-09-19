@@ -5,6 +5,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
+#include "magic_enum.hpp"
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
@@ -230,19 +231,19 @@ auto print_sys_exec_ctx_other(
 	}
 }
 
-auto print_sys_exec_ctx_toggle(
+auto print_sys_exec_ctx_stream_toggle(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars               names,
 	system_provider_t               system_providers
 ) -> void {
 	auto printer = //
-		method_printer{ctx, "toggle"}
+		method_printer{ctx, "stream_toggle"}
 			.parameter("ecsact_component_id", "component_id")
 			.parameter("bool", "streaming_enabled")
 			.return_type("void");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
-		return provider->context_function_toggle(ctx, names) ==
+		return provider->context_function_stream_toggle(ctx, names) ==
 			handle_exclusive_provide::HANDLED;
 	});
 
@@ -336,7 +337,7 @@ static auto print_system_execution_context(
 		print_sys_exec_ctx_generate(ctx, names, system_providers);
 		print_sys_exec_ctx_parent(ctx, names, system_providers);
 		print_sys_exec_ctx_other(ctx, names, system_providers);
-		print_sys_exec_ctx_toggle(ctx, names, system_providers);
+		print_sys_exec_ctx_stream_toggle(ctx, names, system_providers);
 	});
 	ctx.write(";\n\n");
 
@@ -388,25 +389,35 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 }
 
 static auto add_stream_component_if_needed(
-	system_like_id_variant    sys_like_id,
-	std::vector<std::string>& additional_view_components
+	ecsact::codegen_plugin_context& ctx,
+	system_like_id_variant          sys_like_id,
+	std::vector<std::string>&       additional_view_components
 ) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
+
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
 	auto comp_caps = ecsact::meta::system_capabilities(sys_like_id);
 	for(auto [comp_id, capability] : comp_caps) {
 		auto comp_type = ecsact_meta_component_type(comp_id);
-		if(comp_type != ECSACT_COMPONENT_TYPE_STREAM ||
+
+		ctx.warn("COMP TYPE: {}", magic_enum::enum_name(comp_type));
+		ctx.warn("COMP CAPABILITY: {}", magic_enum::enum_name(capability));
+
+		if(comp_type != ECSACT_COMPONENT_TYPE_STREAM &&
 			 comp_type != ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
 			continue;
 		}
+
 		if(capability == ECSACT_SYS_CAP_STREAM_TOGGLE) {
 			continue;
 		}
-		auto comp_name = ecsact::meta::decl_full_name(comp_id);
+
+		auto comp_ident = cpp_identifier(decl_full_name(comp_id));
 		auto run_on_stream_str =
-			std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_name);
-		additional_view_components.push_back("run_on_stream");
+			std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_ident);
+		additional_view_components.push_back(run_on_stream_str);
 	}
 }
 
@@ -429,7 +440,10 @@ static auto print_execute_systems(
 
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
 
-	add_stream_component_if_needed(sys_like_id, additional_view_components);
+	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
+
+	ctx.warn("SYSTEM NAME: {}", system_name);
+	add_stream_component_if_needed(ctx, sys_like_id, additional_view_components);
 
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,

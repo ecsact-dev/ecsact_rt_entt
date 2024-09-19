@@ -121,13 +121,14 @@ void ecsact_system_execution_context_action(
 	return context->action(out_action_data);
 }
 
-void ecsact_system_execution_context_toggle(
+void ecsact_system_execution_context_stream_toggle(
 	ecsact_system_execution_context* context,
 	ecsact_component_id              comp_id,
-	bool                             enable_stream
+	bool                             streaming_enabled,
+	...
 ) {
 	assert(context != nullptr);
-	return context->toggle(comp_id, enable_stream);
+	return context->stream_toggle(comp_id, streaming_enabled);
 }
 
 const ecsact_system_execution_context* ecsact_system_execution_context_parent(

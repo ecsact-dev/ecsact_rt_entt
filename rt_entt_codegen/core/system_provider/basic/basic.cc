@@ -102,11 +102,11 @@ auto provider::basic::context_function_other(
 	return HANDLED;
 }
 
-auto provider::basic::context_function_toggle(
+auto provider::basic::context_function_stream_toggle(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> handle_exclusive_provide {
-	context_toggle_impl(ctx, sys_like_id, system_details);
+	context_stream_toggle_impl(ctx, sys_like_id, system_details);
 	return HANDLED;
 }
 

@@ -170,7 +170,7 @@ auto context_has(
 }
 
 template<typename C>
-auto context_toggle(
+auto context_stream_toggle(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	bool                                      streaming_enabled

@@ -77,7 +77,7 @@ public:
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;
-	[[nodiscard]] virtual auto context_function_toggle(
+	[[nodiscard]] virtual auto context_function_stream_toggle(
 		ecsact::codegen_plugin_context&                   ctx,
 		const ecsact::rt_entt_codegen::core::common_vars& names
 	) -> handle_exclusive_provide;

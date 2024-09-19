@@ -3,10 +3,10 @@
 #include <array>
 #include <set>
 #include <typeindex>
-#include <unordered_set>
 #include <version>
 #include <random>
 #include <ranges>
+#include <iostream>
 #include "ecsact/runtime/core.hh"
 #include "ecsact/runtime/dynamic.h"
 
@@ -169,6 +169,20 @@ void runtime_test::MixedNotify::impl(context& ctx) {
 }
 
 void runtime_test::StreamTestSystem::impl(context& ctx) {
+	auto comp = ctx.get<StreamTestCounter>();
+
+	std::cout << "VAL: " << comp.val << std::endl;
+	if(comp.val == 100) {
+		std::cout << "SteamTest TOGGLED!" << std::endl;
+		ctx.stream_toggle<StreamTestToggle>(false);
+	}
+}
+
+void runtime_test::StreamTestSystemCounter::impl(context& ctx) {
+	auto comp = ctx.get<StreamTestToggle>();
+	std::cout << "STREAM TEST SYSTEM COUNTER ITERATED" << std::endl;
+	comp.val += 10;
+	ctx.update(comp);
 }
 
 TEST(Core, CreateRegistry) {
@@ -1347,5 +1361,56 @@ TEST(Core, StreamComponentMultiThreadedOneEntity) {
 
 	for(auto& thread : thread_pool) {
 		thread.join();
+	}
+}
+
+TEST(Core, StreamComponentToggle) {
+	using runtime_test::StreamTestCounter;
+	using runtime_test::StreamTestToggle;
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::StreamTestSystem::id),
+		runtime_test__StreamTestSystem
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::StreamTestSystemCounter::id
+		),
+		runtime_test__StreamTestSystemCounter
+	);
+
+	auto reg = ecsact::core::registry("Stream");
+	auto entity = reg.create_entity();
+	auto exec_options = ecsact::core::execution_options{};
+
+	auto stream_component = StreamTestToggle{.val = 0};
+	auto stream_comp_counter = StreamTestCounter{.val = 0};
+
+	exec_options.add_component(entity, &stream_component);
+	exec_options.add_component(entity, &stream_comp_counter);
+	exec_options = ecsact::core::execution_options{};
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	int  prev_val = 0;
+
+	for(int i = 0; i < 10; i++) {
+		stream_comp_counter.val += 10;
+		exec_options
+			// ecsact_stream(reg.id(), entity, StreamTestToggle::id,
+			// &stream_component);
+
+			reg.execute_systems();
+
+		stream_component = reg.get_component<StreamTestToggle>(entity);
+		stream_comp_counter = reg.get_component<StreamTestCounter>(entity);
+		ASSERT_EQ(stream_component.val, prev_val + 10);
+		ASSERT_EQ(stream_comp_counter.val, 0);
+		prev_val = stream_component.val;
+	}
+
+	std::cout << "VAL: " << stream_component.val << std::endl;
+
+	for(int i = 0; i < 10; i++) {
 	}
 }
