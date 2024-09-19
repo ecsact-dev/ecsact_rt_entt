@@ -113,7 +113,7 @@ static auto is_capability_safe_entities(
 	}
 
 	std::underlying_type_t<ecsact_system_capability> unsafe_caps =
-		ECSACT_SYS_CAP_ADDS | ECSACT_SYS_CAP_REMOVES;
+		ECSACT_SYS_CAP_ADDS | ECSACT_SYS_CAP_REMOVES | ECSACT_SYS_CAP_STREAM_TOGGLE;
 	unsafe_caps &= ~(ECSACT_SYS_CAP_EXCLUDE | ECSACT_SYS_CAP_INCLUDE);
 
 	return (unsafe_caps & capability) == 0b0;

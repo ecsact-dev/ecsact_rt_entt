@@ -1,11 +1,9 @@
 #include "core.hh"
 
-#include <stdexcept>
 #include <string>
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
-#include "magic_enum.hpp"
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
@@ -402,9 +400,6 @@ static auto add_stream_component_if_needed(
 	for(auto [comp_id, capability] : comp_caps) {
 		auto comp_type = ecsact_meta_component_type(comp_id);
 
-		ctx.warn("COMP TYPE: {}", magic_enum::enum_name(comp_type));
-		ctx.warn("COMP CAPABILITY: {}", magic_enum::enum_name(capability));
-
 		if(comp_type != ECSACT_COMPONENT_TYPE_STREAM &&
 			 comp_type != ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
 			continue;
@@ -442,7 +437,6 @@ static auto print_execute_systems(
 
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
-	ctx.warn("SYSTEM NAME: {}", system_name);
 	add_stream_component_if_needed(ctx, sys_like_id, additional_view_components);
 
 	ecsact::rt_entt_codegen::util::make_view(

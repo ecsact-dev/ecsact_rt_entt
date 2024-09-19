@@ -171,18 +171,20 @@ void runtime_test::MixedNotify::impl(context& ctx) {
 void runtime_test::StreamTestSystem::impl(context& ctx) {
 	auto comp = ctx.get<StreamTestCounter>();
 
-	std::cout << "VAL: " << comp.val << std::endl;
-	if(comp.val == 100) {
-		std::cout << "SteamTest TOGGLED!" << std::endl;
+	if(comp.val == 0) {
 		ctx.stream_toggle<StreamTestToggle>(false);
+	}
+
+	if(comp.val == 10) {
+		ctx.stream_toggle<StreamTestToggle>(true);
 	}
 }
 
 void runtime_test::StreamTestSystemCounter::impl(context& ctx) {
-	auto comp = ctx.get<StreamTestToggle>();
-	std::cout << "STREAM TEST SYSTEM COUNTER ITERATED" << std::endl;
-	comp.val += 10;
-	ctx.update(comp);
+	auto toggle_comp = ctx.get<StreamTestToggle>();
+
+	toggle_comp.val += 10;
+	ctx.update(toggle_comp);
 }
 
 TEST(Core, CreateRegistry) {
@@ -1389,28 +1391,36 @@ TEST(Core, StreamComponentToggle) {
 
 	exec_options.add_component(entity, &stream_component);
 	exec_options.add_component(entity, &stream_comp_counter);
-	exec_options = ecsact::core::execution_options{};
 
 	auto error = reg.execute_systems(std::array{exec_options});
-	int  prev_val = 0;
+	int  prev_val = 10;
 
-	for(int i = 0; i < 10; i++) {
-		stream_comp_counter.val += 10;
-		exec_options
-			// ecsact_stream(reg.id(), entity, StreamTestToggle::id,
-			// &stream_component);
+	for(int i = 0; i < 5; i++) {
+		stream_component.val += 10;
+		ecsact_stream(reg.id(), entity, StreamTestToggle::id, &stream_component);
 
-			reg.execute_systems();
+		reg.execute_systems();
 
 		stream_component = reg.get_component<StreamTestToggle>(entity);
 		stream_comp_counter = reg.get_component<StreamTestCounter>(entity);
 		ASSERT_EQ(stream_component.val, prev_val + 10);
-		ASSERT_EQ(stream_comp_counter.val, 0);
 		prev_val = stream_component.val;
 	}
 
-	std::cout << "VAL: " << stream_component.val << std::endl;
+	stream_comp_counter.val += 10;
+	exec_options.clear();
+	exec_options.update_component(entity, &stream_comp_counter);
+	error = reg.execute_systems(std::array{exec_options});
 
-	for(int i = 0; i < 10; i++) {
+	for(int i = 0; i < 5; i++) {
+		stream_component.val += 10;
+		ecsact_stream(reg.id(), entity, StreamTestToggle::id, &stream_component);
+
+		reg.execute_systems();
+
+		stream_component = reg.get_component<StreamTestToggle>(entity);
+		stream_comp_counter = reg.get_component<StreamTestCounter>(entity);
+		ASSERT_EQ(stream_component.val, prev_val + 10);
+		prev_val = stream_component.val;
 	}
 }

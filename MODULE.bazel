@@ -17,7 +17,6 @@ bazel_dep(name = "xxhash", version = "0.8.2")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
 bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2")
 bazel_dep(name = "boost.process", version = "1.83.0.bzl.2")
-bazel_dep(name = "magic_enum", version = "0.9.6")
 
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
