@@ -1423,4 +1423,16 @@ TEST(Core, StreamComponentToggle) {
 		ASSERT_EQ(stream_component.val, prev_val + 10);
 		prev_val = stream_component.val;
 	}
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::StreamTestSystem::id),
+		nullptr
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::StreamTestSystemCounter::id
+		),
+		nullptr
+	);
 }
