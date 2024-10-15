@@ -110,24 +110,24 @@ bool ecsact_has_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	...
+	const void*         indexed_fields
 ) {
 	using ecsact::entt::detail::globals::has_component_fns;
 	auto fn_itr = has_component_fns.find(component_id);
 	assert(fn_itr != has_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id);
+	return fn_itr->second(reg_id, entity_id, component_id, indexed_fields);
 }
 
 const void* ecsact_get_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	...
+	const void*         indexed_fields
 ) {
 	using ecsact::entt::detail::globals::get_component_fns;
 	auto fn_itr = get_component_fns.find(component_id);
 	assert(fn_itr != get_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id);
+	return fn_itr->second(reg_id, entity_id, component_id, indexed_fields);
 }
 
 int ecsact_count_components(
@@ -138,7 +138,7 @@ int ecsact_count_components(
 
 	int component_count = 0;
 	for(auto comp_id : all_component_ids) {
-		if(ecsact_has_component(registry_id, entity_id, comp_id)) {
+		if(ecsact_has_component(registry_id, entity_id, comp_id, nullptr)) {
 			component_count += 1;
 		}
 	}
@@ -154,10 +154,10 @@ void ecsact_each_component(
 	using ecsact::entt::detail::globals::all_component_ids;
 
 	for(auto comp_id : all_component_ids) {
-		if(ecsact_has_component(registry_id, entity_id, comp_id)) {
+		if(ecsact_has_component(registry_id, entity_id, comp_id, nullptr)) {
 			callback(
 				comp_id,
-				ecsact_get_component(registry_id, entity_id, comp_id),
+				ecsact_get_component(registry_id, entity_id, comp_id, nullptr),
 				callback_user_data
 			);
 		}
@@ -180,10 +180,10 @@ void ecsact_get_components(
 			break;
 		}
 
-		if(ecsact_has_component(registry_id, entity_id, comp_id)) {
+		if(ecsact_has_component(registry_id, entity_id, comp_id, nullptr)) {
 			out_component_ids[index] = comp_id;
 			out_components_data[index] =
-				ecsact_get_component(registry_id, entity_id, comp_id);
+				ecsact_get_component(registry_id, entity_id, comp_id, nullptr);
 			index += 1;
 		}
 	}
@@ -198,24 +198,25 @@ ecsact_update_error ecsact_update_component(
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
 	const void*         component_data,
-	...
+	const void*         indexed_fields
 ) {
 	using ecsact::entt::detail::globals::update_component_fns;
 	auto fn_itr = update_component_fns.find(component_id);
 	assert(fn_itr != update_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id, component_data);
+	return fn_itr
+		->second(reg_id, entity_id, component_id, component_data, indexed_fields);
 }
 
 void ecsact_remove_component(
 	ecsact_registry_id  reg_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	...
+	const void*         indexed_fields
 ) {
 	using ecsact::entt::detail::globals::remove_component_fns;
 	auto fn_itr = remove_component_fns.find(component_id);
 	assert(fn_itr != remove_component_fns.end());
-	return fn_itr->second(reg_id, entity_id, component_id);
+	return fn_itr->second(reg_id, entity_id, component_id, indexed_fields);
 }
 
 ecsact_stream_error ecsact_stream(
@@ -223,11 +224,17 @@ ecsact_stream_error ecsact_stream(
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
 	const void*         component_data,
-	...
+	const void*         indexed_fields
 ) {
 	using ecsact::entt::detail::globals::ecsact_stream_fns;
 	auto fn_itr = ecsact_stream_fns.find(component_id);
 	assert(fn_itr != ecsact_stream_fns.end());
 
-	return fn_itr->second(reg_id, entity_id, component_id, component_data);
+	return fn_itr->second( //
+		reg_id,
+		entity_id,
+		component_id,
+		component_data,
+		indexed_fields
+	);
 }

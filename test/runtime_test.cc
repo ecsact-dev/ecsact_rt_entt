@@ -271,7 +271,7 @@ TEST(Core, AddComponent) {
 	auto add_err = ecsact_add_component(reg_id, entity, comp_id, &comp);
 	EXPECT_EQ(add_err, ECSACT_ADD_OK);
 
-	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
 TEST(Core, HasComponent) {
@@ -281,9 +281,9 @@ TEST(Core, HasComponent) {
 	runtime_test::ComponentA comp{.a = 42};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 
-	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
-	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
 TEST(Core, GetComponent) {
@@ -295,7 +295,7 @@ TEST(Core, GetComponent) {
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, comp_id)
+		ecsact_get_component(reg_id, entity, comp_id, nullptr)
 	);
 
 	EXPECT_EQ(*comp_get, comp);
@@ -312,7 +312,7 @@ TEST(Core, UpdateComponent) {
 	ecsact_update_component(reg_id, entity, comp_id, &upped_comp);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, comp_id)
+		ecsact_get_component(reg_id, entity, comp_id, nullptr)
 	);
 
 	EXPECT_EQ(*comp_get, upped_comp);
@@ -325,9 +325,9 @@ TEST(Core, RemoveComponent) {
 	runtime_test::ComponentA comp{.a = 42};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
-	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 	ecsact_remove_component(reg_id, entity, comp_id);
-	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
 TEST(Core, TrivialRemoveEvent) {
@@ -943,7 +943,7 @@ TEST(Core, StaticSystemImpl) {
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, runtime_test::ComponentA::id)
+		ecsact_get_component(reg_id, entity, runtime_test::ComponentA::id, nullptr)
 	);
 
 	// Sanity check
@@ -959,7 +959,7 @@ TEST(Core, StaticSystemImpl) {
 	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
 
 	comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, comp_id)
+		ecsact_get_component(reg_id, entity, comp_id, nullptr)
 	);
 
 	EXPECT_NE(comp_get->a, comp.a);
