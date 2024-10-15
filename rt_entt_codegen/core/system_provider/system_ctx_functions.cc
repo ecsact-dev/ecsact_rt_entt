@@ -118,13 +118,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id), *view);\n"
+			"::id), nullptr, *view);\n"
 		);
 		return;
 	}
 	ctx.write(std::format(
 		"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, {}_t&);\n",
+		"ecsact_component_like_id, const void*, {}_t&);\n",
 		view_type_name
 	));
 
@@ -149,6 +149,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 		ctx.write("return result;\n");
 	});
 	ctx.write("();\n");
+	ctx.write("remove_fns.at(component_id)(this, component_id, nullptr, *view);\n"
+	);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
@@ -196,7 +198,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 
 	ctx.write(std::format(
 		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, void *, {}_t&, ...);\n",
+		"ecsact_component_like_id, void *, const void*, {}_t&);\n",
 		view_type_name
 	));
 
@@ -223,7 +225,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	ctx.write("();\n");
 
 	ctx.write(
-		"get_fns.at(component_id)(this, component_id, out_component_data, *view);\n"
+		"get_fns.at(component_id)(this, component_id, out_component_data, nullptr, *view);\n"
 	);
 }
 
@@ -246,14 +248,14 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
 			"::id),",
-			"component_data, *view); \n"
+			"component_data, nullptr, *view); \n"
 		);
 		return;
 	}
 
 	ctx.write(std::format(
 		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, const void *, {}_t&);\n",
+		"ecsact_component_like_id, const void *, const void*, {}_t&);\n",
 		view_type_name
 	));
 
@@ -280,7 +282,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 	ctx.write("();\n");
 
 	ctx.write(
-		"update_fns.at(component_id)(this, component_id, component_data, "
+		"update_fns.at(component_id)(this, component_id, component_data, nullptr, "
 		"*view);\n"
 	);
 }
@@ -303,7 +305,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id));\n"
+			"::id), nullptr);\n"
 		);
 	}
 	block(
@@ -326,7 +328,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 	);
 	ctx.write(";\n");
 
-	ctx.write("return has_fns.at(component_id)(this, component_id);\n");
+	ctx.write("return has_fns.at(component_id)(this, component_id, nullptr);\n");
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
@@ -343,7 +345,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 		"static const auto generate_fns = "
 		"std::unordered_map<ecsact_component_id, "
 		"void(*)(ecsact_system_execution_context*, ecsact_component_id, const "
-		"void*, ecsact::entt::entity_id)>",
+		"void*, const void*, ecsact::entt::entity_id)>",
 		[&] {
 			for(const auto& component : details.generate_comps) {
 				for(const auto& [comp_id, requirements] : component) {
@@ -377,7 +379,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 
 		ctx.write(
 			"generate_fns.at(component_id)(this, component_id, "
-			"component_data, entity);\n"
+			"component_data, nullptr, entity);\n"
 		);
 	});
 }
@@ -399,7 +401,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
 			type_name,
-			"::id), streaming_enabled); \n"
+			"::id), streaming_enabled, nullptr); \n"
 		);
 		return;
 	}

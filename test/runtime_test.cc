@@ -309,7 +309,7 @@ TEST(Core, UpdateComponent) {
 	runtime_test::ComponentA upped_comp{.a = 43};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
-	ecsact_update_component(reg_id, entity, comp_id, &upped_comp);
+	ecsact_update_component(reg_id, entity, comp_id, &upped_comp, nullptr);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
 		ecsact_get_component(reg_id, entity, comp_id, nullptr)
@@ -326,7 +326,7 @@ TEST(Core, RemoveComponent) {
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
 	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
-	ecsact_remove_component(reg_id, entity, comp_id);
+	ecsact_remove_component(reg_id, entity, comp_id, nullptr);
 	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
@@ -1323,7 +1323,7 @@ TEST(Core, StreamComponent) {
 
 	for(int i = 0; i < 100; i++) {
 		stream_component.val += 10;
-		ecsact_stream(reg.id(), entity, StreamTest::id, &stream_component);
+		ecsact_stream(reg.id(), entity, StreamTest::id, &stream_component, nullptr);
 		reg.execute_systems();
 
 		stream_component = reg.get_component<StreamTest>(entity);
@@ -1352,7 +1352,13 @@ TEST(Core, StreamComponentMultiThreadedOneEntity) {
 		thread = std::thread([&, reg_id = reg.id(), entity] {
 			auto stream_component = StreamTest{.val = 0};
 			for(int i = 0; i < 10; ++i) {
-				ecsact_stream(reg_id, entity, StreamTest::id, &stream_component);
+				ecsact_stream(
+					reg_id,
+					entity,
+					StreamTest::id,
+					&stream_component,
+					nullptr
+				);
 			}
 		});
 	}
@@ -1397,7 +1403,13 @@ TEST(Core, StreamComponentToggle) {
 
 	for(int i = 0; i < 5; i++) {
 		stream_component.val += 10;
-		ecsact_stream(reg.id(), entity, StreamTestToggle::id, &stream_component);
+		ecsact_stream(
+			reg.id(),
+			entity,
+			StreamTestToggle::id,
+			&stream_component,
+			nullptr
+		);
 
 		reg.execute_systems();
 
@@ -1414,7 +1426,13 @@ TEST(Core, StreamComponentToggle) {
 
 	for(int i = 0; i < 5; i++) {
 		stream_component.val += 10;
-		ecsact_stream(reg.id(), entity, StreamTestToggle::id, &stream_component);
+		ecsact_stream(
+			reg.id(),
+			entity,
+			StreamTestToggle::id,
+			&stream_component,
+			nullptr
+		);
 
 		reg.execute_systems();
 

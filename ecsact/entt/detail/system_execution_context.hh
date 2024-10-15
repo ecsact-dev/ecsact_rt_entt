@@ -37,21 +37,25 @@ struct ecsact_system_execution_context {
 	) -> void = 0;
 
 	virtual auto remove( //
-		ecsact_component_like_id component_id
+		ecsact_component_like_id component_id,
+		const void*              indexed_fields
 	) -> void = 0;
 
 	virtual auto get( //
 		ecsact_component_like_id component_id,
-		void*                    out_component_data
+		void*                    out_component_data,
+		const void*              indexed_fields
 	) -> void = 0;
 
 	virtual auto update( //
 		ecsact_component_like_id component_id,
-		const void*              component_data
+		const void*              component_data,
+		const void*              indexed_fields
 	) -> void = 0;
 
 	virtual auto has( //
-		ecsact_component_like_id component_id
+		ecsact_component_like_id component_id,
+		const void*              indexed_fields
 	) -> bool = 0;
 
 	virtual auto generate( //
@@ -62,7 +66,8 @@ struct ecsact_system_execution_context {
 
 	virtual auto stream_toggle( //
 		ecsact_component_id component_id,
-		bool                enable_stream
+		bool                enable_stream,
+		const void*         indexed_fields
 	) -> void = 0;
 
 	virtual auto parent() -> const ecsact_system_execution_context* = 0;

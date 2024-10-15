@@ -94,6 +94,7 @@ static auto print_sys_exec_ctx_remove(
 	auto printer = //
 		method_printer{ctx, "remove"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -115,6 +116,7 @@ static auto print_sys_exec_ctx_get(
 		method_printer{ctx, "get"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("void*", "out_component_data")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -136,6 +138,7 @@ static auto print_sys_exec_ctx_update(
 		method_printer{ctx, "update"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("const void*", "component_data")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -156,6 +159,7 @@ static auto print_sys_exec_ctx_has(
 	auto printer = //
 		method_printer{ctx, "has"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("const void*", "indexed_fields")
 			.return_type("bool final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -238,6 +242,7 @@ auto print_sys_exec_ctx_stream_toggle(
 		method_printer{ctx, "stream_toggle"}
 			.parameter("ecsact_component_id", "component_id")
 			.parameter("bool", "streaming_enabled")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
