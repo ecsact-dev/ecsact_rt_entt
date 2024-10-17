@@ -78,39 +78,39 @@ void ecsact_system_execution_context_add(
 void ecsact_system_execution_context_remove(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
-	...
+	const void*                      indexed_fields
 ) {
 	assert(context != nullptr);
-	return context->remove(comp_id);
+	return context->remove(comp_id, indexed_fields);
 }
 
 void ecsact_system_execution_context_get(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
 	void*                            out_component_data,
-	...
+	const void*                      indexed_fields
 ) {
 	assert(context != nullptr);
-	return context->get(comp_id, out_component_data);
+	return context->get(comp_id, out_component_data, indexed_fields);
 }
 
 void ecsact_system_execution_context_update(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
 	const void*                      component_data,
-	...
+	const void*                      indexed_fields
 ) {
 	assert(context != nullptr);
-	return context->update(comp_id, component_data);
+	return context->update(comp_id, component_data, indexed_fields);
 }
 
 bool ecsact_system_execution_context_has(
 	ecsact_system_execution_context* context,
 	ecsact_component_like_id         comp_id,
-	...
+	const void*                      indexed_fields
 ) {
 	assert(context != nullptr);
-	return context->has(comp_id);
+	return context->has(comp_id, indexed_fields);
 }
 
 void ecsact_system_execution_context_action(
@@ -119,6 +119,16 @@ void ecsact_system_execution_context_action(
 ) {
 	assert(context != nullptr);
 	return context->action(out_action_data);
+}
+
+void ecsact_system_execution_context_stream_toggle(
+	ecsact_system_execution_context* context,
+	ecsact_component_id              comp_id,
+	bool                             streaming_enabled,
+	const void*                      indexed_fields
+) {
+	assert(context != nullptr);
+	return context->stream_toggle(comp_id, streaming_enabled, indexed_fields);
 }
 
 const ecsact_system_execution_context* ecsact_system_execution_context_parent(

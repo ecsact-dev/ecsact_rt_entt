@@ -205,3 +205,25 @@ system MixedNotify {
 		onremove NotifyComponentB;
 	}
 }
+
+component StreamTest(stream) {
+  i32 val;
+}
+
+
+component StreamTestToggle(stream) {
+    i32 val;
+}
+
+component StreamTestCounter {
+    i32 val;
+}
+
+system StreamTestSystem {
+  stream_toggle StreamTestToggle;
+  readonly StreamTestCounter;
+}
+
+system StreamTestSystemCounter {
+  readwrite StreamTestToggle;
+}

@@ -9,6 +9,7 @@
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
+#include "ecsact/entt/detail/globals.hh"
 
 namespace ecsact::entt::wrapper::core {
 
@@ -17,8 +18,13 @@ inline auto has_component( //
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
-	...
+	const void*                          indexed_fields
 ) -> bool {
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
+
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -30,8 +36,13 @@ inline auto get_component(
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
-	...
+	const void*                          indexed_fields
 ) -> const void* {
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
+
 	if constexpr(std::is_empty_v<C>) {
 		static C emptyVal;
 		return &emptyVal;
@@ -123,9 +134,14 @@ inline auto update_component( //
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data,
-	...
+	const void*                          indexed_fields
 ) -> ecsact_update_error {
 	using ecsact::entt::detail::exec_beforechange_storage;
+
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
 
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
@@ -156,9 +172,14 @@ inline auto update_component_exec_options( //
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data,
-	...
+	const void*                          indexed_fields
 ) -> ecsact_update_error {
 	using ecsact::entt::detail::exec_beforechange_storage;
+
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
 
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
@@ -193,8 +214,13 @@ auto remove_component(
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
-	...
+	const void*                          indexed_fields
 ) -> void {
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
+
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -213,9 +239,14 @@ auto remove_component_exec_options(
 	ecsact_registry_id                   registry_id,
 	ecsact_entity_id                     entity_id,
 	[[maybe_unused]] ecsact_component_id component_id,
-	...
+	const void*                          indexed_fields
 ) -> void {
 	using ecsact::entt::detail::pending_remove;
+
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
 
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
@@ -475,4 +506,25 @@ auto update_exec_itr_beforechange(
 	beforechange_comp.value = comp;
 }
 
+template<typename C>
+auto ecsact_stream(
+	ecsact_registry_id                   registry_id,
+	ecsact_entity_id                     entity_id,
+	[[maybe_unused]] ecsact_component_id component_id,
+	const void*                          component_data,
+	const void*                          indexed_fields
+) -> ecsact_stream_error {
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
+
+	auto component = static_cast<const C*>(component_data);
+
+	using ecsact::entt::detail::globals::stream_registries;
+
+	stream_registries.handle_stream<C>(registry_id, entity_id, *component);
+
+	return ECSACT_STREAM_OK;
+}
 } // namespace ecsact::entt::wrapper::core

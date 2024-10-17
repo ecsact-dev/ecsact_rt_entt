@@ -1,6 +1,5 @@
 #include "core.hh"
 
-#include <stdexcept>
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -95,6 +94,7 @@ static auto print_sys_exec_ctx_remove(
 	auto printer = //
 		method_printer{ctx, "remove"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -116,6 +116,7 @@ static auto print_sys_exec_ctx_get(
 		method_printer{ctx, "get"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("void*", "out_component_data")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -137,6 +138,7 @@ static auto print_sys_exec_ctx_update(
 		method_printer{ctx, "update"}
 			.parameter("ecsact_component_like_id", "component_id")
 			.parameter("const void*", "component_data")
+			.parameter("const void*", "indexed_fields")
 			.return_type("void final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -157,6 +159,7 @@ static auto print_sys_exec_ctx_has(
 	auto printer = //
 		method_printer{ctx, "has"}
 			.parameter("ecsact_component_like_id", "component_id")
+			.parameter("const void*", "indexed_fields")
 			.return_type("bool final");
 
 	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
@@ -227,6 +230,28 @@ auto print_sys_exec_ctx_other(
 
 	if(result == system_providers.end()) {
 		ctx.fatal("INTERNAL: print context other was not handled by providers");
+	}
+}
+
+auto print_sys_exec_ctx_stream_toggle(
+	ecsact::codegen_plugin_context& ctx,
+	const common_vars               names,
+	system_provider_t               system_providers
+) -> void {
+	auto printer = //
+		method_printer{ctx, "stream_toggle"}
+			.parameter("ecsact_component_id", "component_id")
+			.parameter("bool", "streaming_enabled")
+			.parameter("const void*", "indexed_fields")
+			.return_type("void");
+
+	auto result = std::ranges::find_if(system_providers, [&](auto provider) {
+		return provider->context_function_stream_toggle(ctx, names) ==
+			handle_exclusive_provide::HANDLED;
+	});
+
+	if(result == system_providers.end()) {
+		ctx.fatal("INTERNAL: print context toggle was not handled by providers");
 	}
 }
 
@@ -315,6 +340,7 @@ static auto print_system_execution_context(
 		print_sys_exec_ctx_generate(ctx, names, system_providers);
 		print_sys_exec_ctx_parent(ctx, names, system_providers);
 		print_sys_exec_ctx_other(ctx, names, system_providers);
+		print_sys_exec_ctx_stream_toggle(ctx, names, system_providers);
 	});
 	ctx.write(";\n\n");
 
@@ -365,6 +391,36 @@ static auto setup_system_providers(system_like_id_variant sys_like_id
 	return system_providers;
 }
 
+static auto add_stream_component_if_needed(
+	ecsact::codegen_plugin_context& ctx,
+	system_like_id_variant          sys_like_id,
+	std::vector<std::string>&       additional_view_components
+) -> void {
+	using ecsact::cc_lang_support::cpp_identifier;
+	using ecsact::meta::decl_full_name;
+
+	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
+
+	auto comp_caps = ecsact::meta::system_capabilities(sys_like_id);
+	for(auto [comp_id, capability] : comp_caps) {
+		auto comp_type = ecsact_meta_component_type(comp_id);
+
+		if(comp_type != ECSACT_COMPONENT_TYPE_STREAM &&
+			 comp_type != ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
+			continue;
+		}
+
+		if(capability == ECSACT_SYS_CAP_STREAM_TOGGLE) {
+			continue;
+		}
+
+		auto comp_ident = cpp_identifier(decl_full_name(comp_id));
+		auto run_on_stream_str =
+			std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_ident);
+		additional_view_components.push_back(run_on_stream_str);
+	}
+}
+
 static auto print_execute_systems(
 	ecsact::codegen_plugin_context& ctx,
 	system_like_id_variant          sys_like_id,
@@ -383,6 +439,10 @@ static auto print_execute_systems(
 	}
 
 	auto sys_details = ecsact_entt_system_details::from_system_like(sys_like_id);
+
+	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
+
+	add_stream_component_if_needed(ctx, sys_like_id, additional_view_components);
 
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,

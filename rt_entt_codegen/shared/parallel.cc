@@ -32,7 +32,8 @@ auto ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
 
 static auto is_capability_safe(ecsact_system_capability capability) -> bool {
 	std::underlying_type_t<ecsact_system_capability> unsafe_caps =
-		ECSACT_SYS_CAP_ADDS | ECSACT_SYS_CAP_REMOVES | ECSACT_SYS_CAP_WRITEONLY;
+		ECSACT_SYS_CAP_ADDS | ECSACT_SYS_CAP_REMOVES | ECSACT_SYS_CAP_WRITEONLY |
+		ECSACT_SYS_CAP_STREAM_TOGGLE;
 	unsafe_caps &= ~(ECSACT_SYS_CAP_EXCLUDE | ECSACT_SYS_CAP_INCLUDE);
 
 	return (unsafe_caps & capability) == 0b0;
@@ -112,7 +113,7 @@ static auto is_capability_safe_entities(
 	}
 
 	std::underlying_type_t<ecsact_system_capability> unsafe_caps =
-		ECSACT_SYS_CAP_ADDS | ECSACT_SYS_CAP_REMOVES;
+		ECSACT_SYS_CAP_ADDS | ECSACT_SYS_CAP_REMOVES | ECSACT_SYS_CAP_STREAM_TOGGLE;
 	unsafe_caps &= ~(ECSACT_SYS_CAP_EXCLUDE | ECSACT_SYS_CAP_INCLUDE);
 
 	return (unsafe_caps & capability) == 0b0;

@@ -44,6 +44,11 @@ auto context_generate_impl(
 	const system_like_id_variant&                              sys_like_id,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void;
+auto context_stream_toggle_impl(
+	ecsact::codegen_plugin_context&                            ctx,
+	const system_like_id_variant&                              sys_like_id,
+	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
+) -> void;
 auto context_parent_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id

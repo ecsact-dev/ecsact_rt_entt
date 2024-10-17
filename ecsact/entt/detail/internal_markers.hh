@@ -51,6 +51,14 @@ struct pending_add<C> {
 template<typename C>
 struct pending_remove {};
 
+/**
+ * This flag is added to a system when its requirements contain a streaming
+ * component. If the ecsact_stream is toggled to systems, this component gets
+ * added and systems will run.
+ */
+template<typename C>
+struct run_on_stream {};
+
 struct created_entity {
 	ecsact_placeholder_entity_id placeholder_entity_id;
 };
@@ -66,6 +74,9 @@ struct system_sorted {
 template<typename S>
 struct pending_lazy_execution {};
 
+/**
+ * Flags a notify system to run upon fulfilling its requirements
+ */
 template<typename S>
 struct run_system {};
 

@@ -91,4 +91,9 @@ auto print_update_all_beforechange_storage(
 	const ecsact_entt_details& details
 ) -> void;
 
+auto print_apply_streaming_data(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
 } // namespace ecsact::rt_entt_codegen::core

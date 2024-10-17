@@ -70,8 +70,8 @@ template<typename C>
 auto context_remove(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
-	auto&                                     view,
-	...
+	const void*                               indexed_field_values,
+	auto&                                     view
 ) -> void {
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
@@ -126,8 +126,8 @@ auto context_get(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	void*                                     out_component_data,
-	auto&                                     view,
-	...
+	const void*                               indexed_field_values,
+	auto&                                     view
 ) -> void {
 	auto entity = context->entity;
 
@@ -139,6 +139,7 @@ auto context_update(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               in_component_data,
+	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
 	using ecsact::entt::detail::exec_beforechange_storage;
@@ -161,8 +162,13 @@ template<typename C>
 auto context_has(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
-	...
+	const void*                               indexed_fields
 ) -> bool {
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
+
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
 
@@ -170,13 +176,47 @@ auto context_has(
 }
 
 template<typename C>
+auto context_stream_toggle(
+	ecsact_system_execution_context*          context,
+	[[maybe_unused]] ecsact_component_like_id component_id,
+	bool                                      streaming_enabled,
+	const void*                               indexed_fields
+) {
+	using ecsact::entt::detail::run_on_stream;
+
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
+
+	auto  entity = context->entity;
+	auto& registry = *context->registry;
+
+	if(streaming_enabled) {
+		if(registry.any_of<run_on_stream<C>>(entity)) {
+			registry.template remove<run_on_stream<C>>(entity);
+		}
+	} else {
+		if(!registry.any_of<run_on_stream<C>>(entity)) {
+			registry.template emplace<run_on_stream<C>>(entity);
+		}
+	}
+}
+
+template<typename C>
 auto context_generate_add(
 	ecsact_system_execution_context* context,
 	ecsact_component_id              component_id,
 	const void*                      component_data,
+	const void*                      indexed_fields,
 	ecsact::entt::entity_id          entity
 ) -> void {
 	using ecsact::entt::detail::pending_add;
+
+	static_assert(
+		!C::has_assoc_fields,
+		"Ecsact RT EnTT doesn't support indexed fields (yet)"
+	);
 
 	auto& registry = *context->registry;
 

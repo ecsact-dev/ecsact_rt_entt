@@ -3,10 +3,11 @@
 #include <array>
 #include <set>
 #include <typeindex>
-#include <unordered_set>
 #include <version>
 #include <random>
+#include <thread>
 #include <ranges>
+#include <iostream>
 #include "ecsact/runtime/core.hh"
 #include "ecsact/runtime/dynamic.h"
 
@@ -168,6 +169,25 @@ void runtime_test::MixedNotify::impl(context& ctx) {
 	ctx.update(comp);
 }
 
+void runtime_test::StreamTestSystem::impl(context& ctx) {
+	auto comp = ctx.get<StreamTestCounter>();
+
+	if(comp.val == 0) {
+		ctx.stream_toggle<StreamTestToggle>(false);
+	}
+
+	if(comp.val == 10) {
+		ctx.stream_toggle<StreamTestToggle>(true);
+	}
+}
+
+void runtime_test::StreamTestSystemCounter::impl(context& ctx) {
+	auto toggle_comp = ctx.get<StreamTestToggle>();
+
+	toggle_comp.val += 10;
+	ctx.update(toggle_comp);
+}
+
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
 	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
@@ -252,7 +272,7 @@ TEST(Core, AddComponent) {
 	auto add_err = ecsact_add_component(reg_id, entity, comp_id, &comp);
 	EXPECT_EQ(add_err, ECSACT_ADD_OK);
 
-	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
 TEST(Core, HasComponent) {
@@ -262,9 +282,9 @@ TEST(Core, HasComponent) {
 	runtime_test::ComponentA comp{.a = 42};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 
-	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
-	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
 TEST(Core, GetComponent) {
@@ -276,7 +296,7 @@ TEST(Core, GetComponent) {
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, comp_id)
+		ecsact_get_component(reg_id, entity, comp_id, nullptr)
 	);
 
 	EXPECT_EQ(*comp_get, comp);
@@ -290,10 +310,10 @@ TEST(Core, UpdateComponent) {
 	runtime_test::ComponentA upped_comp{.a = 43};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
-	ecsact_update_component(reg_id, entity, comp_id, &upped_comp);
+	ecsact_update_component(reg_id, entity, comp_id, &upped_comp, nullptr);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, comp_id)
+		ecsact_get_component(reg_id, entity, comp_id, nullptr)
 	);
 
 	EXPECT_EQ(*comp_get, upped_comp);
@@ -306,9 +326,9 @@ TEST(Core, RemoveComponent) {
 	runtime_test::ComponentA comp{.a = 42};
 	auto comp_id = static_cast<ecsact_component_id>(runtime_test::ComponentA::id);
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
-	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id));
-	ecsact_remove_component(reg_id, entity, comp_id);
-	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id));
+	EXPECT_TRUE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
+	ecsact_remove_component(reg_id, entity, comp_id, nullptr);
+	EXPECT_FALSE(ecsact_has_component(reg_id, entity, comp_id, nullptr));
 }
 
 TEST(Core, TrivialRemoveEvent) {
@@ -924,7 +944,7 @@ TEST(Core, StaticSystemImpl) {
 	ecsact_add_component(reg_id, entity, comp_id, &comp);
 
 	auto comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, runtime_test::ComponentA::id)
+		ecsact_get_component(reg_id, entity, runtime_test::ComponentA::id, nullptr)
 	);
 
 	// Sanity check
@@ -940,7 +960,7 @@ TEST(Core, StaticSystemImpl) {
 	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
 
 	comp_get = static_cast<const runtime_test::ComponentA*>(
-		ecsact_get_component(reg_id, entity, comp_id)
+		ecsact_get_component(reg_id, entity, comp_id, nullptr)
 	);
 
 	EXPECT_NE(comp_get->a, comp.a);
@@ -1286,4 +1306,152 @@ TEST(Core, NotifyMixed) {
 
 	counter = reg.get_component<Counter>(entity);
 	ASSERT_EQ(counter.val, 3);
+}
+
+TEST(Core, StreamComponent) {
+	using runtime_test::StreamTest;
+
+	auto reg = ecsact::core::registry("Stream");
+	auto entity = reg.create_entity();
+	auto exec_options = ecsact::core::execution_options{};
+
+	auto stream_component = StreamTest{.val = 0};
+
+	exec_options.add_component(entity, &stream_component);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	int  prev_val = 0;
+
+	for(int i = 0; i < 100; i++) {
+		stream_component.val += 10;
+		ecsact_stream(reg.id(), entity, StreamTest::id, &stream_component, nullptr);
+		reg.execute_systems();
+
+		stream_component = reg.get_component<StreamTest>(entity);
+		ASSERT_EQ(stream_component.val, prev_val + 10);
+		prev_val = stream_component.val;
+	}
+}
+
+TEST(Core, StreamComponentMultiThreadedOneEntity) {
+	using runtime_test::StreamTest;
+
+	auto reg = ecsact::core::registry("Stream");
+	auto entity = reg.create_entity();
+	auto exec_options = ecsact::core::execution_options{};
+
+	auto thread_pool = std::array<std::thread, 4>{};
+
+	auto stream_component = StreamTest{.val = 0};
+
+	exec_options.add_component(entity, &stream_component);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	int  prev_val = 0;
+
+	for(auto& thread : thread_pool) {
+		thread = std::thread([&, reg_id = reg.id(), entity] {
+			auto stream_component = StreamTest{.val = 0};
+			for(int i = 0; i < 10; ++i) {
+				ecsact_stream(
+					reg_id,
+					entity,
+					StreamTest::id,
+					&stream_component,
+					nullptr
+				);
+			}
+		});
+	}
+
+	for(int i = 0; i < 5; i++) {
+		reg.execute_systems();
+	}
+
+	for(auto& thread : thread_pool) {
+		thread.join();
+	}
+}
+
+TEST(Core, StreamComponentToggle) {
+	using runtime_test::StreamTestCounter;
+	using runtime_test::StreamTestToggle;
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::StreamTestSystem::id),
+		runtime_test__StreamTestSystem
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::StreamTestSystemCounter::id
+		),
+		runtime_test__StreamTestSystemCounter
+	);
+
+	auto reg = ecsact::core::registry("Stream");
+	auto entity = reg.create_entity();
+	auto exec_options = ecsact::core::execution_options{};
+
+	auto stream_component = StreamTestToggle{.val = 0};
+	auto stream_comp_counter = StreamTestCounter{.val = 0};
+
+	exec_options.add_component(entity, &stream_component);
+	exec_options.add_component(entity, &stream_comp_counter);
+
+	auto error = reg.execute_systems(std::array{exec_options});
+	int  prev_val = 10;
+
+	for(int i = 0; i < 5; i++) {
+		stream_component.val += 10;
+		ecsact_stream(
+			reg.id(),
+			entity,
+			StreamTestToggle::id,
+			&stream_component,
+			nullptr
+		);
+
+		reg.execute_systems();
+
+		stream_component = reg.get_component<StreamTestToggle>(entity);
+		stream_comp_counter = reg.get_component<StreamTestCounter>(entity);
+		ASSERT_EQ(stream_component.val, prev_val + 10);
+		prev_val = stream_component.val;
+	}
+
+	stream_comp_counter.val += 10;
+	exec_options.clear();
+	exec_options.update_component(entity, &stream_comp_counter);
+	error = reg.execute_systems(std::array{exec_options});
+
+	for(int i = 0; i < 5; i++) {
+		stream_component.val += 10;
+		ecsact_stream(
+			reg.id(),
+			entity,
+			StreamTestToggle::id,
+			&stream_component,
+			nullptr
+		);
+
+		reg.execute_systems();
+
+		stream_component = reg.get_component<StreamTestToggle>(entity);
+		stream_comp_counter = reg.get_component<StreamTestCounter>(entity);
+		ASSERT_EQ(stream_component.val, prev_val + 10);
+		prev_val = stream_component.val;
+	}
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(runtime_test::StreamTestSystem::id),
+		nullptr
+	);
+
+	ecsact_set_system_execution_impl(
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::StreamTestSystemCounter::id
+		),
+		nullptr
+	);
 }

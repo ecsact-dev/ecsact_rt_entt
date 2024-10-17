@@ -4,6 +4,7 @@ package(default_visibility = ["//visibility:public"])
 _srcs = [
     "ecsact_rt_entt_core.cc",
     "ecsact_rt_entt_dynamic.cc",
+    "stream_registries.cc",
     "hash.cc",
 ]
 

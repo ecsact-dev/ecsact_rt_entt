@@ -60,6 +60,8 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 
 	ctx.write("\n");
 
+	ctx.write("apply_streaming_data(registry);\n");
+
 	ctx.write("for(auto i=0; execution_count > i; ++i) {");
 	ctx.indentation += 1;
 	ctx.write("\n");
@@ -77,6 +79,8 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 			ctx.write("return err;");
 		});
 	});
+
+	ctx.write("\n");
 
 	std::vector<system_like_id_variant> system_like_variants;
 

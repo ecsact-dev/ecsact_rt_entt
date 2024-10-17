@@ -44,6 +44,7 @@ auto ecsact::rt_entt_codegen::system_util::is_trivial_system(
 		ECSACT_SYS_CAP_OPTIONAL_READONLY,
 		ECSACT_SYS_CAP_OPTIONAL_READWRITE,
 		ECSACT_SYS_CAP_OPTIONAL_WRITEONLY,
+		ECSACT_SYS_CAP_STREAM_TOGGLE,
 	};
 
 	bool has_non_tag_adds = false;

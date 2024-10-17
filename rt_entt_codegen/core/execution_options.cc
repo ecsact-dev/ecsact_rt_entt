@@ -185,7 +185,7 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 			"execution_update_fns.at(ecsact_id_cast<ecsact_component_like_id>("
 			"component.component_id))(registry_id, "
 			"ecsact::entt::entity_id(entity), "
-			"component.component_id, component.component_data);\n"
+			"component.component_id, component.component_data, nullptr);\n"
 		);
 	});
 
@@ -197,7 +197,7 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 			"execution_remove_fns.at(ecsact_id_cast<ecsact_component_like_id>("
 			"component_id))(registry_id, "
 			"ecsact::entt::entity_id(entity), "
-			"component_id);\n\n"
+			"component_id, nullptr);\n\n"
 		);
 	});
 
