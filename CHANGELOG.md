@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.8 - 2024-10-17
+#### Features
+- toggle stream + new indexed fields api (#151) - (1d79758) - Austin Kelway
+#### Miscellaneous Chores
+- **(deps)** update ecsact repositories (#150) - (17c4531) - renovate[bot]
+- **(deps)** update dependency ecsact_runtime to v0.6.8 (#148) - (ac49d43) - renovate[bot]
+- **(deps)** update dependency rules_ecsact to v0.5.6 (#147) - (c2b7394) - renovate[bot]
+- improve compile commands situation in main - (dc5fdbb) - Ezekiel Warren
+- sync with ecsact_common (#149) - (fe02ca1) - seaubot
+
+- - -
+
 ## 0.3.7 - 2024-08-10
 #### Miscellaneous Chores
 - refactor to use new codegen api (#146) - (fb7b0d9) - Ezekiel Warren
