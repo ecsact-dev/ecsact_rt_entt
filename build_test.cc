@@ -1,4 +1,4 @@
-// Include all headers fot the sake of a quick build test
+// Include all headers for the sake of a quick build test
 #include "entt/entt.hpp" // IWYU pragma: keep
 #include "ecsact/entt/detail/apply_pending.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/bytes.hh" // IWYU pragma: keep
