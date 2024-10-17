@@ -225,7 +225,9 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	ctx.write("();\n");
 
 	ctx.write(
-		"get_fns.at(component_id)(this, component_id, out_component_data, nullptr, *view);\n"
+		"get_fns.at("
+		"component_id)(this, component_id, out_component_data, nullptr, *view"
+		");\n"
 	);
 }
 
