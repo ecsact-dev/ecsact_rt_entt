@@ -5,6 +5,7 @@
 #include <typeindex>
 #include <version>
 #include <random>
+#include <thread>
 #include <ranges>
 #include <iostream>
 #include "ecsact/runtime/core.hh"
