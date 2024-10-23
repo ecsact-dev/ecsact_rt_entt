@@ -181,6 +181,18 @@ void runtime_test::StreamTestSystem::impl(context& ctx) {
 	}
 }
 
+void runtime_test::StreamTestSystemTwo::impl(context& ctx) {
+	auto comp = ctx.get<StreamTestCounter>();
+
+	if(comp.val == 0) {
+		ctx.stream_toggle<StreamTest>(false);
+	}
+
+	if(comp.val == 10) {
+		ctx.stream_toggle<StreamTestToggle>(true);
+	}
+}
+
 void runtime_test::StreamTestSystemCounter::impl(context& ctx) {
 	auto toggle_comp = ctx.get<StreamTestToggle>();
 

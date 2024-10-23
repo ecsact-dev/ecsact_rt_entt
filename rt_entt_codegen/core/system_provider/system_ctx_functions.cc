@@ -401,7 +401,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 		ctx.write(
 			"wrapper::dynamic::context_stream_toggle<::",
 			type_name,
-			">(this, ecsact_id_cast<ecsact_component_like_id>(",
+			">(this, ecsact_id_cast<ecsact_component_id>(",
 			type_name,
 			"::id), streaming_enabled, nullptr); \n"
 		);
@@ -410,22 +410,29 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 	block(
 		ctx,
 		"static const auto toggle_fns = "
-		"std::unordered_map<ecsact_component_like_id, "
+		"std::unordered_map<ecsact_component_id, "
 		"decltype(&ecsact_system_execution_context_stream_toggle)>",
 		[&] {
 			for(const auto comp_id : stream_comps) {
 				auto type_name = cpp_identifier(decl_full_name(comp_id));
 				ctx.write(
 					"{",
-					"ecsact_id_cast<ecsact_component_like_id>(",
+					"ecsact_id_cast<ecsact_component_id>(",
 					type_name,
 					"::id), ",
 					"&wrapper::dynamic::context_stream_toggle<::",
 					type_name,
-					"> },"
+					"> },\n"
 				);
 			}
 		}
+	);
+	ctx.writef(";\n");
+
+	ctx.writef( //
+		"return toggle_fns.at(component_id)("
+		"this, component_id, streaming_enabled, nullptr"
+		");\n"
 	);
 }
 

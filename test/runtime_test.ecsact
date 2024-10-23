@@ -224,6 +224,12 @@ system StreamTestSystem {
   readonly StreamTestCounter;
 }
 
+system StreamTestSystemTwo {
+  stream_toggle StreamTestToggle;
+  stream_toggle StreamTest;
+  readonly StreamTestCounter;
+}
+
 system StreamTestSystemCounter {
   readwrite StreamTestToggle;
 }

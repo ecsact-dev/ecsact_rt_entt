@@ -177,11 +177,11 @@ auto context_has(
 
 template<typename C>
 auto context_stream_toggle(
-	ecsact_system_execution_context*          context,
-	[[maybe_unused]] ecsact_component_like_id component_id,
-	bool                                      streaming_enabled,
-	const void*                               indexed_fields
-) {
+	ecsact_system_execution_context*     context,
+	[[maybe_unused]] ecsact_component_id component_id,
+	bool                                 streaming_enabled,
+	const void*                          indexed_fields
+) -> void {
 	using ecsact::entt::detail::run_on_stream;
 
 	static_assert(
