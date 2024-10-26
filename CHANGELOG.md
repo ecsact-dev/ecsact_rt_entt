@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.9 - 2024-10-26
+#### Bug Fixes
+- stream toggle codegen misses (#153) - (46e7c76) - Ezekiel Warren
+- bad codegen with multiple stream_toggle systems - (2fb568d) - Ezekiel
+
+- - -
+
 ## 0.3.8 - 2024-10-17
 #### Features
 - toggle stream + new indexed fields api (#151) - (1d79758) - Austin Kelway
