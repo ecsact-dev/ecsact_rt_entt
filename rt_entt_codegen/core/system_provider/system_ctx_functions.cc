@@ -403,7 +403,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_id>(",
 			type_name,
-			"::id), streaming_enabled, nullptr); \n"
+			"::id), streaming_enabled, indexed_fields); \n"
 		);
 		return;
 	}
@@ -417,9 +417,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 				auto type_name = cpp_identifier(decl_full_name(comp_id));
 				ctx.write(
 					"{",
-					"ecsact_id_cast<ecsact_component_id>(",
 					type_name,
-					"::id), ",
+					"::id, ",
 					"&wrapper::dynamic::context_stream_toggle<::",
 					type_name,
 					"> },\n"
@@ -431,7 +430,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 
 	ctx.writef( //
 		"return toggle_fns.at(component_id)("
-		"this, component_id, streaming_enabled, nullptr"
+		"this, component_id, streaming_enabled, indexed_fields"
 		");\n"
 	);
 }
