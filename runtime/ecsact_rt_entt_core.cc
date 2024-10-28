@@ -176,14 +176,12 @@ void ecsact_get_components(
 
 	auto index = 0;
 	for(auto comp_id : all_component_ids) {
-		if(index >= max_components_count) {
-			break;
-		}
-
 		if(ecsact_has_component(registry_id, entity_id, comp_id, nullptr)) {
-			out_component_ids[index] = comp_id;
-			out_components_data[index] =
-				ecsact_get_component(registry_id, entity_id, comp_id, nullptr);
+			if(index >= max_components_count) {
+				out_component_ids[index] = comp_id;
+				out_components_data[index] =
+					ecsact_get_component(registry_id, entity_id, comp_id, nullptr);
+			}
 			index += 1;
 		}
 	}
