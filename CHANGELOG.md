@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.10 - 2024-10-29
+#### Bug Fixes
+- fauly logic on index of get components (#154) - (5b751ce) - Austin Kelway
+
+- - -
+
 ## 0.3.9 - 2024-10-26
 #### Bug Fixes
 - stream toggle codegen misses (#153) - (46e7c76) - Ezekiel Warren
