@@ -414,6 +414,10 @@ static auto add_stream_component_if_needed(
 			continue;
 		}
 
+		if(capability == ECSACT_SYS_CAP_READONLY) {
+			continue;
+		}
+
 		auto comp_ident = cpp_identifier(decl_full_name(comp_id));
 		auto run_on_stream_str =
 			std::format("::ecsact::entt::detail::run_on_stream<{}>", comp_ident);
