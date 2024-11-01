@@ -258,19 +258,19 @@ static auto loop_iterator(
 		for(const auto [comp_id, capability] : capabilities) {
 			auto cpp_name = decl_full_name(comp_id);
 
-			if(unsafe_comps.contains(comp_id)) {
-				if(capability == ECSACT_SYS_CAP_READONLY ||
-					 capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
+			if(!is_capability_safe(capability)) {
+				if(!unsafe_comps.contains(comp_id)) {
+					unsafe_comps.insert(comp_id);
+				} else {
 					parallel_system_cluster.push_back(parallel_system_list);
 					loop_iterator(system_list, iterator, parallel_system_cluster);
 					return;
 				}
 			}
 
-			if(!is_capability_safe(capability)) {
-				if(!unsafe_comps.contains(comp_id)) {
-					unsafe_comps.insert(comp_id);
-				} else {
+			if(unsafe_comps.contains(comp_id)) {
+				if(capability == ECSACT_SYS_CAP_READONLY ||
+					 capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
 					parallel_system_cluster.push_back(parallel_system_list);
 					loop_iterator(system_list, iterator, parallel_system_cluster);
 					return;
