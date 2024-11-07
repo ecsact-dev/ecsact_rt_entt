@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.11 - 2024-11-07
+#### Bug Fixes
+- capability safeties (#156) - (a25ad82) - Austin Kelway
+#### Features
+- Allow readonly of stream components even when toggled (#155) - (cb60b50) - Austin Kelway
+
+- - -
+
 ## 0.3.10 - 2024-10-29
 #### Bug Fixes
 - fauly logic on index of get components (#154) - (5b751ce) - Austin Kelway

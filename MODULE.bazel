@@ -1,6 +1,6 @@
 module(
     name = "ecsact_rt_entt",
-    version = "0.3.10",
+    version = "0.3.11",
     compatibility_level = 3,
 )
 
