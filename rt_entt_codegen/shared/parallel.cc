@@ -204,6 +204,7 @@ static auto loop_iterator(
 ) -> void {
 	std::vector<system_like_id_variant> parallel_system_list;
 	auto unsafe_comps = std::set<ecsact_component_like_id>{};
+	auto safe_ro_comps = std::set<ecsact_component_like_id>{};
 
 	using ecsact::meta::decl_full_name;
 
@@ -227,7 +228,9 @@ static auto loop_iterator(
 		}
 
 		auto capabilities = ecsact::meta::system_capabilities(sys_like_id);
+
 		auto child_unsafe_comps = std::set<ecsact_component_like_id>{};
+		auto child_safe_ro_comps = std::set<ecsact_component_like_id>{};
 		auto child_systems = ecsact::meta::get_child_system_ids(sys_like_id);
 
 		for(auto child_sys_id : child_systems) {
@@ -251,21 +254,17 @@ static auto loop_iterator(
 					} else {
 						child_unsafe_comps.insert(child_comp_id);
 					}
+				} else {
+					if(child_capability == ECSACT_SYS_CAP_READONLY ||
+						 child_capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
+						child_safe_ro_comps.insert(child_comp_id);
+					}
 				}
 			}
 		}
 
 		for(const auto [comp_id, capability] : capabilities) {
 			auto cpp_name = decl_full_name(comp_id);
-
-			if(unsafe_comps.contains(comp_id)) {
-				if(capability == ECSACT_SYS_CAP_READONLY ||
-					 capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
-					parallel_system_cluster.push_back(parallel_system_list);
-					loop_iterator(system_list, iterator, parallel_system_cluster);
-					return;
-				}
-			}
 
 			if(!is_capability_safe(capability)) {
 				if(!unsafe_comps.contains(comp_id)) {
@@ -275,12 +274,29 @@ static auto loop_iterator(
 					loop_iterator(system_list, iterator, parallel_system_cluster);
 					return;
 				}
+			} else {
+				if(capability == ECSACT_SYS_CAP_READONLY ||
+					 capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
+					safe_ro_comps.insert(comp_id);
+				}
+			}
+
+			if(unsafe_comps.contains(comp_id) && safe_ro_comps.contains(comp_id)) {
+				parallel_system_cluster.push_back(parallel_system_list);
+				loop_iterator(system_list, iterator, parallel_system_cluster);
+				return;
 			}
 		}
 
-		for(auto unsafe_comp : child_unsafe_comps) {
-			if(!unsafe_comps.contains(unsafe_comp)) {
-				unsafe_comps.insert(unsafe_comp);
+		for(auto child_safe_ro_comp : child_safe_ro_comps) {
+			if(!safe_ro_comps.contains(child_safe_ro_comp)) {
+				safe_ro_comps.insert(child_safe_ro_comp);
+			}
+		}
+
+		for(auto child_unsafe_comp : child_unsafe_comps) {
+			if(!unsafe_comps.contains(child_unsafe_comp)) {
+				unsafe_comps.insert(child_unsafe_comp);
 			}
 		}
 
