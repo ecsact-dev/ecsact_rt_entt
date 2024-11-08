@@ -467,6 +467,7 @@ inline auto prepare_component(ecsact_registry_id registry_id) -> void {
 	if constexpr(!std::is_empty_v<C>) {
 		reg.template storage<detail::exec_beforechange_storage<C>>();
 		reg.template storage<detail::exec_itr_beforechange_storage<C>>();
+		reg.template storage<detail::run_on_stream<C>>();
 	}
 }
 

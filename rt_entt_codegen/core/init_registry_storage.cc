@@ -16,6 +16,11 @@ auto ecsact::rt_entt_codegen::core::print_init_registry_storage(
 			.parameter("ecsact_registry_id", "registry_id")
 			.return_type("void");
 
+	ctx.write("auto& reg = ecsact::entt::get_registry(registry_id);\n");
+	ctx.write(
+		"reg.template storage<ecsact::entt::detail::destroyed_entity>();\n\n"
+	);
+
 	for(auto comp_id : details.all_components) {
 		auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 
