@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.12 - 2024-11-08
+#### Bug Fixes
+- nullptr hard set on actions (#157) - (0763495) - Austin Kelway
+
+- - -
+
 ## 0.3.11 - 2024-11-07
 #### Bug Fixes
 - capability safeties (#156) - (a25ad82) - Austin Kelway
