@@ -686,7 +686,7 @@ static auto print_execute_actions_template_specialization(
 			action_id,
 			{
 				.registry_var_name = "registry",
-				.parent_context_var_name = "nullptr",
+				.parent_context_var_name = "parent_context",
 				.action_var_name = "action",
 			}
 		);
