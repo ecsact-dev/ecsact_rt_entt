@@ -12,8 +12,8 @@ auto ecsact::rt_entt_codegen::core::print_init_registry_storage(
 	using ecsact::rt_entt_codegen::util::method_printer;
 
 	auto printer = //
-		method_printer{ctx, "ecsact_init_registry_storage"}
-			.parameter("entt::registry&", "registry")
+		method_printer{ctx, "ecsact::entt::ecsact_init_registry_storage"}
+			.parameter("::entt::registry&", "registry")
 			.return_type("void");
 
 	ctx.write(
