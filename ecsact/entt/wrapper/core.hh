@@ -6,6 +6,7 @@
 #include "ecsact/entt/detail/internal_markers.hh"
 #include "ecsact/entt/event_markers.hh"
 #include "entt/entity/registry.hpp"
+#include "entt/entt.hpp"
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/execution_events_collector.hh"
@@ -452,10 +453,8 @@ inline auto clear_notify_component(ecsact_registry_id registry_id) -> void {
 }
 
 template<typename C>
-inline auto prepare_component(ecsact_registry_id registry_id) -> void {
+inline auto prepare_component(::entt::registry& reg) -> void {
 	using namespace ecsact::entt;
-
-	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	reg.template storage<C>();
 	reg.template storage<component_added<C>>();
@@ -472,13 +471,12 @@ inline auto prepare_component(ecsact_registry_id registry_id) -> void {
 }
 
 template<typename S>
-inline auto prepare_system(ecsact_registry_id registry_id) -> void {
+inline auto prepare_system(::entt::registry& registry) -> void {
 	using namespace ecsact::entt::detail;
-	auto& reg = ecsact::entt::get_registry(registry_id);
 
-	reg.template storage<system_sorted<S>>();
-	reg.template storage<pending_lazy_execution<S>>();
-	reg.template storage<run_system<S>>();
+	registry.template storage<system_sorted<S>>();
+	registry.template storage<pending_lazy_execution<S>>();
+	registry.template storage<run_system<S>>();
 }
 
 template<typename C, typename V>
