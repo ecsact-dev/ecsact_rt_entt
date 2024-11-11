@@ -33,4 +33,6 @@ inline auto create_registry()
 	return {registry_id, std::ref(registry)};
 }
 
+auto ecsact_init_registry_storage(::entt::registry& registry) -> void;
+
 } // namespace ecsact::entt
