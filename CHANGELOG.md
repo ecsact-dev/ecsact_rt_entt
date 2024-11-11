@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.13 - 2024-11-11
+#### Miscellaneous Chores
+- ecsact to entt reg prepare (#159) - (bc0fac6) - Austin Kelway
+
+- - -
+
 ## 0.3.12 - 2024-11-08
 #### Bug Fixes
 - nullptr hard set on actions (#157) - (0763495) - Austin Kelway
