@@ -17,6 +17,7 @@ bazel_dep(name = "xxhash", version = "0.8.2")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
 bazel_dep(name = "boost.dll", version = "1.83.0.bzl.2")
 bazel_dep(name = "boost.process", version = "1.83.0.bzl.2")
+bazel_dep(name = "tracy", version = "0.11.1")
 
 bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
@@ -31,6 +32,12 @@ git_override(
     module_name = "libarchive",
     commit = "7c331f92acea5243c195cdc6fb46ecfa11ce1ce2",
     remote = "https://github.com/zaucy/libarchive.git",
+)
+
+git_override(
+    module_name = "tracy",
+    commit = "cc236c7d1cf57b7065dc2cb3faa6a9573b46481a",
+    remote = "git@github.com:seaube/tracy.git",
 )
 
 ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)
