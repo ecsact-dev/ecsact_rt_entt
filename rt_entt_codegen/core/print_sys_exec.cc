@@ -4,6 +4,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
+#include "tracy/Tracy.hpp"
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
@@ -347,8 +348,8 @@ static auto print_system_execution_context(
 	return context_type_name;
 }
 
-static auto setup_system_providers(system_like_id_variant sys_like_id
-) -> system_provider_t {
+static auto setup_system_providers(system_like_id_variant sys_like_id)
+	-> system_provider_t {
 	using ecsact::rt_entt_codegen::core::provider::association;
 	using ecsact::rt_entt_codegen::core::provider::basic;
 	using ecsact::rt_entt_codegen::core::provider::lazy;
@@ -553,6 +554,7 @@ static auto print_trivial_system_like(
 			.parameter("const ecsact::entt::actions_map&", "actions_map")
 			.return_type("void");
 
+	ctx.write("ZoneScoped;\n");
 	ecsact::rt_entt_codegen::util::make_view(ctx, "view", "registry", details);
 
 	block(ctx, "for(auto entity : view)", [&] {
@@ -619,6 +621,8 @@ static auto print_execute_system_template_specialization(
 		block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
 		ctx.write("\n");
 	}
+
+	ctx.write("ZoneScoped;\n");
 
 	print_execute_systems(
 		ctx,
