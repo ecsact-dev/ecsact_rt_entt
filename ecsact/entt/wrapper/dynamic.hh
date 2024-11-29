@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <type_traits>
-#include "tracy/Tracy.hpp"
 #include "ecsact/entt/entity.hh"
 #include "entt/entity/registry.hpp"
 #include "ecsact/entt/registry_util.hh"
@@ -10,6 +9,10 @@
 #include "ecsact/entt/detail/internal_markers.hh"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
+
+#ifdef TRACY_ENABLE
+#	include "tracy/Tracy.hpp"
+#endif
 
 namespace ecsact::entt::wrapper::dynamic {
 
@@ -19,7 +22,9 @@ auto context_add(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               component_data
 ) -> void {
-	ZoneScoped;
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Teal);
+#endif
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::beforeremove_storage;
@@ -53,7 +58,9 @@ auto component_add_trivial(
 	ecsact::entt::registry_t& registry,
 	ecsact::entt::entity_id   entity_id
 ) -> void {
-	ZoneScoped;
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Teal);
+#endif
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::pending_add;
@@ -76,7 +83,9 @@ auto context_remove(
 	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
-	ZoneScoped;
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Orange);
+#endif
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
 	using ecsact::entt::component_removed;
@@ -107,7 +116,9 @@ auto component_remove_trivial(
 	ecsact::entt::entity_id   entity_id,
 	auto&                     view
 ) -> void {
-	ZoneScoped;
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Orange);
+#endif
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;
@@ -134,7 +145,6 @@ auto context_get(
 	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
-	ZoneScoped;
 	auto entity = context->entity;
 
 	*static_cast<C*>(out_component_data) = view.template get<C>(entity);
@@ -148,7 +158,6 @@ auto context_update(
 	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
-	ZoneScoped;
 	using ecsact::entt::detail::exec_beforechange_storage;
 	// TODO(Kelwan): for remove, beforeremove_storage
 
@@ -171,7 +180,6 @@ auto context_has(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               indexed_fields
 ) -> bool {
-	ZoneScoped;
 	static_assert(
 		!C::has_assoc_fields,
 		"Ecsact RT EnTT doesn't support indexed fields (yet)"
@@ -190,7 +198,6 @@ auto context_stream_toggle(
 	bool                                 streaming_enabled,
 	const void*                          indexed_fields
 ) -> void {
-	ZoneScoped;
 	using ecsact::entt::detail::run_on_stream;
 
 	static_assert(
@@ -220,7 +227,6 @@ auto context_generate_add(
 	const void*                      indexed_fields,
 	ecsact::entt::entity_id          entity
 ) -> void {
-	ZoneScoped;
 	using ecsact::entt::detail::pending_add;
 
 	static_assert(

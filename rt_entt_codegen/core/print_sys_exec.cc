@@ -4,7 +4,6 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
-#include "tracy/Tracy.hpp"
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/common.h"
@@ -554,7 +553,14 @@ static auto print_trivial_system_like(
 			.parameter("const ecsact::entt::actions_map&", "actions_map")
 			.return_type("void");
 
-	ctx.write("ZoneScoped;\n");
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"ZoneScopedNC(\"execute_system trivial ",
+		system_name,
+		"\", tracy::Color::SpringGreen);\n",
+		"#endif\n"
+	);
+
 	ecsact::rt_entt_codegen::util::make_view(ctx, "view", "registry", details);
 
 	block(ctx, "for(auto entity : view)", [&] {
@@ -622,7 +628,13 @@ static auto print_execute_system_template_specialization(
 		ctx.write("\n");
 	}
 
-	ctx.write("ZoneScoped;\n");
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"\tZoneScopedNC(\"execute_system ",
+		system_name,
+		"\", tracy::Color::DarkGreen);\n",
+		"#endif\n"
+	);
 
 	print_execute_systems(
 		ctx,

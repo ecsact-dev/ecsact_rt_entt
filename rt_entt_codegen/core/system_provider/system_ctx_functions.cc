@@ -16,6 +16,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 ) -> void {
 	if(sys_like_id.is_action()) {
 		auto action_name = cpp_identifier(decl_full_name(sys_like_id));
+		ctx.write(
+			"\t#ifdef TRACY_ENABLE\n",
+			"ZoneScopedNC(\"context_action ",
+			action_name,
+			"\", tracy::Color::Blue);\n",
+			"#endif\n"
+		);
 
 		ctx.write(
 			"*static_cast<",
@@ -48,7 +55,9 @@ auto ecsact::rt_entt_codegen::core::provider::context_add_impl(
 	if(adds_comps.empty()) {
 		// TODO(Kelwan): Handle unexpected behaviour
 		return;
-	} else if(adds_comps.size() == 1) {
+	}
+
+	if(adds_comps.size() == 1) {
 		const auto& comp_id = adds_comps.front();
 		auto        type_name = cpp_identifier(decl_full_name(comp_id));
 		ctx.write(
@@ -61,6 +70,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_add_impl(
 		);
 		return;
 	}
+
 	block(
 		ctx,
 		"static const auto add_fns = "
@@ -109,6 +119,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 		// TODO(Kelwan): Handle unexpected behaviour
 		return;
 	}
+
 	if(remove_comps.size() == 1) {
 		const auto& comp_id = remove_comps.front();
 
@@ -175,22 +186,31 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	if(get_components.size() == 0) {
 		return;
 	}
+	auto system_name = decl_full_name(sys_like_id);
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n"
+		"\tZoneScopedNC(\"context_get ",
+		system_name,
+		"\", tracy::Color::Purple);\n",
+		"#endif\n"
+	);
 
 	// Shortcut - ignore component ID because we only have 1
 	if(details.get_comps.size() == 1 && details.readable_comps.size() == 1) {
 		auto comp_id = *details.get_comps.begin();
-		auto cpp_comp_full_name = cpp_identifier(decl_full_name(comp_id));
+		auto comp_name = decl_full_name(comp_id);
+		auto type_name = cpp_identifier(comp_name);
 
 		ctx.write(
 			"assert(ecsact_id_cast<ecsact_component_like_id>(::",
-			cpp_comp_full_name,
+			type_name,
 			"::id) == component_id);\n"
 		);
 		ctx.write(
 			"*static_cast<::",
-			cpp_comp_full_name,
+			type_name,
 			"*>(out_component_data) = view->get<::",
-			cpp_comp_full_name,
+			type_name,
 			">(entity);"
 		);
 		return;
@@ -241,9 +261,20 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 		return;
 	}
 
+	auto system_name = decl_full_name(sys_like_id);
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"\tZoneScopedNC(\"context_update ",
+		system_name,
+		"\", tracy::Color::Red);\n",
+		"#endif\n"
+	);
+
 	if(details.writable_comps.size() == 1) {
 		const auto& comp_id = *details.writable_comps.begin();
-		auto        type_name = cpp_identifier(decl_full_name(comp_id));
+		auto        comp_name = decl_full_name(comp_id);
+		auto        type_name = cpp_identifier(comp_name);
+
 		ctx.write(
 			"wrapper::dynamic::context_update<::",
 			type_name,
@@ -299,9 +330,20 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 		return;
 	}
 
+	auto system_name = decl_full_name(sys_like_id);
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"\tZoneScopedNC(\"context_has ",
+		system_name,
+		"\", tracy::Color::Gray);\n",
+		"#endif\n"
+	);
+
 	if(details.writable_comps.size() == 1) {
 		const auto& comp_id = *details.writable_comps.begin();
 		auto        type_name = cpp_identifier(decl_full_name(comp_id));
+		auto        comp_name = decl_full_name(comp_id);
+
 		ctx.write(
 			"return wrapper::dynamic::context_has<::",
 			type_name,
@@ -342,6 +384,16 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 		// TODO (Kelwan): Handle undefined behaviour
 		return;
 	}
+
+	auto system_name = decl_full_name(sys_like_id);
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"\tZoneScopedNC(\"context_generate ",
+		system_name,
+		"\", tracy::Color::Yellow);\n",
+		"#endif\n"
+	);
+
 	block(
 		ctx,
 		"static const auto generate_fns = "
@@ -351,7 +403,9 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 		[&] {
 			for(const auto& component : details.generate_comps) {
 				for(const auto& [comp_id, requirements] : component) {
-					auto type_name = cpp_identifier(decl_full_name(comp_id));
+					auto comp_name = decl_full_name(comp_id);
+					auto type_name = cpp_identifier(comp_name);
+
 					ctx.write(
 						"{",
 						type_name,
@@ -395,9 +449,21 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 	if(stream_comps.empty()) {
 		// TODO(Kelwan): Handle unexpected behaviour
 		return;
-	} else if(stream_comps.size() == 1) {
+	}
+
+	auto system_name = decl_full_name(sys_like_id);
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"\tZoneScopedNC(\"context_stream_toggle ",
+		system_name,
+		"\", tracy::Color::Green);\n",
+		"#endif\n"
+	);
+
+	if(stream_comps.size() == 1) {
 		const auto& comp_id = stream_comps.begin();
 		auto        type_name = cpp_identifier(decl_full_name(*comp_id));
+
 		ctx.write(
 			"wrapper::dynamic::context_stream_toggle<::",
 			type_name,
@@ -407,6 +473,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 		);
 		return;
 	}
+
 	block(
 		ctx,
 		"static const auto toggle_fns = "
