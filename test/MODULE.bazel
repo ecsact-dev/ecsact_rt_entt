@@ -31,7 +31,7 @@ git_override(
 git_override(
     module_name = "tracy",
     commit = "b75f30a3823bc290b4d2359234d10ff69855d046",
-    remote = "git@github.com:seaube/tracy.git",
+    remote = "https://github.com/seaube/tracy.git",
 )
 
 bazel_dep(name = "ecsact_rt_entt")
