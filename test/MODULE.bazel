@@ -1,6 +1,6 @@
 module(name = "ecsact_rt_entt_test")
 
-bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_cc", version = "0.0.17")
 bazel_dep(name = "bazel_skylib", version = "1.6.1")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
 bazel_dep(name = "rules_ecsact", version = "0.5.8")
@@ -30,7 +30,7 @@ git_override(
 
 git_override(
     module_name = "tracy",
-    commit = "cc236c7d1cf57b7065dc2cb3faa6a9573b46481a",
+    commit = "b75f30a3823bc290b4d2359234d10ff69855d046",
     remote = "git@github.com:seaube/tracy.git",
 )
 
