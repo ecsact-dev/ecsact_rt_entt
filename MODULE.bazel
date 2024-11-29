@@ -36,8 +36,8 @@ git_override(
 
 git_override(
     module_name = "tracy",
-    commit = "cc236c7d1cf57b7065dc2cb3faa6a9573b46481a",
-    remote = "git@github.com:seaube/tracy.git",
+    commit = "b75f30a3823bc290b4d2359234d10ff69855d046",
+    remote = "https://github.com/seaube/tracy.git",
 )
 
 ecsact = use_extension("@rules_ecsact//ecsact:extensions.bzl", "ecsact", dev_dependency = True)
