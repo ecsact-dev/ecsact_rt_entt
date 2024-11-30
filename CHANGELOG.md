@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.14 - 2024-11-30
+#### Features
+- tracy (#160) - (fbd85f2) - Austin Kelway
+#### Miscellaneous Chores
+- use tracy from edr - (a6c18fa) - Ezekiel Warren
+
+- - -
+
 ## 0.3.13 - 2024-11-11
 #### Miscellaneous Chores
 - ecsact to entt reg prepare (#159) - (bc0fac6) - Austin Kelway
