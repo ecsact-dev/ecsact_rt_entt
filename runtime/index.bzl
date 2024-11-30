@@ -83,6 +83,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         "@entt",
         "@xxhash",
         "%s__public_cc" % name,
+        "@tracy"
     ]
 
     cc_library(

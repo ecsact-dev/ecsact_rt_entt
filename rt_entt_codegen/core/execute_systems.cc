@@ -56,6 +56,12 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 			.parameter("const ecsact_execution_events_collector*", "evc")
 			.return_type("ecsact_execute_systems_error");
 
+	ctx.write(
+		"#ifdef TRACY_ENABLE\n",
+		"\tZoneScopedN(\"execute_all_systems\");\n",
+		"#endif\n"
+	);
+
 	ctx.write(METHOD_BODY_TOP);
 
 	ctx.write("\n");

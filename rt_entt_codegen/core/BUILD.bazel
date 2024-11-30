@@ -35,6 +35,7 @@ _CORE_CODEGEN_METHODS = {
         "//rt_entt_codegen/core/system_provider",
         "@entt//:entt",
         "@ecsact_rt_entt//:lib",
+        "@tracy",
     ],
     "check_error": [],
     "execution_options": [],

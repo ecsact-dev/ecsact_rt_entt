@@ -10,6 +10,10 @@
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
 
+#ifdef TRACY_ENABLE
+#	include "tracy/Tracy.hpp"
+#endif
+
 namespace ecsact::entt::wrapper::dynamic {
 
 template<typename C>
@@ -18,6 +22,9 @@ auto context_add(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               component_data
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Teal);
+#endif
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::beforeremove_storage;
@@ -51,6 +58,9 @@ auto component_add_trivial(
 	ecsact::entt::registry_t& registry,
 	ecsact::entt::entity_id   entity_id
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Teal);
+#endif
 	using ecsact::entt::component_added;
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::pending_add;
@@ -73,6 +83,9 @@ auto context_remove(
 	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Orange);
+#endif
 	assert(ecsact_id_cast<ecsact_component_like_id>(C::id) == component_id);
 
 	using ecsact::entt::component_removed;
@@ -103,6 +116,9 @@ auto component_remove_trivial(
 	ecsact::entt::entity_id   entity_id,
 	auto&                     view
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedC(tracy::Color::Orange);
+#endif
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;

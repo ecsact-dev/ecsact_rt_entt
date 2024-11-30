@@ -12,6 +12,10 @@
 #include "ecsact/entt/detail/execution_events_collector.hh"
 #include "ecsact/entt/detail/globals.hh"
 
+#ifdef TRACY_ENABLE
+#	include "tracy/Tracy.hpp"
+#endif
+
 namespace ecsact::entt::wrapper::core {
 
 template<typename C>
@@ -21,6 +25,9 @@ inline auto has_component( //
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          indexed_fields
 ) -> bool {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core has_component");
+#endif
 	static_assert(
 		!C::has_assoc_fields,
 		"Ecsact RT EnTT doesn't support indexed fields (yet)"
@@ -39,6 +46,9 @@ inline auto get_component(
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          indexed_fields
 ) -> const void* {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core get_component");
+#endif
 	static_assert(
 		!C::has_assoc_fields,
 		"Ecsact RT EnTT doesn't support indexed fields (yet)"
@@ -63,6 +73,9 @@ inline auto add_component( //
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data
 ) -> ecsact_add_error {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core add_component");
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -99,6 +112,9 @@ inline auto add_component_exec_options( //
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          component_data
 ) -> ecsact_add_error {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
@@ -137,6 +153,9 @@ inline auto update_component( //
 	const void*                          component_data,
 	const void*                          indexed_fields
 ) -> ecsact_update_error {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core update_component");
+#endif
 	using ecsact::entt::detail::exec_beforechange_storage;
 
 	static_assert(
@@ -175,6 +194,9 @@ inline auto update_component_exec_options( //
 	const void*                          component_data,
 	const void*                          indexed_fields
 ) -> ecsact_update_error {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	using ecsact::entt::detail::exec_beforechange_storage;
 
 	static_assert(
@@ -217,6 +239,9 @@ auto remove_component(
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          indexed_fields
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core remove_component");
+#endif
 	static_assert(
 		!C::has_assoc_fields,
 		"Ecsact RT EnTT doesn't support indexed fields (yet)"
@@ -242,6 +267,9 @@ auto remove_component_exec_options(
 	[[maybe_unused]] ecsact_component_id component_id,
 	const void*                          indexed_fields
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	using ecsact::entt::detail::pending_remove;
 
 	static_assert(
@@ -275,6 +303,9 @@ inline auto _trigger_create_entity_events(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	using ecsact::entt::detail::created_entity;
 
 	auto& reg = ecsact::entt::get_registry(registry_id);
@@ -299,6 +330,9 @@ inline auto _trigger_destroy_entity_events(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	using ecsact::entt::detail::destroyed_entity;
 
 	auto& reg = ecsact::entt::get_registry(registry_id);
@@ -321,6 +355,9 @@ auto _trigger_init_component_event(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	if(!events_collector.has_init_callback()) {
@@ -353,6 +390,9 @@ auto _trigger_update_component_event(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::exec_beforechange_storage;
 
@@ -386,6 +426,9 @@ auto _trigger_remove_component_event(
 	ecsact_registry_id                                registry_id,
 	ecsact::entt::detail::execution_events_collector& events_collector
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	if(!events_collector.has_remove_callback()) {
@@ -429,6 +472,9 @@ inline auto check_action_error(
 	ecsact_registry_id registry_id,
 	const void*        action_data
 ) -> ecsact_execute_systems_error {
+#ifdef TRACY_ENABLE
+	ZoneScoped;
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	auto action = *static_cast<const A*>(action_data);
@@ -439,6 +485,9 @@ inline auto check_action_error(
 
 template<typename C>
 inline auto clear_component(ecsact_registry_id registry_id) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core clear_component");
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	reg.clear<ecsact::entt::component_added<C>>();
@@ -447,6 +496,9 @@ inline auto clear_component(ecsact_registry_id registry_id) -> void {
 
 template<typename S>
 inline auto clear_notify_component(ecsact_registry_id registry_id) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core clear_notify_component");
+#endif
 	auto& reg = ecsact::entt::get_registry(registry_id);
 
 	reg.clear<ecsact::entt::detail::run_system<S>>();
@@ -481,6 +533,9 @@ inline auto prepare_system(::entt::registry& registry) -> void {
 
 template<typename C, typename V>
 auto has_component_changed(entt::entity_id entity, V& view) -> bool {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core has_component_changed");
+#endif
 	using detail::exec_itr_beforechange_storage;
 
 	const auto& current_comp = view.template get<C>(entity);
@@ -498,6 +553,9 @@ auto update_exec_itr_beforechange(
 	entt::entity_id           entity,
 	ecsact::entt::registry_t& reg
 ) -> void {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core update_beforechange_value");
+#endif
 	auto  comp = reg.get<C>(entity);
 	auto& beforechange_comp =
 		reg.get<detail::exec_itr_beforechange_storage<C>>(entity);
@@ -513,6 +571,9 @@ auto ecsact_stream(
 	const void*                          component_data,
 	const void*                          indexed_fields
 ) -> ecsact_stream_error {
+#ifdef TRACY_ENABLE
+	ZoneScopedN("core ecsact_stream");
+#endif
 	static_assert(
 		!C::has_assoc_fields,
 		"Ecsact RT EnTT doesn't support indexed fields (yet)"
