@@ -58,7 +58,7 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 
 	ctx.write(
 		"#ifdef TRACY_ENABLE\n",
-		"\tZoneScopedN(\"execute_all_systems);\n",
+		"\tZoneScopedN(\"execute_all_systems\");\n",
 		"#endif\n"
 	);
 
