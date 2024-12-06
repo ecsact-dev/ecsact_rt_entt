@@ -112,6 +112,23 @@ cc_test(
     name = "test",
     srcs = [
         "runtime_test.cc",
+        "system_impls.cc",
+        ":ecsact_cc_system_impl_srcs",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    deps = [
+        ":runtime",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "clone_test",
+    srcs = [
+        "clone_test.cc",
+        "system_impls.cc",
         ":ecsact_cc_system_impl_srcs",
     ],
     args = ["--gtest_catch_exceptions=0"],

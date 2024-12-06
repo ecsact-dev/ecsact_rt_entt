@@ -157,6 +157,7 @@ ecsact_build_recipe(
         # core
         "ecsact_execute_systems",
         "ecsact_create_registry",
+        "ecsact_clone_registry",
         "ecsact_destroy_registry",
         "ecsact_clear_registry",
         "ecsact_create_entity",

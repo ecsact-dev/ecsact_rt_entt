@@ -17,6 +17,29 @@ void ecsact_destroy_registry(ecsact_registry_id reg_id) {
 	assert(reg.template storage<entt::entity>().in_use() == 0);
 }
 
+auto ecsact_create_registry(const char* registry_name) -> ecsact_registry_id {
+	auto&& [registry_id, reg] = ecsact::entt::create_registry();
+	ecsact::entt::ecsact_init_registry_storage(reg);
+	return registry_id;
+}
+
+auto ecsact_clone_registry( //
+	ecsact_registry_id reg_id,
+	const char*        name
+) -> ecsact_registry_id {
+	auto& reg = ecsact::entt::get_registry(reg_id);
+	auto  cloned_reg_id = ecsact_create_registry(name);
+	auto& cloned_reg = ecsact::entt::get_registry(cloned_reg_id);
+	for(auto&& [entity_id] : reg.template storage<entt::entity>().each()) {
+		[[maybe_unused]] auto cloned_entity_id = cloned_reg.create(entity_id);
+		assert(cloned_entity_id == entity_id);
+	}
+
+	ecsact::entt::copy_components(reg, cloned_reg);
+
+	return cloned_reg_id;
+}
+
 void ecsact_clear_registry(ecsact_registry_id reg_id) {
 	auto& reg = ecsact::entt::get_registry(reg_id);
 	reg = {};

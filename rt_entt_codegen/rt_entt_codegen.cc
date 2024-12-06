@@ -350,7 +350,7 @@ void ecsact_codegen_plugin(
 		core::print_check_error_template_specializations(ctx, details);
 		core::print_execute_system_like_template_specializations(ctx, details);
 		core::print_init_registry_storage(ctx, details);
-		core::print_create_registry(ctx, details);
+		core::print_copy_components(ctx, details);
 		core::print_apply_streaming_data(ctx, details);
 		core::print_trigger_ecsact_events_minimal(ctx, details);
 		core::print_trigger_ecsact_events_all(ctx, details);

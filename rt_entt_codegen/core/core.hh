@@ -21,11 +21,6 @@ auto print_execution_options( //
 	const ecsact_entt_details& details
 ) -> void;
 
-auto print_create_registry( //
-	codegen_plugin_context&    ctx,
-	const ecsact_entt_details& details
-) -> void;
-
 auto print_init_registry_storage( //
 	ecsact::codegen_plugin_context&                     ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_details& details
@@ -92,6 +87,11 @@ auto print_update_all_beforechange_storage(
 ) -> void;
 
 auto print_apply_streaming_data(
+	codegen_plugin_context&    ctx,
+	const ecsact_entt_details& details
+) -> void;
+
+auto print_copy_components(
 	codegen_plugin_context&    ctx,
 	const ecsact_entt_details& details
 ) -> void;

@@ -35,4 +35,9 @@ inline auto create_registry()
 
 auto ecsact_init_registry_storage(::entt::registry& registry) -> void;
 
+auto copy_components( //
+	const ::entt::registry& src,
+	::entt::registry&       dst
+) -> void;
+
 } // namespace ecsact::entt
