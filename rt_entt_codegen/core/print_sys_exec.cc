@@ -347,7 +347,8 @@ static auto print_system_execution_context(
 	return context_type_name;
 }
 
-static auto setup_system_providers(system_like_id_variant sys_like_id
+static auto setup_system_providers( //
+	system_like_id_variant sys_like_id
 ) -> system_provider_t {
 	using ecsact::rt_entt_codegen::core::provider::association;
 	using ecsact::rt_entt_codegen::core::provider::basic;
