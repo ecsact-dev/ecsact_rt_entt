@@ -228,7 +228,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	block(ctx, "", [&] {
 		ctx.writef(
 			"auto result = std::unordered_map<ecsact_component_like_id, "
-			"get_fn_t>{};\n"
+			"get_fn_t>{{}};\n"
 		);
 		for(const auto comp_id : details.readable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
@@ -295,10 +295,10 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 
 	ctx.writef("static const auto update_fns = []()\n");
 
-	block(ctx, "", [&] {
+	block(ctx, [&] {
 		ctx.writef(
 			"auto result = std::unordered_map<ecsact_component_like_id, "
-			"update_fn_t>{};\n"
+			"update_fn_t>{{}};\n"
 		);
 		for(const auto comp_id : details.writable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));

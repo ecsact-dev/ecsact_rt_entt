@@ -181,8 +181,8 @@ void ecsact_codegen_plugin(
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.writef(
-				"result.insert({::{0}::id, "
-				"&ecsact::entt::wrapper::core::add_component<::{0}>});\n",
+				"result.insert({{::{0}::id, "
+				"&ecsact::entt::wrapper::core::add_component<::{0}>}});\n",
 				cpp_comp_name
 			);
 		}
@@ -201,8 +201,8 @@ void ecsact_codegen_plugin(
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.writef(
-				"result.insert({::{0}::id, "
-				"&ecsact::entt::wrapper::core::get_component<::{0}>});\n",
+				"result.insert({{::{0}::id, "
+				"&ecsact::entt::wrapper::core::get_component<::{0}>}});\n",
 				cpp_comp_name
 			);
 		}
@@ -227,8 +227,8 @@ void ecsact_codegen_plugin(
 		for(auto comp_id : non_tag_component_ids) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.writef(
-				"result.insert({::{0}::id, "
-				"&ecsact::entt::wrapper::core::update_component<::{0]>});\n",
+				"result.insert({{::{0}::id, "
+				"&ecsact::entt::wrapper::core::update_component<::{0]>}});\n",
 				cpp_comp_name
 			);
 		}
@@ -244,8 +244,8 @@ void ecsact_codegen_plugin(
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.writef(
-				"result.insert({::{0}::id, "
-				"&ecsact::entt::wrapper::core::remove_component<::{0}>});\n",
+				"result.insert({{::{0}::id, "
+				"&ecsact::entt::wrapper::core::remove_component<::{0}>}});\n",
 				cpp_comp_name
 			);
 		}
@@ -261,8 +261,8 @@ void ecsact_codegen_plugin(
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.writef(
-				"result.insert({::{0}::id, "
-				"&ecsact::entt::wrapper::core::has_component<::{0}>});\n",
+				"result.insert({{::{0}::id, "
+				"&ecsact::entt::wrapper::core::has_component<::{0}>}});\n",
 				cpp_comp_name
 			);
 		}
@@ -291,8 +291,8 @@ void ecsact_codegen_plugin(
 		for(auto comp_id : stream_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 			ctx.writef(
-				"result.insert({::{0}::id, "
-				"&ecsact::entt::wrapper::core::ecsact_stream<::{0}>});\n",
+				"result.insert({{::{0}::id, "
+				"&ecsact::entt::wrapper::core::ecsact_stream<::{0}>}});\n",
 				cpp_comp_name
 			);
 		}
