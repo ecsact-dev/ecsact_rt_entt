@@ -43,13 +43,12 @@ auto provider::lazy::before_make_view_or_group(
 	const common_vars&              names,
 	std::vector<std::string>&       additional_view_components
 ) -> void {
-	ctx.write(
-		"constexpr auto lazy_iteration_rate_ = ",
-		lazy_iteration_rate,
-		";\n\n"
+	ctx.writef(
+		"constexpr auto lazy_iteration_rate_ = {};\n\n",
+		lazy_iteration_rate
 	);
-	ctx.write("auto iteration_count_ = 0;\n\n");
-	ctx.write(exec_start_label_name, ":\n");
+	ctx.writef("auto iteration_count_ = 0;\n\n");
+	ctx.writef("{}:\n", exec_start_label_name);
 	additional_view_components.push_back(pending_lazy_exec_struct);
 
 	if(sys_like_id.is_system()) {
@@ -65,7 +64,7 @@ auto provider::lazy::after_make_view_or_group(
 ) -> void {
 	if(sys_like_id.is_system()) {
 		if(system_needs_sorted_entities(sys_like_id.as_system())) {
-			ctx.write("view.use<", system_sorting_struct_name, ">();\n");
+			ctx.writef("view.use<{}>();\n", system_sorting_struct_name);
 		}
 	}
 }
@@ -77,15 +76,14 @@ auto provider::lazy::pre_exec_system_impl(
 	using ecsact::cpp_codegen_plugin_util::block;
 
 	block(ctx, "if(iteration_count_ == lazy_iteration_rate_)", [&] {
-		ctx.write("break;\n");
+		ctx.writef("break;\n");
 	});
 
-	ctx.write("++iteration_count_;\n");
-	ctx.write(
+	ctx.writef("++iteration_count_;\n");
+	ctx.writef(
+		"{}.erase<{}>(entity);\n",
 		names.registry_var_name,
-		".erase<",
-		pending_lazy_exec_struct,
-		">(entity);\n"
+		pending_lazy_exec_struct
 	);
 }
 
@@ -97,11 +95,11 @@ auto provider::lazy::post_iteration(
 
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
-	ctx.write(
+	ctx.writef(
 		"// If this assertion triggers that's a ecsact_rt_entt codegen "
 		"failure\n"
 	);
-	ctx.write("assert(iteration_count_ <= lazy_iteration_rate_);\n");
+	ctx.writef("assert(iteration_count_ <= lazy_iteration_rate_);\n");
 	block(ctx, "if(iteration_count_ < lazy_iteration_rate_)", [&] {
 		ctx.write(
 			"_recalc_sorting_hash<",
@@ -124,13 +122,13 @@ auto provider::lazy::post_iteration(
 			system_details
 		);
 
-		ctx.write("auto view_no_pending_lazy_count_ = 0;\n");
+		ctx.writef("auto view_no_pending_lazy_count_ = 0;\n");
 
 		block(
 			ctx,
 			"for(ecsact::entt::entity_id entity : view_no_pending_lazy_)",
 			[&] {
-				ctx.write(
+				ctx.writef(
 					"// If this assertion triggers this is an indicator of a codegen "
 					"failure.\n"
 					"// Please report to "
@@ -143,7 +141,7 @@ auto provider::lazy::post_iteration(
 					system_sorting_struct_name,
 					">(entity));\n"
 				);
-				ctx.write("view_no_pending_lazy_count_ += 1;\n");
+				ctx.writef("view_no_pending_lazy_count_ += 1;\n");
 				ctx.write(
 					names.registry_var_name,
 					".emplace<",
@@ -154,7 +152,7 @@ auto provider::lazy::post_iteration(
 		);
 
 		block(ctx, "if(view_no_pending_lazy_count_ >= lazy_iteration_rate_)", [&] {
-			ctx.write("goto ", exec_start_label_name, ";\n");
+			ctx.writef("goto {};\n", exec_start_label_name);
 		});
 	});
 }

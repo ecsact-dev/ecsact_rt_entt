@@ -324,13 +324,13 @@ static auto print_system_execution_context(
 	);
 
 	block(ctx, struct_header, [&] {
-		ctx.write("view_t* view;\n");
+		ctx.writef("view_t* view;\n");
 
 		for(const auto& provider : system_providers) {
 			provider->context_function_header(ctx, names);
 		}
 
-		ctx.write("\n");
+		ctx.writef("\n");
 		print_sys_exec_ctx_action(ctx, names, system_providers);
 		print_sys_exec_ctx_add(ctx, names, system_providers);
 		print_sys_exec_ctx_remove(ctx, names, system_providers);
@@ -342,13 +342,14 @@ static auto print_system_execution_context(
 		print_sys_exec_ctx_other(ctx, names, system_providers);
 		print_sys_exec_ctx_stream_toggle(ctx, names, system_providers);
 	});
-	ctx.write(";\n\n");
+	ctx.writef(";\n\n");
 
 	return context_type_name;
 }
 
-static auto setup_system_providers(system_like_id_variant sys_like_id)
-	-> system_provider_t {
+static auto setup_system_providers( //
+	system_like_id_variant sys_like_id
+) -> system_provider_t {
 	using ecsact::rt_entt_codegen::core::provider::association;
 	using ecsact::rt_entt_codegen::core::provider::basic;
 	using ecsact::rt_entt_codegen::core::provider::lazy;
@@ -456,7 +457,7 @@ static auto print_execute_systems(
 		additional_view_components
 	);
 
-	ctx.write("using view_t = decltype(view);\n");
+	ctx.writef("using view_t = decltype(view);\n");
 
 	auto context_type_name =
 		print_system_execution_context(ctx, sys_like_id, names, system_providers);
@@ -510,7 +511,7 @@ static auto print_execute_systems(
 					provider->post_exec_system_impl(ctx, names);
 				}
 
-				ctx.write("\n");
+				ctx.writef("\n");
 			});
 			if(result == handle_exclusive_provide::HANDLED) {
 				break;
@@ -545,7 +546,7 @@ static auto print_trivial_system_like(
 	auto system_name = cpp_identifier(decl_full_name(system_like_id));
 	auto sys_capabilities = system_capabilities(system_like_id);
 
-	ctx.write("template<>\n");
+	ctx.writef("template<>\n");
 	auto printer = //
 		method_printer{ctx, "ecsact::entt::execute_system<::" + system_name + ">"}
 			.parameter("ecsact::entt::registry_t&", "registry")
@@ -585,7 +586,7 @@ static auto print_trivial_system_like(
 			}
 		}
 	});
-	ctx.write("\n");
+	ctx.writef("\n");
 	print_apply_pendings(ctx, details, system_like_id, "registry");
 }
 
@@ -608,7 +609,7 @@ static auto print_execute_system_template_specialization(
 	}
 	auto system_name = cpp_identifier(decl_full_name(system_id));
 
-	ctx.write("template<>\n");
+	ctx.writef("template<>\n");
 	auto printer = //
 		method_printer{ctx, "ecsact::entt::execute_system<::" + system_name + ">"}
 			.parameter("ecsact::entt::registry_t&", "registry")
@@ -624,8 +625,8 @@ static auto print_execute_system_template_specialization(
 
 	auto child_ids = ecsact::meta::get_child_system_ids(system_id);
 	if(child_ids.empty()) {
-		block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
-		ctx.write("\n");
+		block(ctx, "if(system_impl == nullptr)", [&] { ctx.writef("return;"); });
+		ctx.writef("\n");
 	}
 
 	ctx.write(
@@ -670,7 +671,7 @@ static auto print_execute_actions_template_specialization(
 	const auto method_name =
 		"ecsact::entt::execute_actions<::" + cpp_system_name + ">";
 
-	ctx.write("template<>\n");
+	ctx.writef("template<>\n");
 	auto printer = //
 		method_printer{ctx, method_name}
 			.parameter("ecsact::entt::registry_t&", "registry")
@@ -686,8 +687,8 @@ static auto print_execute_actions_template_specialization(
 
 	auto child_ids = ecsact::meta::get_child_system_ids(action_id);
 	if(child_ids.empty()) {
-		block(ctx, "if(system_impl == nullptr)", [&] { ctx.write("return;"); });
-		ctx.write("\n");
+		block(ctx, "if(system_impl == nullptr)", [&] { ctx.writef("return;"); });
+		ctx.writef("\n");
 	}
 
 	ctx.write(

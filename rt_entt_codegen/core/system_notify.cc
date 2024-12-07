@@ -27,10 +27,9 @@ auto ecsact::rt_entt_codegen::core::print_cleanup_system_notifies(
 
 		auto system_name = cpp_identifier(decl_full_name(system_id));
 
-		ctx.write(
-			"ecsact::entt::wrapper::core::clear_notify_component<",
-			system_name,
-			">(registry_id);\n"
+		ctx.writef(
+			"ecsact::entt::wrapper::core::clear_notify_component<{}>(registry_id);\n",
+			system_name
 		);
 	}
 }

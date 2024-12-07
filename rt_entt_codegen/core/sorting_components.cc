@@ -32,7 +32,7 @@ static auto print_system_entity_sorting_component_struct(
 	auto system_sorting_struct_name =
 		std::format("::ecsact::entt::detail::system_sorted<{}>", system_cpp_name);
 
-	ctx.write("template<>\n");
+	ctx.writef("template<>\n");
 	auto printer =
 		method_printer{ctx, "_recalc_sorting_hash<" + system_cpp_name + ">"}
 			.parameter("ecsact::entt::registry_t&", "reg")
@@ -53,10 +53,9 @@ static auto print_system_entity_sorting_component_struct(
 	);
 
 	block(ctx, "for(auto entity : view)", [&] {
-		ctx.write(
-			"auto& sorted = view.get<",
-			system_sorting_struct_name,
-			">(entity);\n"
+		ctx.writef(
+			"auto& sorted = view.get<{}>(entity);\n",
+			system_sorting_struct_name
 		);
 
 		for(auto&& [comp_id, caps] : caps_map) {
@@ -67,17 +66,14 @@ static auto print_system_entity_sorting_component_struct(
 			auto comp_cpp_name = decl_cpp_ident(comp_id);
 			auto comp_var = gen_comp_var_name(comp_id);
 
-			ctx.write(
-				"const auto& ",
+			ctx.writef(
+				"const auto& {} = view.get<{}>(entity);\n",
 				comp_var,
-				" = ",
-				"view.get<",
-				comp_cpp_name,
-				">(entity);\n"
+				comp_cpp_name
 			);
 		}
 
-		ctx.write("auto bytes = ::ecsact::entt::detail::bytes_copy(");
+		ctx.writef("auto bytes = ::ecsact::entt::detail::bytes_copy(");
 		ctx.indentation += 1;
 
 		auto prefix = std::string{"\n"};
@@ -92,15 +88,15 @@ static auto print_system_entity_sorting_component_struct(
 					field_id
 				)};
 
-				ctx.write(prefix, comp_var, ".", field_name);
+				ctx.writef("{}{}.{}", prefix, comp_var, ".", field_name);
 				prefix = ",\n";
 			}
 		}
 
 		ctx.indentation -= 1;
-		ctx.write("\n);\n");
+		ctx.writef("\n);\n");
 
-		ctx.write(
+		ctx.writef(
 			"sorted.hash = ::ecsact::entt::detail::bytes_hash(bytes.data(), "
 			"bytes.size());"
 		);
@@ -111,7 +107,7 @@ auto ecsact::rt_entt_codegen::core::print_entity_sorting_components(
 	codegen_plugin_context&    ctx,
 	const ecsact_entt_details& details
 ) -> void {
-	ctx.write(RECALC_COMPONENTS_HASH_DECL);
+	ctx.writef("{}", RECALC_COMPONENTS_HASH_DECL);
 
 	for(auto sys_id : details.all_systems) {
 		auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);

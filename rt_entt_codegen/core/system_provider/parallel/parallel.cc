@@ -19,7 +19,7 @@ auto provider::parallel::entity_iteration(
 		"view.end(), [&](auto entity)",
 		[&] { iter_func(); }
 	);
-	ctx.write(");\n");
+	ctx.writef(");\n");
 	return HANDLED;
 }
 
@@ -36,22 +36,21 @@ auto provider::parallel::pre_exec_system_impl_context_init(
 	const ecsact::rt_entt_codegen::core::common_vars& names,
 	std::string_view                                  context_type_name
 ) -> void {
-	ctx.write(std::format("{} context;\n\n", context_type_name));
+	ctx.writef("{} context;\n\n", context_type_name);
 
 	auto system_name =
 		cc_lang_support::cpp_identifier(meta::decl_full_name(sys_like_id));
 
-	ctx.write("context.registry = &", names.registry_var_name, ";\n");
+	ctx.writef("context.registry = &{};\n", names.registry_var_name);
 	if(names.action_var_name) {
-		ctx.write("context.action_data = ", *names.action_var_name, ";\n\n");
+		ctx.writef("context.action_data = {};\n\n", *names.action_var_name);
 	}
 
-	ctx.write(
-		"context.id = ecsact_id_cast<ecsact_system_like_id>(::",
-		system_name,
-		"::id);\n"
+	ctx.writef(
+		"context.id = ecsact_id_cast<ecsact_system_like_id>(::{}::id);\n",
+		system_name
 	);
-	ctx.write("context.parent_ctx = ", names.parent_context_var_name, ";\n");
-	ctx.write("context.view = &view;\n\n");
-	ctx.write("context.entity = entity;\n");
+	ctx.writef("context.parent_ctx = {};\n", names.parent_context_var_name);
+	ctx.writef("context.view = &view;\n\n");
+	ctx.writef("context.entity = entity;\n");
 }
