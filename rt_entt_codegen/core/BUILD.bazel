@@ -15,7 +15,6 @@ _CORE_CODEGEN_METHODS = {
         "//rt_entt_codegen/shared:parallel",
         "//rt_entt_codegen/shared:system_variant",
     ],
-    "create_registry": [],
     "entity_matches": [
         "//rt_entt_codegen/shared:sorting",
     ],
@@ -52,6 +51,7 @@ _CORE_CODEGEN_METHODS = {
     ],
     "system_notify": ["//rt_entt_codegen/shared:system_util"],
     "update_beforechange": [],
+    "copy_components": [],
 }
 
 [cc_library(
