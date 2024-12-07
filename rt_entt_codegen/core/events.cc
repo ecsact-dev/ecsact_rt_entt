@@ -12,12 +12,11 @@ static auto print_trigger_event_fn_call(
 	std::string                     event_name,
 	std::string                     component_name
 ) {
-	ctx.write(
-		"::ecsact::entt::wrapper::core::_trigger_",
+	ctx.writef(
+		"::ecsact::entt::wrapper::core::_trigger_{}"
+		"_component_event<::{}>(registry_id, events_collector);\n",
 		event_name,
-		"_component_event<::",
-		component_name,
-		">(registry_id, events_collector);\n"
+		component_name
 	);
 }
 
@@ -53,12 +52,12 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_minimal( //
 		print_trigger_event_fn_call(ctx, "remove", type_name);
 	}
 
-	ctx.write(
+	ctx.writef(
 		"ecsact::entt::wrapper::core::_trigger_create_entity_events(registry_id, "
 		"events_collector);\n"
 	);
 
-	ctx.write(
+	ctx.writef(
 		"ecsact::entt::wrapper::core::_trigger_destroy_entity_events(registry_id, "
 		"events_collector);\n"
 	);
@@ -101,12 +100,12 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_all( //
 		print_trigger_event_fn_call(ctx, "remove", type_name);
 	}
 
-	ctx.write(
+	ctx.writef(
 		"ecsact::entt::wrapper::core::_trigger_create_entity_events(registry_id, "
 		"events_collector);\n"
 	);
 
-	ctx.write(
+	ctx.writef(
 		"ecsact::entt::wrapper::core::_trigger_destroy_entity_events(registry_id, "
 		"events_collector);\n"
 	);
@@ -128,11 +127,10 @@ auto ecsact::rt_entt_codegen::core::print_cleanup_ecsact_component_events( //
 
 	for(auto component_id : details.all_components) {
 		auto type_name = cpp_identifier(decl_full_name(component_id));
-		ctx.write(
+		ctx.writef(
 			"ecsact::entt::wrapper::core::clear_component",
-			"<::",
-			type_name,
-			">(registry_id);\n"
+			"<::{}>(registry_id);\n",
+			type_name
 		);
 	}
 }

@@ -22,7 +22,7 @@ auto provider::basic::context_function_header(
 	const common_vars&              names
 ) -> void {
 	if(names.action_var_name) {
-		ctx.write("const void* action_data = nullptr;\n");
+		ctx.writef("const void* action_data = nullptr;\n");
 	}
 }
 
@@ -98,7 +98,7 @@ auto provider::basic::context_function_other(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> handle_exclusive_provide {
-	ctx.write("return nullptr;");
+	ctx.writef("return nullptr;");
 	return HANDLED;
 }
 
@@ -114,7 +114,7 @@ auto provider::basic::system_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const common_vars&              names
 ) -> handle_exclusive_provide {
-	ctx.write("system_impl(&context);\n");
+	ctx.writef("system_impl(&context);\n");
 	return HANDLED;
 }
 
@@ -136,7 +136,7 @@ auto provider::basic::provide_context_init(
 	const ecsact::rt_entt_codegen::core::common_vars& names,
 	std::string_view                                  context_type_name
 ) -> handle_exclusive_provide {
-	ctx.write(std::format("{} context;\n\n", context_type_name));
+	ctx.writef("{} context;\n\n", context_type_name);
 
 	auto system_name =
 		cc_lang_support::cpp_identifier(meta::decl_full_name(sys_like_id));
@@ -152,7 +152,7 @@ auto provider::basic::provide_context_init(
 		"::id);\n"
 	);
 	ctx.write("context.parent_ctx = ", names.parent_context_var_name, ";\n");
-	ctx.write("context.view = &view;\n\n");
+	ctx.writef("context.view = &view;\n\n");
 	return HANDLED;
 }
 
@@ -161,5 +161,5 @@ auto provider::basic::pre_exec_system_impl_context_init(
 	const ecsact::rt_entt_codegen::core::common_vars& names,
 	std::string_view                                  context_type_name
 ) -> void {
-	ctx.write("context.entity = entity;\n");
+	ctx.writef("context.entity = entity;\n");
 }
