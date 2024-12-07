@@ -40,4 +40,6 @@ auto copy_components( //
 	::entt::registry&       dst
 ) -> void;
 
+auto hash_registry(const ::entt::registry& reg) -> std::uint64_t;
+
 } // namespace ecsact::entt

@@ -40,6 +40,11 @@ auto ecsact_clone_registry( //
 	return cloned_reg_id;
 }
 
+auto ecsact_hash_registry(ecsact_registry_id reg_id) -> uint64_t {
+	auto& reg = ecsact::entt::get_registry(reg_id);
+	return ecsact::entt::hash_registry(reg);
+}
+
 void ecsact_clear_registry(ecsact_registry_id reg_id) {
 	auto& reg = ecsact::entt::get_registry(reg_id);
 	reg = {};
