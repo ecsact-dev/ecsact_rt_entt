@@ -1,6 +1,6 @@
 module(
     name = "ecsact_rt_entt",
-    version = "0.3.14",
+    version = "0.3.15",
     compatibility_level = 3,
 )
 
@@ -22,7 +22,6 @@ bazel_dep(name = "docopt.cpp", version = "0.6.2")
 
 bazel_dep(name = "toolchains_llvm", version = "1.2.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
-
 git_override(
     module_name = "hedron_compile_commands",
     commit = "204aa593e002cbd177d30f11f54cff3559110bb9",

@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.15 - 2024-12-07
+#### Features
+- implement new hash registry method (#164) - (80e6349) - Ezekiel Warren
+- implement new clone registry method (#163) - (9162169) - Ezekiel Warren
+#### Miscellaneous Chores
+- sync with ecsact_common (#161) - (a4b0921) - Ezekiel Warren
+- update llvm (#165) - (18f70e2) - Ezekiel Warren
+
+- - -
+
 ## 0.3.14 - 2024-11-30
 #### Features
 - tracy (#160) - (fbd85f2) - Austin Kelway
