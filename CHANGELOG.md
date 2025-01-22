@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.16 - 2025-01-22
+#### Miscellaneous Chores
+- allow ecsact_runtime 0.8.x - (7ba25dc) - Ezekiel Warren
+
+- - -
+
 ## 0.3.15 - 2024-12-07
 #### Features
 - implement new hash registry method (#164) - (80e6349) - Ezekiel Warren
