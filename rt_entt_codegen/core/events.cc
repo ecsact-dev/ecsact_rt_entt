@@ -38,6 +38,11 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_minimal( //
 			)
 			.return_type("void");
 
+	ctx.write(
+		"ecsact::entt::wrapper::core::_trigger_create_entity_events(registry_id, "
+		"events_collector);\n"
+	);
+
 	for(auto comp_id : comps_with_caps(details, ECSACT_SYS_CAP_ADDS)) {
 		auto type_name = cpp_identifier(decl_full_name(comp_id));
 		print_trigger_event_fn_call(ctx, "init", type_name);
@@ -52,11 +57,6 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_minimal( //
 		auto type_name = cpp_identifier(decl_full_name(comp_id));
 		print_trigger_event_fn_call(ctx, "remove", type_name);
 	}
-
-	ctx.write(
-		"ecsact::entt::wrapper::core::_trigger_create_entity_events(registry_id, "
-		"events_collector);\n"
-	);
 
 	ctx.write(
 		"ecsact::entt::wrapper::core::_trigger_destroy_entity_events(registry_id, "
@@ -81,6 +81,11 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_all( //
 			)
 			.return_type("void");
 
+	ctx.write(
+		"ecsact::entt::wrapper::core::_trigger_create_entity_events(registry_id, "
+		"events_collector);\n"
+	);
+
 	for(auto component_id : details.all_components) {
 		auto type_name = cpp_identifier(decl_full_name(component_id));
 		print_trigger_event_fn_call(ctx, "init", type_name);
@@ -100,11 +105,6 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_all( //
 		auto type_name = cpp_identifier(decl_full_name(component_id));
 		print_trigger_event_fn_call(ctx, "remove", type_name);
 	}
-
-	ctx.write(
-		"ecsact::entt::wrapper::core::_trigger_create_entity_events(registry_id, "
-		"events_collector);\n"
-	);
 
 	ctx.write(
 		"ecsact::entt::wrapper::core::_trigger_destroy_entity_events(registry_id, "
