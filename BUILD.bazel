@@ -19,16 +19,16 @@ cc_library(
 
 cc_test(
     name = "test",
-    visibility = ["//visibility:private"],
+    srcs = [
+        "build_test.cc",
+        "//runtime:sources",
+    ],
     copts = copts,
     defines = [
         "ECSACT_CORE_API=",
         "ECSACT_DYNAMIC_API=",
     ],
-    srcs = [
-        "build_test.cc",
-        "//runtime:sources",
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         ":lib",
         "@ecsact_runtime//:common",
@@ -175,6 +175,7 @@ ecsact_build_recipe(
         "ecsact_get_components",
         "ecsact_update_component",
         "ecsact_remove_component",
+        "ecsact_stream",
         # dynamic
         "ecsact_system_execution_context_same",
         "ecsact_system_execution_context_entity",
