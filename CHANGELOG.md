@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.3.19 - 2025-01-31
+#### Bug Fixes
+- added a few missing exports to recipe - (2871200) - Ezekiel Warren
+
+- - -
+
 ## 0.3.18 - 2025-01-30
 #### Bug Fixes
 - added missing ecsact_stream to recipe export - (820418c) - Ezekiel Warren
