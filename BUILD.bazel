@@ -177,7 +177,10 @@ ecsact_build_recipe(
         "ecsact_remove_component",
         "ecsact_stream",
         # dynamic
+        "ecsact_set_system_execution_impl",
         "ecsact_system_execution_context_same",
+        "ecsact_system_execution_context_parent",
+        "ecsact_system_execution_context_stream_toggle",
         "ecsact_system_execution_context_entity",
         "ecsact_system_execution_context_generate",
         "ecsact_system_execution_context_id",
