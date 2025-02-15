@@ -480,7 +480,7 @@ static auto print_execute_systems(
 
 	auto exec_system_impls = [&](bool has_system_impl) {
 		for(auto provider : system_providers) {
-			auto result = provider->entity_iteration(ctx, names, [&] {
+			auto result = provider->entity_iteration(ctx, sys_like_id, names, [&] {
 				for(const auto& provider : system_providers) {
 					provider->pre_exec_system_impl(ctx, names);
 				}

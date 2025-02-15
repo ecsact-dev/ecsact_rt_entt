@@ -73,6 +73,7 @@ public:
 
 	auto entity_iteration(
 		ecsact::codegen_plugin_context&                   ctx,
+		ecsact_system_like_id                             sys_like_id,
 		const ecsact::rt_entt_codegen::core::common_vars& names,
 		std::function<void()>                             iter_func
 	) -> handle_exclusive_provide;

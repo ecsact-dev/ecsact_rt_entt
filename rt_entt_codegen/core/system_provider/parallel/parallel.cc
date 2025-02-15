@@ -8,15 +8,26 @@ using namespace ecsact::rt_entt_codegen::core;
 
 auto provider::parallel::entity_iteration(
 	ecsact::codegen_plugin_context&                   ctx,
+	ecsact_system_like_id                             sys_like_id,
 	const ecsact::rt_entt_codegen::core::common_vars& names,
 	std::function<void()>                             iter_func
 ) -> handle_exclusive_provide {
 	using ecsact::cpp_codegen_plugin_util::block;
+	using namespace std::string_literals;
+	using ecsact::meta::get_system_parallel_execution;
+
+	auto execution_tag = "std::execution::par_unseq"s;
+	if(get_system_parallel_execution(sys_like_id) == ECSACT_PAR_EXEC_DENY) {
+		execution_tag = "std::execution::seq"s;
+	}
 
 	block(
 		ctx,
-		"std::for_each(std::execution::par_unseq, view.begin(), "
-		"view.end(), [&](auto entity)",
+		std::format(
+			"std::for_each({}, view.begin(), "
+			"view.end(), [&](auto entity)",
+			execution_tag
+		),
 		[&] { iter_func(); }
 	);
 	ctx.write(");\n");
