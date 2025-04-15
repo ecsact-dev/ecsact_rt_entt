@@ -37,7 +37,7 @@ inline auto print_static_maps(
 
 	block(
 		ctx,
-		"static const auto execution_update_fns="
+		"static const auto execution_update_fns ="
 		"std::unordered_map<ecsact_component_like_id, "
 		"decltype(&ecsact_update_component)>\n",
 		[&] {

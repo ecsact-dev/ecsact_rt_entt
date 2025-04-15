@@ -362,7 +362,9 @@ auto make_id_map_type(std::string value_type) -> std::string {
 	auto id_type_str = ecsact_id_type_to_string<ID>();
 	auto [min, max] = ecsact_id_min_max<ID>();
 	return std::format(
-		"::ecsact::entt::detail::id_map<{}, {}, {}, {}>",
+		"::ecsact::entt::detail::id_map<{0}, {1}, "
+		"static_cast<{0}>({2}), "
+		"static_cast<{0}>({3})>",
 		id_type_str,
 		value_type,
 		static_cast<int>(min),

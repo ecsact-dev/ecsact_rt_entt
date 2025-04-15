@@ -138,6 +138,7 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/wrapper/core.hh");
 	inc_header(ctx, "ecsact/entt/wrapper/dynamic.hh");
 	inc_header(ctx, "ecsact/entt/error_check.hh");
+	inc_header(ctx, "ecsact/entt/detail/id_map.hh");
 	inc_header(ctx, "xxhash.h");
 	ctx.write("#include <execution>\n");
 

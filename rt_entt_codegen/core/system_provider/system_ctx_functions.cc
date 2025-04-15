@@ -246,8 +246,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	ctx.write("();\n");
 
 	ctx.write(
-		"get_fns.at("
-		"component_id)(this, component_id, out_component_data, nullptr, *view"
+		"get_fns[component_id]"
+		"(this, component_id, out_component_data, nullptr, *view"
 		");\n"
 	);
 }
@@ -296,9 +296,9 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 	ctx.write("static const auto update_fns = []()\n");
 
 	block(ctx, "", [&] {
-		ctx.write(
-			"auto result = std::unordered_map<ecsact_component_like_id, "
-			"update_fn_t>{};\n"
+		ctx.writef(
+			"auto result = {}{{}};\n",
+			make_id_map_type<ecsact_component_like_id>("update_fn_t")
 		);
 		for(const auto comp_id : details.writable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
@@ -316,8 +316,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 	ctx.write("();\n");
 
 	ctx.write(
-		"update_fns.at(component_id)(this, component_id, component_data, nullptr, "
-		"*view);\n"
+		"update_fns[component_id]"
+		"(this, component_id, component_data, nullptr, *view);\n"
 	);
 }
 
