@@ -326,4 +326,47 @@ auto make_view( //
 	ctx.write(");\n");
 }
 
+template<typename ID>
+constexpr auto ecsact_id_type_to_string() -> std::string_view;
+
+template<>
+constexpr auto ecsact_id_type_to_string<ecsact_component_like_id>()
+	-> std::string_view {
+	return "ecsact_component_like_id";
+}
+
+/**
+ * Get the smallest and largest ID by number.
+ * Used when creating and id_map
+ */
+template<typename ID>
+auto ecsact_id_min_max() -> std::tuple<ID, ID>;
+
+template<>
+auto ecsact_id_min_max<ecsact_component_id>()
+	-> std::tuple<ecsact_component_id, ecsact_component_id>;
+
+template<>
+auto ecsact_id_min_max<ecsact_transient_id>()
+	-> std::tuple<ecsact_transient_id, ecsact_transient_id>;
+
+template<>
+auto ecsact_id_min_max<ecsact_component_like_id>()
+	-> std::tuple<ecsact_component_like_id, ecsact_component_like_id>;
+
+/**
+ * Helper function for printing an ecsact::entt::detail::id_map in codegen
+ */
+template<typename ID>
+auto make_id_map_type(std::string value_type) -> std::string {
+	auto id_type_str = ecsact_id_type_to_string<ID>();
+	auto [min, max] = ecsact_id_min_max<ID>();
+	return std::format(
+		"::ecsact::entt::detail::id_map<{}, {}, {}, {}>",
+		id_type_str,
+		value_type,
+		static_cast<int>(min),
+		static_cast<int>(max)
+	);
+}
 } // namespace ecsact::rt_entt_codegen::util
