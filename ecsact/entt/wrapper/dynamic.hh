@@ -180,10 +180,9 @@ auto context_has(
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               indexed_fields
 ) -> bool {
-	static_assert(
-		!C::has_assoc_fields,
-		"Ecsact RT EnTT doesn't support indexed fields (yet)"
-	);
+	if constexpr(C::has_assoc_fields) {
+		throw std::logic_error{"assoc context_has unimplemented"};
+	}
 
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
@@ -200,10 +199,9 @@ auto context_stream_toggle(
 ) -> void {
 	using ecsact::entt::detail::run_on_stream;
 
-	static_assert(
-		!C::has_assoc_fields,
-		"Ecsact RT EnTT doesn't support indexed fields (yet)"
-	);
+	if constexpr(C::has_assoc_fields) {
+		throw std::logic_error{"assoc stream_toggle unimplemented"};
+	}
 
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
@@ -229,10 +227,9 @@ auto context_generate_add(
 ) -> void {
 	using ecsact::entt::detail::pending_add;
 
-	static_assert(
-		!C::has_assoc_fields,
-		"Ecsact RT EnTT doesn't support indexed fields (yet)"
-	);
+	if constexpr(C::has_assoc_fields) {
+		throw std::logic_error{"assoc generate_add unimplemented"};
+	}
 
 	auto& registry = *context->registry;
 
