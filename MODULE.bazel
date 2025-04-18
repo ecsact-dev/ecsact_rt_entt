@@ -41,3 +41,13 @@ register_toolchains(
     "@ecsact_toolchain//:all",
     dev_dependency = True,
 )
+
+local_path_override(
+    module_name = "ecsact_lang_cpp",
+    path = "../ecsact_lang_cpp",
+)
+
+local_path_override(
+    module_name = "ecsact_runtime",
+    path = "../ecsact_runtime",
+)

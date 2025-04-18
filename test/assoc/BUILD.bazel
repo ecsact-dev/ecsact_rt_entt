@@ -1,0 +1,3 @@
+load("//:macros.bzl", "rt_entt_test")
+
+rt_entt_test(name = "assoc")

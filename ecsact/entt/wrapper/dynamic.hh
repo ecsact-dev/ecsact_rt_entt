@@ -4,11 +4,14 @@
 #include <type_traits>
 #include "ecsact/entt/entity.hh"
 #include "entt/entity/registry.hpp"
+#include "ecsact/runtime/common.hh"
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
 #include "ecsact/entt/detail/internal_markers.hh"
 #include "ecsact/entt/event_markers.hh"
 #include "ecsact/entt/detail/system_execution_context.hh"
+#include "ecsact/entt/detail/assoc.hh"
+#include "ecsact/entt/detail/storage.hh"
 
 #ifdef TRACY_ENABLE
 #	include "tracy/Tracy.hpp"
@@ -16,7 +19,7 @@
 
 namespace ecsact::entt::wrapper::dynamic {
 
-template<typename C>
+template<ecsact::component_without_indexed_fields C>
 auto context_add(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
@@ -36,19 +39,22 @@ auto context_add(
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
 
-	if constexpr(std::is_empty_v<C>) {
-		registry.template emplace_or_replace<pending_add<C>>(entity);
+	auto s = detail::storage{registry};
+
+	if constexpr(ecsact::tag_component<C>) {
+		detail::ensure_component(s.deferred<C>().add(), entity);
 	} else {
 		const C* component = static_cast<const C*>(component_data);
-		registry.template emplace_or_replace<pending_add<C>>(entity, *component);
-		registry.template remove<beforeremove_storage<C>>(entity);
+		detail::ensure_component(s.deferred<C>().add(), entity, *component);
+		detail::remove_component(s.event<C>().beforeremove(), entity);
 	}
 
 	if constexpr(!C::transient) {
-		if(registry.template all_of<component_removed<C>>(entity)) {
-			registry.template erase<component_removed<C>>(entity);
+		auto removed_event = s.event<C>().removed();
+		if(detail::has_component(removed_event, entity)) {
+			detail::remove_component_unchecked(removed_event, entity);
 		} else {
-			registry.template emplace_or_replace<component_added<C>>(entity);
+			detail::ensure_component(s.event<C>().added());
 		}
 	}
 }
@@ -56,7 +62,7 @@ auto context_add(
 template<typename C>
 auto component_add_trivial(
 	ecsact::entt::registry_t& registry,
-	ecsact::entt::entity_id   entity_id
+	ecsact::entt::entity_id   entity
 ) -> void {
 #ifdef TRACY_ENABLE
 	ZoneScopedC(tracy::Color::Teal);
@@ -65,13 +71,16 @@ auto component_add_trivial(
 	using ecsact::entt::component_removed;
 	using ecsact::entt::detail::pending_add;
 
-	registry.template emplace_or_replace<pending_add<C>>(entity_id);
+	auto s = detail::storage{registry};
+
+	detail::ensure_component(s.deferred<C>().add(), entity);
 
 	if constexpr(!C::transient) {
-		if(registry.template all_of<component_removed<C>>(entity_id)) {
-			registry.template erase<component_removed<C>>(entity_id);
+		auto removed_event = s.event<C>().removed();
+		if(detail::has_component(removed_event, entity)) {
+			detail::remove_component_unchecked(removed_event, entity);
 		} else {
-			registry.template emplace_or_replace<component_added<C>>(entity_id);
+			detail::ensure_component(s.event<C>().added());
 		}
 	}
 }
@@ -95,25 +104,22 @@ auto context_remove(
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
 
-	registry.template remove<component_added<C>>(entity);
-	registry.template emplace_or_replace<pending_remove<C>>(entity);
-	registry.template emplace_or_replace<component_removed<C>>(entity);
+	auto s = detail::storage{registry};
 
-	// Stop here (tag)
+	detail::remove_component(s.event<C>().added(), entity);
+	detail::ensure_component(s.deferred<C>().remove(), entity);
+	detail::ensure_component(s.event<C>().removed(), entity);
+
 	if constexpr(!std::is_empty_v<C>) {
-		auto component = view.template get<C>(entity);
-
-		auto& remove_storage =
-			registry.template emplace_or_replace<beforeremove_storage<C>>(entity);
-
-		remove_storage.value = component;
+		const auto& component = view.template get<C>(entity);
+		detail::ensure_component(s.event<C>().beforeremove(), entity, component);
 	}
 }
 
 template<typename C>
 auto component_remove_trivial(
 	ecsact::entt::registry_t& registry,
-	ecsact::entt::entity_id   entity_id,
+	ecsact::entt::entity_id   entity,
 	auto&                     view
 ) -> void {
 #ifdef TRACY_ENABLE
@@ -123,17 +129,15 @@ auto component_remove_trivial(
 	using ecsact::entt::detail::beforeremove_storage;
 	using ecsact::entt::detail::pending_remove;
 
-	registry.template remove<component_added<C>>(entity_id);
-	registry.template emplace_or_replace<pending_remove<C>>(entity_id);
-	registry.template emplace_or_replace<component_removed<C>>(entity_id);
+	auto s = detail::storage{registry};
+
+	detail::remove_component(s.event<C>().added(), entity);
+	detail::ensure_component(s.deferred<C>().remove(), entity);
+	detail::ensure_component(s.event<C>().removed(), entity);
 
 	if constexpr(!std::is_empty_v<C>) {
-		auto component = view.template get<C>(entity_id);
-
-		auto& remove_storage =
-			registry.template emplace_or_replace<beforeremove_storage<C>>(entity_id);
-
-		remove_storage.value = component;
+		const auto& component = view.template get<C>(entity);
+		detail::ensure_component(s.event<C>().beforeremove(), entity, component);
 	}
 }
 
@@ -142,7 +146,6 @@ auto context_get(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	void*                                     out_component_data,
-	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
 	auto entity = context->entity;
@@ -155,7 +158,6 @@ auto context_update(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
 	const void*                               in_component_data,
-	const void*                               indexed_field_values,
 	auto&                                     view
 ) -> void {
 	using ecsact::entt::detail::exec_beforechange_storage;
@@ -178,32 +180,22 @@ template<typename C>
 auto context_has(
 	ecsact_system_execution_context*          context,
 	[[maybe_unused]] ecsact_component_like_id component_id,
-	const void*                               indexed_fields
+	auto&                                     view
 ) -> bool {
-	static_assert(
-		!C::has_assoc_fields,
-		"Ecsact RT EnTT doesn't support indexed fields (yet)"
-	);
-
-	auto  entity = context->entity;
-	auto& registry = *context->registry;
-
-	return registry.template any_of<C>(entity);
+	return true;
 }
 
 template<typename C>
 auto context_stream_toggle(
 	ecsact_system_execution_context*     context,
 	[[maybe_unused]] ecsact_component_id component_id,
-	bool                                 streaming_enabled,
-	const void*                          indexed_fields
+	bool                                 streaming_enabled
 ) -> void {
 	using ecsact::entt::detail::run_on_stream;
 
-	static_assert(
-		!C::has_assoc_fields,
-		"Ecsact RT EnTT doesn't support indexed fields (yet)"
-	);
+	if constexpr(C::has_assoc_fields) {
+		throw std::logic_error{"assoc stream_toggle unimplemented"};
+	}
 
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
@@ -229,10 +221,9 @@ auto context_generate_add(
 ) -> void {
 	using ecsact::entt::detail::pending_add;
 
-	static_assert(
-		!C::has_assoc_fields,
-		"Ecsact RT EnTT doesn't support indexed fields (yet)"
-	);
+	if constexpr(C::has_assoc_fields) {
+		throw std::logic_error{"assoc generate_add unimplemented"};
+	}
 
 	auto& registry = *context->registry;
 
