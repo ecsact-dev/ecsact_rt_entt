@@ -29,69 +29,7 @@ static auto check_unsupported_features( //
 	ecsact::codegen_plugin_context&                     ctx,
 	const ecsact::rt_entt_codegen::ecsact_entt_details& details
 ) -> bool {
-	auto found_assoc_feature = false;
-	for(auto comp_id : details.all_components) {
-		for(auto field_id : ecsact::meta::get_field_ids(comp_id)) {
-			auto field_type = ecsact::meta::get_field_type(comp_id, field_id);
-			if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
-				 field_type.type.builtin == ECSACT_ENTITY_TYPE) {
-				auto comp_name = ecsact::meta::decl_full_name(comp_id);
-				auto field_name = ecsact::meta::field_name(comp_id, field_id);
-				ctx.error("Assoc field found {}.{}", comp_name, field_name);
-				found_assoc_feature = true;
-			} else if(field_type.kind == ECSACT_TYPE_KIND_FIELD_INDEX) {
-				auto comp_name = ecsact::meta::decl_full_name(comp_id);
-				auto field_name = ecsact::meta::field_name(comp_id, field_id);
-				ctx.error("Assoc field found {}.{}", comp_name, field_name);
-				found_assoc_feature = true;
-			}
-		}
-	}
-
-	for(auto sys_id : details.all_systems) {
-		auto assoc_ids = ecsact::meta::system_assoc_ids(sys_id);
-		if(!assoc_ids.empty()) {
-			found_assoc_feature = true;
-			auto system_name = ecsact::meta::decl_full_name(sys_id);
-			ctx.error("Assoc system found {}", system_name);
-			found_assoc_feature = true;
-		}
-	}
-
-	for(auto act_id : details.all_actions) {
-		auto assoc_ids = ecsact::meta::system_assoc_ids(act_id);
-		if(!assoc_ids.empty()) {
-			found_assoc_feature = true;
-			auto system_name = ecsact::meta::decl_full_name(act_id);
-			ctx.error("Assoc action found {}", system_name);
-			found_assoc_feature = true;
-		}
-
-		for(auto field_id : ecsact::meta::get_field_ids(act_id)) {
-			auto field_type = ecsact::meta::get_field_type(act_id, field_id);
-			if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
-				 field_type.type.builtin == ECSACT_ENTITY_TYPE) {
-				auto act_name = ecsact::meta::decl_full_name(act_id);
-				auto field_name = ecsact::meta::field_name(act_id, field_id);
-				ctx.error("Assoc field found {}.{}", act_name, field_name);
-				found_assoc_feature = true;
-			} else if(field_type.kind == ECSACT_TYPE_KIND_FIELD_INDEX) {
-				auto act_name = ecsact::meta::decl_full_name(act_id);
-				auto field_name = ecsact::meta::field_name(act_id, field_id);
-				ctx.error("Assoc field found {}.{}", act_name, field_name);
-				found_assoc_feature = true;
-			}
-		}
-	}
-
-	if(found_assoc_feature) {
-		ctx.fatal(
-			"Association currently unsupported "
-			"https://github.com/ecsact-dev/ecsact_rt_entt/issues/138"
-		);
-		return true;
-	}
-
+	// we support it all! for now...
 	return false;
 }
 

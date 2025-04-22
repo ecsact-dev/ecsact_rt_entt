@@ -1,0 +1,13 @@
+main package assoc_test;
+
+component Power { f32 value; }
+component Attacker { entity target; }
+component Health { f32 value; }
+
+system DoDamage {
+	readonly Power;
+	readonly Health;
+	readonly Attacker with target {
+		readwrite Health;
+	}
+}
