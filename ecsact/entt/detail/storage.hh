@@ -33,6 +33,16 @@ struct event_storage {
 	auto beforeremove() -> storage_for<beforeremove_storage>;
 };
 
+template<typename C>
+struct marker_storage {
+	template<template<typename> typename WrapperT>
+	using storage_for = ::entt::storage_for_t<WrapperT<C>>;
+
+	ecsact::entt::registry_t& registry;
+
+	auto stream() -> storage_for<run_on_stream>;
+};
+
 struct storage {
 	template<typename C>
 	using storage_for = ::entt::storage_for_t<C>;
@@ -56,6 +66,11 @@ struct storage {
 	template<typename C>
 	auto event() -> event_storage<C> {
 		return event_storage<C>{registry};
+	}
+
+	template<typename C>
+	auto marker() -> marker_storage<C> {
+		return marker_storage<C>{registry};
 	}
 };
 

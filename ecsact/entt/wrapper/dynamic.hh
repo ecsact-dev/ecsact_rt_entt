@@ -199,14 +199,17 @@ auto context_stream_toggle(
 
 	auto  entity = context->entity;
 	auto& registry = *context->registry;
+	auto  s = detail::storage{registry};
+
+	auto stream_storage = s.marker().stream();
 
 	if(streaming_enabled) {
-		if(registry.any_of<run_on_stream<C>>(entity)) {
-			registry.template remove<run_on_stream<C>>(entity);
+		if(detail::has_component(stream_storage, entity)) {
+			detail::remove_component(stream_storage, entity);
 		}
 	} else {
-		if(!registry.any_of<run_on_stream<C>>(entity)) {
-			registry.template emplace<run_on_stream<C>>(entity);
+		if(!detail::has_component(stream_storage, entity)) {
+			detail::add_component_unchecked(stream_storage, entity);
 		}
 	}
 }
@@ -226,10 +229,11 @@ auto context_generate_add(
 	}
 
 	auto& registry = *context->registry;
+	auto  s = detail::storage{registry};
 
 	const auto& component = *static_cast<const C*>(component_data);
-	registry.template emplace<pending_add<C>>(entity, component);
-	registry.template emplace_or_replace<component_added<C>>(entity);
+	detail::add_component_unchecked(s.deferred<C>().pending(), entity, component);
+	detail::ensure_component(s.event<C>().added(), entity);
 }
 
 } // namespace ecsact::entt::wrapper::dynamic
